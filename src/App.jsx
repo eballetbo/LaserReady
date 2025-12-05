@@ -7,6 +7,7 @@ import { LASER_MODES } from './utils/laser-modes';
 import { LanguageProvider, useLanguage } from './contexts/language';
 import { Languages } from 'lucide-react';
 import { exportToSVG, downloadSVG } from './utils/svg-exporter';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // --- CONSTANTS ---
 // Material size in MM
@@ -269,6 +270,7 @@ function AppContent() {
                     deleteSelected={deleteSelected}
                 />
             </div>
+            <SpeedInsights />
         </div >
     );
 }

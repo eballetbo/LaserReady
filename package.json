@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/speed-insights": "^1.3.1",
     "fabric": "^5.3.0",
     "lucide-react": "^0.555.0",
     "paper": "^0.12.18",
