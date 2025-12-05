@@ -3,7 +3,7 @@ import { useLanguage } from '../contexts/language';
 import { Settings, Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
 import { LASER_MODES } from '../utils/laser-modes';
 
-export default function PropertiesPanel({ theme, selection, editor, applyLaserMode, deleteSelected }) {
+export default function PropertiesPanel({ theme, selection, editor, applyLaserMode, deleteSelected, isEmbedded }) {
     const { t } = useLanguage();
     const [dimensions, setDimensions] = useState({ x: 0, y: 0, w: 0, h: 0 });
     const [sides, setSides] = useState(6);
@@ -68,7 +68,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     };
 
     return (
-        <div className={`w-72 ${theme.panel} border-l ${theme.border} flex flex-col shrink-0 z-20 p-4`}>
+        <div className={`flex flex-col shrink-0 z-20 p-4 ${isEmbedded ? 'w-full' : `w-72 ${theme.panel} border-l ${theme.border}`}`}>
             <h2 className="font-bold mb-4 flex items-center gap-2"><Settings size={18} /> {t('properties')}</h2>
 
             {selection.length > 1 ? (

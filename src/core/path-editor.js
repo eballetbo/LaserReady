@@ -1,3 +1,4 @@
+import { Geometry } from '../math/geometry.js';
 import { CanvasRenderer } from '../render/canvas-renderer.js';
 import { PathNode } from '../model/path-node.js';
 import { PathShape } from '../model/path-shape.js';
@@ -162,13 +163,36 @@ export class PathEditor {
         this.endAction();
     }
 
-    importSVGString(svgString) {
+    importSVGString(svgString, position = null) {
         try {
             const shapes = SVGImporter.importSVG(svgString);
             if (shapes && shapes.length > 0) {
                 this.startAction();
-                this.shapes = shapes;
-                this.selectedShapes = [];
+
+                // If position is provided, center the shapes at that position
+                if (position) {
+                    // Calculate combined bounds
+                    const bounds = Geometry.getCombinedBounds(shapes);
+                    const centerX = bounds.minX + bounds.width / 2;
+                    const centerY = bounds.minY + bounds.height / 2;
+                    const dx = position.x - centerX;
+                    const dy = position.y - centerY;
+
+                    // Move all shapes
+                    shapes.forEach(shape => {
+                        shape.nodes.forEach(node => {
+                            node.x += dx;
+                            node.y += dy;
+                            node.cpIn.x += dx;
+                            node.cpIn.y += dy;
+                            node.cpOut.x += dx;
+                            node.cpOut.y += dy;
+                        });
+                    });
+                }
+
+                this.shapes.push(...shapes);
+                this.selectedShapes = shapes; // Select imported shapes
                 this.render();
                 this.endAction();
             } else {

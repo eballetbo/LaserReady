@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import Toolbar from './components/toolbar';
-import PropertiesPanel from './components/properties';
+import RightSidebar from './components/right-sidebar';
 import Canvas from './components/canvas';
 import { LASER_MODES } from './utils/laser-modes';
 import { LanguageProvider, useLanguage } from './contexts/language';
@@ -261,7 +261,7 @@ function AppContent() {
                     />
                 </div>
 
-                <PropertiesPanel
+                <RightSidebar
                     theme={theme}
                     selection={selection}
                     editor={editor}

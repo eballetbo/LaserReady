@@ -54,4 +54,8 @@ export const es = {
     sides: 'Lados',
     points: 'Puntas',
     innerRadius: 'Radio Interior',
+
+    // Asset Library
+    library: 'Biblioteca',
+    dragAndDrop: 'Arrastra y suelta iconos al lienzo',
 };

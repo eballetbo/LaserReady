@@ -54,4 +54,8 @@ export const ca = {
     sides: 'Costats',
     points: 'Puntes',
     innerRadius: 'Radi Interior',
+
+    // Asset Library
+    library: 'Biblioteca',
+    dragAndDrop: 'Arrossega i deixa anar icones al llenç',
 };

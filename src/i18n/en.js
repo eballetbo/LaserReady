@@ -54,4 +54,8 @@ export const en = {
     sides: 'Sides',
     points: 'Points',
     innerRadius: 'Inner Radius',
+
+    // Asset Library
+    library: 'Library',
+    dragAndDrop: 'Drag & Drop icons to canvas',
 };

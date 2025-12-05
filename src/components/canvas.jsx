@@ -40,13 +40,33 @@ export default function Canvas({
             editorRef.current?.render();
         }
     }, [material]);
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    };
 
+    const handleDrop = (e) => {
+        e.preventDefault();
+        const svgString = e.dataTransfer.getData('image/svg+xml');
+        if (svgString && editorRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            // Calculate drop position in canvas coordinates
+            // We need to account for zoom and pan, which getMousePos does
+            // But getMousePos expects a MouseEvent, we can construct a mock one or use the logic directly
+            // Let's use the editor's getMousePos logic if possible, or replicate it
+            // Editor.getMousePos takes {clientX, clientY}
+            const pos = editorRef.current.getMousePos(e);
+            editorRef.current.importSVGString(svgString, pos);
+        }
+    };
     return (
         <div className="shadow-2xl bg-white">
             <canvas
                 ref={canvasRef}
                 width={material.width}
                 height={material.height}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
             />
         </div>
     );
