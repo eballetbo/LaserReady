@@ -17,10 +17,10 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             const updateDims = () => {
                 const bounds = selectedObject.getBounds();
                 setDimensions({
-                    x: bounds.minX,
-                    y: bounds.minY,
-                    w: bounds.width,
-                    h: bounds.height
+                    x: Math.round(bounds.minX),
+                    y: Math.round(bounds.minY),
+                    w: Math.round(bounds.width),
+                    h: Math.round(bounds.height)
                 });
             };
             updateDims();
@@ -41,6 +41,10 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
     const updateDimension = (key, value) => {
         if (!selectedObject) return;
+
+        // Update local state immediately to allow typing
+        setDimensions(prev => ({ ...prev, [key]: value }));
+
         const val = parseFloat(value);
         if (isNaN(val)) return;
 
@@ -67,14 +71,12 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         editor.render();
         editor.endAction();
 
-        // Update local state to reflect changes immediately
-        const newBounds = selectedObject.getBounds();
-        setDimensions({
-            x: newBounds.minX,
-            y: newBounds.minY,
-            w: newBounds.width,
-            h: newBounds.height
-        });
+        // We don't update local state here because we want to keep what the user typed.
+        // The useEffect will handle updating state if selection changes.
+        // However, if we want to reflect the *actual* bounds after a complex operation (like scaling constraints),
+        // we might need to, but for simple scaling/moving, the input value is the truth.
+        // Actually, if we scale, the other dimension might change if we were maintaining aspect ratio (not implemented yet).
+        // For now, let's trust the input value for the field being edited.
     };
 
     const updateParam = (key, value) => {
@@ -131,7 +133,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <label className="text-[10px] text-gray-400 block mb-1">X</label>
                                 <input
                                     type="number"
-                                    value={Math.round(dimensions.x)}
+                                    value={dimensions.x}
                                     onChange={(e) => updateDimension('x', e.target.value)}
                                     className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                 />
@@ -140,7 +142,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <label className="text-[10px] text-gray-400 block mb-1">Y</label>
                                 <input
                                     type="number"
-                                    value={Math.round(dimensions.y)}
+                                    value={dimensions.y}
                                     onChange={(e) => updateDimension('y', e.target.value)}
                                     className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                 />
@@ -149,7 +151,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <label className="text-[10px] text-gray-400 block mb-1">{t('width')}</label>
                                 <input
                                     type="number"
-                                    value={Math.round(dimensions.w)}
+                                    value={dimensions.w}
                                     onChange={(e) => updateDimension('w', e.target.value)}
                                     className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                 />
@@ -158,7 +160,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <label className="text-[10px] text-gray-400 block mb-1">{t('height')}</label>
                                 <input
                                     type="number"
-                                    value={Math.round(dimensions.h)}
+                                    value={dimensions.h}
                                     onChange={(e) => updateDimension('h', e.target.value)}
                                     className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                 />

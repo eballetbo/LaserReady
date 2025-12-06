@@ -90,6 +90,9 @@ function AppContent() {
     // Global Key handlers
     useEffect(() => {
         const handleKey = (e) => {
+            // Ignore if typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
             if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
 
             if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
