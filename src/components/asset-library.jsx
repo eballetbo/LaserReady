@@ -115,7 +115,6 @@ export default function AssetLibrary({ theme }) {
         <div className={`flex-1 flex flex-col overflow-hidden ${theme.panel}`}>
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-3">
                 <div>
-                    <h3 className={`font-bold ${theme.text}`}>{t('library') || 'Library'}</h3>
                     <p className={`text-xs ${theme.textMuted} mt-1`}>
                         {t('dragAndDrop') || 'Drag & Drop icons to canvas'}
                     </p>
