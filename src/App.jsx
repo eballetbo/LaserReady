@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github } from 'lucide-react';
+import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee } from 'lucide-react';
 import Toolbar from './components/toolbar';
 import RightSidebar from './components/right-sidebar';
 import Canvas from './components/canvas';
@@ -226,6 +226,9 @@ function AppContent() {
                     <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded ${theme.buttonHover}`}>
                         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
+                    <a href="https://www.buymeacoffee.com/eballetbo" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-yellow-500`} title="Buy Me a Coffee">
+                        <Coffee size={20} />
+                    </a>
                     <a href="https://github.com/eballetbo/LaserReady" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-black dark:hover:text-white`} title="GitHub">
                         <Github size={20} />
                     </a>
