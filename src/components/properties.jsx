@@ -44,10 +44,37 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         const val = parseFloat(value);
         if (isNaN(val)) return;
 
-        // TODO: Implement dimension update for PathShape
-        // selectedObject.set(key, val);
-        // editor.render();
-        setDimensions(prev => ({ ...prev, [key]: val }));
+        const bounds = selectedObject.getBounds();
+
+        editor.startAction();
+
+        if (key === 'x') {
+            const dx = val - bounds.minX;
+            selectedObject.move(dx, 0);
+        } else if (key === 'y') {
+            const dy = val - bounds.minY;
+            selectedObject.move(0, dy);
+        } else if (key === 'w') {
+            if (bounds.width === 0) return; // Avoid division by zero
+            const sx = val / bounds.width;
+            selectedObject.scale(sx, 1, { x: bounds.minX, y: bounds.minY });
+        } else if (key === 'h') {
+            if (bounds.height === 0) return;
+            const sy = val / bounds.height;
+            selectedObject.scale(1, sy, { x: bounds.minX, y: bounds.minY });
+        }
+
+        editor.render();
+        editor.endAction();
+
+        // Update local state to reflect changes immediately
+        const newBounds = selectedObject.getBounds();
+        setDimensions({
+            x: newBounds.minX,
+            y: newBounds.minY,
+            w: newBounds.width,
+            h: newBounds.height
+        });
     };
 
     const updateParam = (key, value) => {
