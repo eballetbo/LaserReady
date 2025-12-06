@@ -53,8 +53,9 @@ export class PathEditor {
         this._tool = 'select';
         this.activeTool = this.tools.select;
 
-        this.activePath = null;
+        this.activePath = null; // For pen tool
         this.previewPoint = null;
+        this.selectedNodeIndex = null; // For node edit tool
 
         this.zoom = 1;
         this.pan = { x: 0, y: 0 };
@@ -133,7 +134,8 @@ export class PathEditor {
             this.previewPoint,
             null, // selectionBox
             this.zoom,
-            this.pan
+            this.pan,
+            this.selectedNodeIndex
         );
 
         // Notify selection change

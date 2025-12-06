@@ -20,7 +20,7 @@ export class CanvasRenderer {
         this.ctx.stroke();
     }
 
-    drawScene(shapes, selectedShapes, config, toolType, activePath, previewPoint, selectionBox, zoom = 1, pan = { x: 0, y: 0 }) {
+    drawScene(shapes, selectedShapes, config, toolType, activePath, previewPoint, selectionBox, zoom = 1, pan = { x: 0, y: 0 }, selectedNodeIndex = null) {
         this.clear();
 
         this.ctx.save();
@@ -39,7 +39,7 @@ export class CanvasRenderer {
             this.drawPath(shape, isSelected, config);
 
             if (isSelected && toolType === 'node-edit') {
-                this.drawNodes(shape, config);
+                this.drawNodes(shape, config, selectedNodeIndex);
             }
         });
 
@@ -112,24 +112,46 @@ export class CanvasRenderer {
         }
     }
 
-    drawNodes(shape, config) {
-        this.ctx.strokeStyle = config.colorHandleLine;
-        this.ctx.lineWidth = 1;
-        this.ctx.beginPath();
-        shape.nodes.forEach(n => {
-            this.ctx.moveTo(n.x, n.y); this.ctx.lineTo(n.cpIn.x, n.cpIn.y);
-            this.ctx.moveTo(n.x, n.y); this.ctx.lineTo(n.cpOut.x, n.cpOut.y);
-        });
-        this.ctx.stroke();
-
-        shape.nodes.forEach(n => {
-            this.drawCircle(n.cpIn.x, n.cpIn.y, config.handleRadius, config.colorHandle);
-            this.drawCircle(n.cpOut.x, n.cpOut.y, config.handleRadius, config.colorHandle);
-
-            this.ctx.fillStyle = config.colorAnchor;
+    drawNodes(shape, config, selectedNodeIndex) {
+        // 1. Draw Anchors (Squares) first
+        shape.nodes.forEach((n, i) => {
+            this.ctx.fillStyle = i === selectedNodeIndex ? config.colorSelection : config.colorAnchor;
             const size = config.anchorSize;
             this.ctx.fillRect(n.x - size / 2, n.y - size / 2, size, size);
         });
+
+        // 2. Draw Handles (Lines + Circles) ONLY for selected node
+        if (selectedNodeIndex !== null && selectedNodeIndex >= 0 && selectedNodeIndex < shape.nodes.length) {
+            const n = shape.nodes[selectedNodeIndex];
+
+            // Helper to check if handle is at anchor
+            const isAtAnchor = (p) => Math.abs(p.x - n.x) < 0.1 && Math.abs(p.y - n.y) < 0.1;
+
+            this.ctx.strokeStyle = config.colorHandleLine;
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+
+            // Draw In Handle if not at anchor
+            if (!isAtAnchor(n.cpIn)) {
+                this.ctx.moveTo(n.x, n.y);
+                this.ctx.lineTo(n.cpIn.x, n.cpIn.y);
+            }
+
+            // Draw Out Handle if not at anchor
+            if (!isAtAnchor(n.cpOut)) {
+                this.ctx.moveTo(n.x, n.y);
+                this.ctx.lineTo(n.cpOut.x, n.cpOut.y);
+            }
+            this.ctx.stroke();
+
+            // Draw Handle Circles
+            if (!isAtAnchor(n.cpIn)) {
+                this.drawCircle(n.cpIn.x, n.cpIn.y, config.handleRadius, config.colorHandle);
+            }
+            if (!isAtAnchor(n.cpOut)) {
+                this.drawCircle(n.cpOut.x, n.cpOut.y, config.handleRadius, config.colorHandle);
+            }
+        }
     }
 
     drawSelectionBounds(bounds, config) {
