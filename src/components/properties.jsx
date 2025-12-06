@@ -98,8 +98,6 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
     return (
         <div className={`flex flex-col shrink-0 z-20 p-4 ${isEmbedded ? 'w-full' : `w-72 ${theme.panel} border-l ${theme.border}`}`}>
-            <h2 className="font-bold mb-4 flex items-center gap-2"><Settings size={18} /> {t('properties')}</h2>
-
             {selection.length > 1 ? (
                 <div className="space-y-6">
                     <div>
