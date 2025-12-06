@@ -29,8 +29,15 @@ export class RectTool extends BaseTool {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        const w = x - this.dragStart.x;
-        const h = y - this.dragStart.y;
+        let w = x - this.dragStart.x;
+        let h = y - this.dragStart.y;
+
+        if (e.shiftKey) {
+            const d = Math.max(Math.abs(w), Math.abs(h));
+            w = d * Math.sign(w || 1);
+            h = d * Math.sign(h || 1);
+        }
+
         const n = this.editor.selectedShape.nodes;
 
         n[1].x = this.dragStart.x + w; n[1].y = this.dragStart.y;
@@ -77,10 +84,19 @@ export class CircleTool extends BaseTool {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        const rx = Math.abs(x - this.dragStart.x);
-        const ry = Math.abs(y - this.dragStart.y);
-        const cx = this.dragStart.x;
-        const cy = this.dragStart.y;
+        let w = x - this.dragStart.x;
+        let h = y - this.dragStart.y;
+
+        if (e.shiftKey) {
+            const d = Math.max(Math.abs(w), Math.abs(h));
+            w = d * Math.sign(w || 1);
+            h = d * Math.sign(h || 1);
+        }
+
+        const rx = Math.abs(w) / 2;
+        const ry = Math.abs(h) / 2;
+        const cx = this.dragStart.x + w / 2;
+        const cy = this.dragStart.y + h / 2;
         const kappa = 0.552284749831;
         const ox = rx * kappa;
         const oy = ry * kappa;
@@ -140,16 +156,26 @@ export class PolygonTool extends BaseTool {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        const dx = x - this.dragStart.x;
-        const dy = y - this.dragStart.y;
-        const radius = Math.sqrt(dx * dx + dy * dy);
+        let w = x - this.dragStart.x;
+        let h = y - this.dragStart.y;
+
+        if (e.shiftKey) {
+            const d = Math.max(Math.abs(w), Math.abs(h));
+            w = d * Math.sign(w || 1);
+            h = d * Math.sign(h || 1);
+        }
+
+        const rx = Math.abs(w) / 2;
+        const ry = Math.abs(h) / 2;
+        const cx = this.dragStart.x + w / 2;
+        const cy = this.dragStart.y + h / 2;
         const sides = this.sides;
         const n = this.editor.selectedShape.nodes;
 
         for (let i = 0; i < sides; i++) {
             const angle = (i * 2 * Math.PI / sides) - Math.PI / 2;
-            n[i].x = this.dragStart.x + radius * Math.cos(angle);
-            n[i].y = this.dragStart.y + radius * Math.sin(angle);
+            n[i].x = cx + rx * Math.cos(angle);
+            n[i].y = cy + ry * Math.sin(angle);
             n[i].cpIn = { x: n[i].x, y: n[i].y };
             n[i].cpOut = { x: n[i].x, y: n[i].y };
         }
@@ -191,20 +217,36 @@ export class StarTool extends BaseTool {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        const dx = x - this.dragStart.x;
-        const dy = y - this.dragStart.y;
-        const outerRadius = Math.sqrt(dx * dx + dy * dy);
-        const innerRadius = outerRadius * this.innerRadius;
+        let w = x - this.dragStart.x;
+        let h = y - this.dragStart.y;
+
+        if (e.shiftKey) {
+            const d = Math.max(Math.abs(w), Math.abs(h));
+            w = d * Math.sign(w || 1);
+            h = d * Math.sign(h || 1);
+        }
+
+        const rx = Math.abs(w) / 2;
+        const ry = Math.abs(h) / 2;
+        const cx = this.dragStart.x + w / 2;
+        const cy = this.dragStart.y + h / 2;
+
+        const outerRx = rx;
+        const outerRy = ry;
+        const innerRx = rx * this.innerRadius;
+        const innerRy = ry * this.innerRadius;
+
         const points = this.points;
         const n = this.editor.selectedShape.nodes;
-        const cx = this.dragStart.x;
-        const cy = this.dragStart.y;
 
         for (let i = 0; i < points * 2; i++) {
-            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const isOuter = i % 2 === 0;
+            const rX = isOuter ? outerRx : innerRx;
+            const rY = isOuter ? outerRy : innerRy;
+
             const angle = (i * Math.PI / points) - Math.PI / 2;
-            n[i].x = cx + radius * Math.cos(angle);
-            n[i].y = cy + radius * Math.sin(angle);
+            n[i].x = cx + rX * Math.cos(angle);
+            n[i].y = cy + rY * Math.sin(angle);
             n[i].cpIn = { x: n[i].x, y: n[i].y };
             n[i].cpOut = { x: n[i].x, y: n[i].y };
         }
