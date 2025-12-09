@@ -58,4 +58,11 @@ export const es = {
     // Asset Library
     library: 'Biblioteca',
     dragAndDrop: 'Arrastra y suelta iconos al lienzo',
+
+    // Text Tool
+    textTool: "Herramienta de Texto",
+    textProperties: "Propiedades de Texto",
+    content: "Contenido",
+    fontFamily: "Fuente",
+    fontSize: "Tamaño",
 };

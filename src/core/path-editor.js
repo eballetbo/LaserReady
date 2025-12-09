@@ -5,6 +5,8 @@ import { PathShape } from '../model/path-shape.js';
 import { RectTool, CircleTool, PolygonTool, StarTool } from '../tools/shape-tools.js';
 import { PenTool } from '../tools/pen-tool.js';
 import { SelectTool } from '../tools/select-tool.js';
+import { TextTool } from '../tools/text-tool.js';
+import { TextObject } from '../model/text-object.js';
 import { NodeEditTool } from '../tools/node-edit-tool.js';
 import { BooleanOperations } from '../math/boolean.js';
 import { SVGImporter } from '../utils/svg-importer.js';
@@ -42,6 +44,7 @@ export class PathEditor {
             select: new SelectTool(this),
             rect: new RectTool(this),
             circle: new CircleTool(this),
+            text: new TextTool(this),
 
             triangle: new PolygonTool(this, 3),
             pentagon: new PolygonTool(this, 5),
@@ -355,7 +358,9 @@ export class PathEditor {
             // OR it might be PathShapes if it came from a previous undo/redo cycle?
             // Let's assume it can be plain objects and re-hydrate.
             this.shapes = previousState.map(s => {
-                return s instanceof PathShape ? s : PathShape.fromJSON(s);
+                if (s instanceof PathShape || s instanceof TextObject) return s;
+                if (s.type === 'text') return TextObject.fromJSON(s);
+                return PathShape.fromJSON(s);
             });
             this.selectedShapes = []; // Clear selection to avoid issues
             this.render();
@@ -368,7 +373,9 @@ export class PathEditor {
 
         if (nextState) {
             this.shapes = nextState.map(s => {
-                return s instanceof PathShape ? s : PathShape.fromJSON(s);
+                if (s instanceof PathShape || s instanceof TextObject) return s;
+                if (s.type === 'text') return TextObject.fromJSON(s);
+                return PathShape.fromJSON(s);
             });
             this.selectedShapes = [];
             this.render();

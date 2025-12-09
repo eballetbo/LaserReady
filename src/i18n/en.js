@@ -58,4 +58,11 @@ export const en = {
     // Asset Library
     library: 'Library',
     dragAndDrop: 'Drag & Drop icons to canvas',
+
+    // Text Tool
+    textTool: "Text Tool",
+    textProperties: "Text Properties",
+    content: "Content",
+    fontFamily: "Font Family",
+    fontSize: "Font Size",
 };

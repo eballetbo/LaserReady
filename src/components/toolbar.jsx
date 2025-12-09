@@ -9,7 +9,8 @@ import {
     PenLine,
     SplinePointer,
     ChevronRight,
-    Star
+    Star,
+    Type
 } from 'lucide-react';
 
 
@@ -77,6 +78,7 @@ export default function Toolbar({ tool, setTool, theme, addText }) {
                 }
             />
             <ToolButton active={tool === 'pen'} icon={PenLine} label={t('penTool')} onClick={() => setTool('pen')} theme={theme} />
+            <ToolButton active={tool === 'text'} icon={Type} label={t('textTool')} onClick={() => setTool('text')} theme={theme} />
         </div>
     );
 }

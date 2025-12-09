@@ -44,8 +44,15 @@ export class SelectTool extends BaseTool {
         let clickedShape = null;
         // Hit test in reverse order (top to bottom)
         for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
-            if (Geometry.isPointInBezierPath(this.editor.ctx, this.editor.shapes[i], x, y)) {
-                clickedShape = this.editor.shapes[i];
+            const shape = this.editor.shapes[i];
+            if (shape.type === 'text') {
+                const bounds = shape.getBounds();
+                if (x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY) {
+                    clickedShape = shape;
+                    break;
+                }
+            } else if (Geometry.isPointInBezierPath(this.editor.ctx, shape, x, y)) {
+                clickedShape = shape;
                 break;
             }
         }
@@ -144,8 +151,23 @@ export class SelectTool extends BaseTool {
         // Cursor updates
         if (this.editor.selectedShapes.length > 0 && this.getClickedControl(x, y)) {
             this.editor.canvas.style.cursor = 'grab';
-        } else if (this.editor.shapes.some(s => Geometry.isPointInBezierPath(this.editor.ctx, s, x, y))) {
-            this.editor.canvas.style.cursor = 'move';
+        } else {
+            let hover = false;
+            for (const s of this.editor.shapes) {
+                if (s.type === 'text') {
+                    const b = s.getBounds();
+                    if (x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY) {
+                        hover = true;
+                        break;
+                    }
+                } else if (Geometry.isPointInBezierPath(this.editor.ctx, s, x, y)) {
+                    hover = true;
+                    break;
+                }
+            }
+            if (hover) {
+                this.editor.canvas.style.cursor = 'move';
+            }
         }
 
         if (this.isDraggingShape && this.editor.selectedShapes.length > 0) {

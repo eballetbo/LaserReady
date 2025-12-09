@@ -58,4 +58,11 @@ export const ca = {
     // Asset Library
     library: 'Biblioteca',
     dragAndDrop: 'Arrossega i deixa anar icones al llenç',
+
+    // Text Tool
+    textTool: "Eina de Text",
+    textProperties: "Propietats de Text",
+    content: "Contingut",
+    fontFamily: "Font",
+    fontSize: "Mida",
 };

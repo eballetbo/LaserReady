@@ -36,10 +36,14 @@ export class CanvasRenderer {
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
-            this.drawPath(shape, isSelected, config);
 
-            if (isSelected && toolType === 'node-edit') {
-                this.drawNodes(shape, config, selectedNodeIndex);
+            if (shape.type === 'text') {
+                this.drawText(shape, isSelected, config);
+            } else {
+                this.drawPath(shape, isSelected, config);
+                if (isSelected && toolType === 'node-edit') {
+                    this.drawNodes(shape, config, selectedNodeIndex);
+                }
             }
         });
 
@@ -219,5 +223,71 @@ export class CanvasRenderer {
         this.ctx.lineWidth = 1;
         this.ctx.fillRect(box.x, box.y, box.width, box.height);
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+    }
+
+    drawText(textObject, isSelected, config) {
+        this.ctx.save();
+
+        // Font settings
+        const fontStyle = textObject.fontStyle || 'normal';
+        const fontWeight = textObject.fontWeight || 'normal';
+        const fontSize = textObject.fontSize || 24;
+        const fontFamily = textObject.fontFamily || 'Arial';
+        this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+
+        // Colors
+        this.ctx.fillStyle = textObject.fillColor || config.colorStroke; // Default to black/stroke color
+
+        // Apply rotation and scaling
+        // We translate to the text position (x, y)
+        this.ctx.translate(textObject.x, textObject.y);
+
+        // Apply rotation
+        if (textObject.rotation) {
+            this.ctx.rotate(textObject.rotation);
+        }
+
+        // Apply scaling
+        if (textObject.scaleX !== undefined || textObject.scaleY !== undefined) {
+            this.ctx.scale(textObject.scaleX || 1, textObject.scaleY || 1);
+        }
+
+        // Draw text
+        // Since we translated to (x, y), we draw at (0, 0) relative to the new origin
+        // But wait, textObject.y is the top-left of the bounding box (roughly), 
+        // whereas fillText expects baseline y.
+        // In getBounds, we assumed y is top-left?
+        // No, in getBounds: minY: this.y - this.fontSize
+        // So this.y is the baseline of the first line.
+
+        const lines = textObject.text.split('\n');
+        const lineHeight = fontSize * 1.2;
+
+        lines.forEach((line, i) => {
+            // We draw at 0, 0 + offset because we already translated to (x, y)
+            this.ctx.fillText(line, 0, 0 + i * lineHeight);
+            if (textObject.strokeWidth > 0 && textObject.strokeColor) {
+                this.ctx.strokeStyle = textObject.strokeColor;
+                this.ctx.lineWidth = textObject.strokeWidth;
+                this.ctx.strokeText(line, 0, 0 + i * lineHeight);
+            }
+        });
+
+        // Restore context
+        this.ctx.restore();
+
+        // We need to return early or skip the original drawing loop because we handled it here
+        // Helper to keep the method structure valid since I'm replacing a block inside drawText
+        // Actually, I should replace the whole drawText method to be safe and clean.
+        // But the tool asks for a chunk.
+        // Let's replace the whole drawText method content.
+
+        // Draw selection overlay separately (in world space)
+        if (isSelected) {
+            const bounds = textObject.getBounds(); // This is AABB
+            this.ctx.strokeStyle = config.colorSelection;
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
+        }
     }
 }

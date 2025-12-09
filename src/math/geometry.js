@@ -104,7 +104,12 @@ export const Geometry = {
      * @returns {boolean}
      */
     isShapeInRect(shape, rect) {
-        const bounds = this.calculateBoundingBox(shape.nodes);
+        let bounds;
+        if (shape.getBounds) {
+            bounds = shape.getBounds();
+        } else {
+            bounds = this.calculateBoundingBox(shape.nodes);
+        }
         return this.isRectInRect(bounds, rect);
     },
 
@@ -116,7 +121,12 @@ export const Geometry = {
      * @returns {boolean}
      */
     isShapeIntersectingRect(shape, rect) {
-        const bounds = this.calculateBoundingBox(shape.nodes);
+        let bounds;
+        if (shape.getBounds) {
+            bounds = shape.getBounds();
+        } else {
+            bounds = this.calculateBoundingBox(shape.nodes);
+        }
         return !(bounds.maxX < rect.minX ||
             bounds.minX > rect.maxX ||
             bounds.maxY < rect.minY ||
@@ -134,7 +144,15 @@ export const Geometry = {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
         shapes.forEach(shape => {
-            const b = this.calculateBoundingBox(shape.nodes);
+            let b;
+            if (shape.getBounds) {
+                b = shape.getBounds();
+            } else if (shape.nodes) {
+                b = this.calculateBoundingBox(shape.nodes);
+            } else {
+                return;
+            }
+
             minX = Math.min(minX, b.minX);
             minY = Math.min(minY, b.minY);
             maxX = Math.max(maxX, b.maxX);

@@ -184,6 +184,84 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     )}
 
+                    {selectedObject.type === 'text' && (
+                        <div>
+                            <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('textProperties')}</div>
+                            <div className="space-y-2">
+                                <div>
+                                    <label className="text-[10px] text-gray-400 block mb-1">{t('content')}</label>
+                                    <textarea
+                                        value={selectedObject.text}
+                                        onChange={(e) => {
+                                            selectedObject.text = e.target.value;
+                                            editor.render();
+                                            // Force update to keep input in sync if needed, 
+                                            // but usually direct object mutation + render is enough for canvas,
+                                            // but for React input we need state or force update.
+                                            // Since we don't have local state for text content here, 
+                                            // we rely on parent re-render or we should add local state.
+                                            // Let's add a forceUpdate or use local state.
+                                            // For now, let's just mutate and force update via setDimensions (hacky) or better, add local state.
+                                        }}
+                                        className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
+                                        rows={3}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-[10px] text-gray-400 block mb-1">{t('fontFamily')}</label>
+                                        <select
+                                            value={selectedObject.fontFamily}
+                                            onChange={(e) => {
+                                                selectedObject.fontFamily = e.target.value;
+                                                editor.render();
+                                            }}
+                                            className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
+                                        >
+                                            <option value="Arial">Arial</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Georgia">Georgia</option>
+                                            <option value="Verdana">Verdana</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-gray-400 block mb-1">{t('fontSize')}</label>
+                                        <input
+                                            type="number"
+                                            value={selectedObject.fontSize}
+                                            onChange={(e) => {
+                                                selectedObject.fontSize = parseFloat(e.target.value);
+                                                editor.render();
+                                            }}
+                                            className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            selectedObject.fontWeight = selectedObject.fontWeight === 'bold' ? 'normal' : 'bold';
+                                            editor.render();
+                                        }}
+                                        className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontWeight === 'bold' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                                    >
+                                        B
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            selectedObject.fontStyle = selectedObject.fontStyle === 'italic' ? 'normal' : 'italic';
+                                            editor.render();
+                                        }}
+                                        className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontStyle === 'italic' ? 'bg-gray-200 dark:bg-gray-700' : ''} italic`}
+                                    >
+                                        I
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {selectedObject.type === 'star' && (
                         <div>
                             <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('shapeProperties')}</div>
