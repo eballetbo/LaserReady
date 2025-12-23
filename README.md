@@ -1,7 +1,6 @@
 # LaserReady
 
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/eballetbo)
-Support the project by buying me a coffee!
 
 LaserReady is a browser-based vector editor designed specifically for laser cutting and engraving workflows. It allows users to create, import, and edit vector designs, setting specific parameters for cutting, scoring, and engraving.
 
