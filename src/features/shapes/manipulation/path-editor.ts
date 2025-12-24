@@ -108,6 +108,8 @@ export class PathEditor {
     set tool(value) {
         this._tool = value;
         this.activeTool = this.tools[value] || this.tools.select;
+        // Update Zustand store to trigger UI updates
+        useStore.getState().setTool(value);
     }
 
     get tool() {
@@ -188,6 +190,13 @@ export class PathEditor {
     }
 
     handleKeyDown(e) {
+        // SPECS.md § 3: Escape key switches to SelectTool from any other tool
+        if (e.key === 'Escape' && this.tool !== 'select') {
+            this.tool = 'select';
+            this.render();
+            return; // Don't propagate to tool
+        }
+
         // Ignore keys handled by App.jsx or that shouldn't trigger a save
         if (e.key === 'Delete' || e.key === 'Backspace') return;
         if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) return;

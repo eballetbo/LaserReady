@@ -398,10 +398,8 @@ export class SelectTool extends BaseTool {
     }
 
     onKeyDown(e: KeyboardEvent): void {
-        if (e.key === 'Escape') {
-            this.editor.selectedShapes = [];
-            this.editor.render();
-        }
+        // Escape key is handled globally in PathEditor
+        // SelectTool-specific key handling can go here
     }
 
     getClickedControl(x: number, y: number): ControlHit | null {
