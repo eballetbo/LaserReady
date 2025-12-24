@@ -1,5 +1,5 @@
 import { Geometry } from '../../math/geometry';
-import { CanvasRenderer } from '../../render/canvas-renderer.js';
+import { CanvasRenderer } from '../../render/canvas-renderer';
 import { InputManager } from './input-manager';
 import { PathNode } from '../shapes/path-node';
 import { PathShape } from '../shapes/path-shape';

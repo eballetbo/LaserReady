@@ -1,16 +1,37 @@
-import { Geometry } from '../math/geometry.js';
+import { Geometry } from '../math/geometry';
+import { IShape, ILayer, OperationMode } from '../types/core';
+
+export interface RendererConfig {
+    gridSpacing?: number;
+    anchorSize: number;
+    handleRadius: number;
+    colorAnchor: string;
+    colorHandle: string;
+    colorHandleLine: string;
+    colorStroke: string;
+    colorFill: string;
+    colorSelection: string;
+    [key: string]: any;
+}
 
 export class CanvasRenderer {
-    constructor(canvas) {
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2D context');
+        }
+        this.ctx = context;
     }
 
-    clear() {
+    clear(): void {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawGrid(spacing = 40) {
+    drawGrid(spacing: number = 40): void {
         this.ctx.strokeStyle = '#f0f0f0';
         this.ctx.lineWidth = 1;
         this.ctx.beginPath();
@@ -20,7 +41,19 @@ export class CanvasRenderer {
         this.ctx.stroke();
     }
 
-    drawScene(shapes, selectedShapes, layers, config, toolType, activePath, previewPoint, selectionBox, zoom = 1, pan = { x: 0, y: 0 }, selectedNodeIndex = null) {
+    drawScene(
+        shapes: IShape[],
+        selectedShapes: IShape[],
+        layers: ILayer[],
+        config: RendererConfig,
+        toolType: string,
+        activePath: IShape | null, // PathShape
+        previewPoint: { x: number; y: number } | null,
+        selectionBox: any | null,
+        zoom: number = 1,
+        pan: { x: number; y: number } = { x: 0, y: 0 },
+        selectedNodeIndex: number | null = null
+    ): void {
         this.clear();
 
         this.ctx.save();
@@ -66,8 +99,8 @@ export class CanvasRenderer {
         this.ctx.restore();
     }
 
-    drawPath(shape, isSelected, config, layerColor, layerMode) {
-        if (shape.nodes.length < 2) return;
+    drawPath(shape: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode): void {
+        if (!shape.nodes || shape.nodes.length < 2) return;
 
         this.ctx.beginPath();
         this.ctx.moveTo(shape.nodes[0].x, shape.nodes[0].y);
@@ -118,9 +151,9 @@ export class CanvasRenderer {
         }
     }
 
-    drawNodes(shape, config, selectedNodeIndex) {
+    drawNodes(shape: any, config: RendererConfig, selectedNodeIndex: number | null): void {
         // 1. Draw Anchors (Squares) first
-        shape.nodes.forEach((n, i) => {
+        shape.nodes.forEach((n: any, i: number) => {
             this.ctx.fillStyle = i === selectedNodeIndex ? config.colorSelection : config.colorAnchor;
             const size = config.anchorSize;
             this.ctx.fillRect(n.x - size / 2, n.y - size / 2, size, size);
@@ -131,7 +164,7 @@ export class CanvasRenderer {
             const n = shape.nodes[selectedNodeIndex];
 
             // Helper to check if handle is at anchor
-            const isAtAnchor = (p) => Math.abs(p.x - n.x) < 0.1 && Math.abs(p.y - n.y) < 0.1;
+            const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < 0.1 && Math.abs(p.y - n.y) < 0.1;
 
             this.ctx.strokeStyle = config.colorHandleLine;
             this.ctx.lineWidth = 1;
@@ -160,7 +193,7 @@ export class CanvasRenderer {
         }
     }
 
-    drawSelectionBounds(bounds, config) {
+    drawSelectionBounds(bounds: any, config: RendererConfig): void {
 
         // Draw rotation handle
         const handleX = bounds.cx;
@@ -199,15 +232,15 @@ export class CanvasRenderer {
         });
     }
 
-    drawCircle(x, y, r, color) {
+    drawCircle(x: number, y: number, r: number, color: string): void {
         this.ctx.beginPath();
         this.ctx.arc(x, y, r, 0, Math.PI * 2);
         this.ctx.fillStyle = color;
         this.ctx.fill();
     }
 
-    drawPenPreview(activePath, previewPoint) {
-        if (activePath.nodes.length === 0) return;
+    drawPenPreview(activePath: any, previewPoint: { x: number; y: number }): void {
+        if (!activePath.nodes || activePath.nodes.length === 0) return;
         const lastNode = activePath.nodes[activePath.nodes.length - 1];
         this.ctx.beginPath();
         this.ctx.moveTo(lastNode.x, lastNode.y);
@@ -219,7 +252,7 @@ export class CanvasRenderer {
         this.ctx.setLineDash([]);
     }
 
-    drawSelectionBox(box) {
+    drawSelectionBox(box: any): void {
         this.ctx.fillStyle = box.style.fill;
         this.ctx.strokeStyle = box.style.stroke;
         this.ctx.lineWidth = 1;
@@ -227,7 +260,7 @@ export class CanvasRenderer {
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
     }
 
-    drawText(textObject, isSelected, config, layerColor, layerMode) {
+    drawText(textObject: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode): void {
         this.ctx.save();
 
         // Font settings
@@ -247,10 +280,10 @@ export class CanvasRenderer {
             this.ctx.scale(textObject.scaleX || 1, textObject.scaleY || 1);
         }
 
-        const lines = textObject.text.split('\n');
+        const lines = (textObject.text || '').split('\n');
         const lineHeight = fontSize * 1.2;
 
-        lines.forEach((line, i) => {
+        lines.forEach((line: string, i: number) => {
             if (layerMode === 'ENGRAVE') {
                 this.ctx.fillStyle = layerColor;
                 this.ctx.fillText(line, 0, 0 + i * lineHeight);
@@ -266,7 +299,9 @@ export class CanvasRenderer {
 
         // Draw selection overlay separately (in world space)
         if (isSelected) {
-            const bounds = textObject.getBounds(); // This might be expensive if using measure
+            // This might be expensive if using measure
+            // Ideally textObject has a `getBounds()` method we can assume exists
+            const bounds = textObject.getBounds ? textObject.getBounds() : { minX: textObject.x, minY: textObject.y, width: 100, height: 20 };
             this.ctx.strokeStyle = config.colorSelection;
             this.ctx.lineWidth = 1;
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
