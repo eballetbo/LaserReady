@@ -1,13 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { PathEditor } from '../core/path-editor';
 
+interface CanvasProps {
+    material: { width: number; height: number };
+    setEditorInstance?: (editor: any) => void; // PathEditor type is not fully exported as a TS type yet, using any for now or I can assume it matches
+    tool: string;
+}
+
 export default function Canvas({
     material,
     setEditorInstance,
     tool
-}) {
-    const canvasRef = useRef(null);
-    const editorRef = useRef(null);
+}: CanvasProps) {
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const editorRef = useRef<any | null>(null); // Type as any for now until PathEditor is fully typed
 
     useEffect(() => {
         if (editorRef.current) {
@@ -28,7 +34,9 @@ export default function Canvas({
         if (setEditorInstance) setEditorInstance(editor);
 
         return () => {
-            editor.dispose();
+            if (editor && typeof editor.dispose === 'function') {
+                editor.dispose();
+            }
         };
     }, []);
 
@@ -40,25 +48,25 @@ export default function Canvas({
             editorRef.current?.render();
         }
     }, [material]);
-    const handleDragOver = (e) => {
+
+    const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
     };
 
-    const handleDrop = (e) => {
+    const handleDrop = (e: React.DragEvent<HTMLCanvasElement>) => {
         e.preventDefault();
         const svgString = e.dataTransfer.getData('image/svg+xml');
         if (svgString && editorRef.current) {
-            const rect = canvasRef.current.getBoundingClientRect();
+            // const rect = canvasRef.current!.getBoundingClientRect();
             // Calculate drop position in canvas coordinates
             // We need to account for zoom and pan, which getMousePos does
-            // But getMousePos expects a MouseEvent, we can construct a mock one or use the logic directly
-            // Let's use the editor's getMousePos logic if possible, or replicate it
-            // Editor.getMousePos takes {clientX, clientY}
-            const pos = editorRef.current.getMousePos(e);
+            // But getMousePos expects a MouseEvent. React.DragEvent is compatible enough with required props usually.
+            const pos = editorRef.current.getMousePos(e.nativeEvent);
             editorRef.current.importSVGString(svgString, pos);
         }
     };
+
     return (
         <div className="shadow-2xl bg-white">
             <canvas
