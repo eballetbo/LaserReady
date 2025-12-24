@@ -11,7 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // --- CONSTANTS ---
 // Material size in MM
-const INITIAL_MATERIAL = { width: 1000, height: 800 };
+import { useStore } from './store/useStore';
 
 // --- THEME CONFIGURATION ---
 const THEMES = {
@@ -53,10 +53,15 @@ export default function App() {
 
 function AppContent() {
     // State
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const {
+        isDarkMode, setDarkMode,
+        material, setMaterial,
+        tool, setTool
+    } = useStore();
+
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
-    const [material, setMaterial] = useState(INITIAL_MATERIAL);
-    const [tool, setTool] = useState('select');
+    // const [material, setMaterial] = useState(INITIAL_MATERIAL); // Removed
+    // const [tool, setTool] = useState('select'); // Removed
     const [editor, setEditor] = useState(null);
     const [selection, setSelection] = useState([]);
 
@@ -223,7 +228,7 @@ function AppContent() {
                             <Maximize size={18} />
                         </button>
                     </div>
-                    <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded ${theme.buttonHover}`}>
+                    <button onClick={() => setDarkMode(!isDarkMode)} className={`p-2 rounded ${theme.buttonHover}`}>
                         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
                     <a href="https://www.buymeacoffee.com/eballetbo" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-yellow-500`} title="Buy Me a Coffee">
