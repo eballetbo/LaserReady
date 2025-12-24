@@ -39,32 +39,11 @@ export class PenTool extends BaseTool {
             // Continue path
             const startNode = this.editor.activePath.nodes[0];
             const distToStart = Geometry.getDistance({ x, y }, { x: startNode.x, y: startNode.y });
-            const snapDist2 = ((this.editor.config.anchorSize || 8) + 5) ** 2;
 
-            if (this.editor.activePath.nodes.length > 2 && distToStart ** 2 <= snapDist2) { // distToStart is dist, not squared. Wait, Geometry.getDistance returns distance.
-                // Original code: distToStart <= snapDist2. If distToStart is plain distance and snapDist2 is squared, that comparison is broken unless distToStart was already squared.
-                // Geometry.getDistance usually involves sqrt.
-                // Let's assume Geometry.getDistance returns standard distance.
-                // And `(size + 5) ** 2` is squared.
-                // So comparison should be `distToStart ** 2 <= snapDist2` OR `distToStart <= Math.sqrt(snapDist2)`.
-                // Original JS was: `const distToStart = Geometry.getDistance(...); const snapDist2 = (...) ** 2; if (distToStart <= snapDist2)`
-                // If distance is 10, snapDist2 is 100. 10 <= 100. True.
-                // If distance is 100, snapDist2 is 100. 100 <= 100. True.
-                // Wait. DistanceSquared is expected if comparing to Squared.
-                // If `getDistance` returns actual distance, then `dist <= distSquared` is only true if dist >= 1 (usually).
-                // Example: dist = 5. snap = 5. distSq = 25. 5 <= 25. True.
-                // Example: dist = 24. snap = 5. distSq = 25. 24 <= 25. True. BUG?
-                // Snap radius is 5.
-                // If I am at 24px away, I should NOT snap. But 24 <= 25. It snaps.
-                // So effectively snap radius became 25px instead of 5px?
-                // I will correct references to use logical comparison.
-                // `distToStart <= (anchorSize + 5)`
+            // Snap radius: 25px for easier closing
+            const snapRadius = 25;
 
-                // For migration, I will stick to safe logic but maybe fix the bug if apparent.
-                // I'll check Geometry.getDistance implementation from memory/context: `Math.sqrt(dx*dx + dy*dy)`.
-                // So it returns actual distance.
-                // I will use `distToStart <= this.editor.config.anchorSize + 5`.
-
+            if (this.editor.activePath.nodes.length > 2 && distToStart <= snapRadius) {
                 // Close path
                 this.editor.activePath.closed = true;
                 this.editor.activePath = null;
