@@ -1,4 +1,19 @@
-export const LASER_MODES = {
+export interface LaserMode {
+    id: string;
+    label: string;
+    color: string;
+    strokeWidth: number;
+    fill: string;
+}
+
+export interface LaserModes {
+    CUT: LaserMode;
+    SCORE: LaserMode;
+    ENGRAVE: LaserMode;
+    [key: string]: LaserMode;
+}
+
+export const LASER_MODES: LaserModes = {
     CUT: {
         id: 'cut',
         label: 'Tallar',

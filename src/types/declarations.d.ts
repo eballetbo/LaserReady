@@ -22,10 +22,6 @@ declare module '*/path-editor.js' {
     }
 }
 
-declare module '*/laser-modes.js' {
-    export const LASER_MODES: Record<string, any>;
-}
-
 declare module '*/translations' {
     export const translations: Record<string, any>;
 }
