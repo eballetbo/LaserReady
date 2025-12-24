@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Settings, Library } from 'lucide-react';
 import { useLanguage } from '../contexts/language';
-import PropertiesPanel from './properties';
-import AssetLibrary from './asset-library';
+import PropertiesPanel from './PropertiesPanel';
+import AssetLibrary from './AssetLibrary';
 import { PathEditor } from '../features/editor/path-editor';
 
 interface Theme {

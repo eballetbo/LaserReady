@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee } from 'lucide-react';
-import Toolbar from './components/toolbar';
-import RightSidebar from './components/right-sidebar';
+import Toolbar from './components/Toolbar';
+import RightSidebar from './components/RightSidebar';
 import Canvas from './features/editor/Canvas';
 import { LASER_MODES } from './utils/laser-modes';
 import { LanguageProvider, useLanguage } from './contexts/language';
