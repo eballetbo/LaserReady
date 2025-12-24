@@ -1,6 +1,8 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { Geometry, Point, Rect } from '../../../core/math/geometry';
 import { IShape } from '../../../types/core';
+import { ResizeShapeCommand } from '../commands/resize';
+import { MoveShapeCommand } from '../commands/move';
 
 interface ControlHit {
     type: 'rotate' | 'resize';
@@ -202,6 +204,111 @@ export class SelectTool extends BaseTool {
     }
 
     onMouseUp(e: MouseEvent): void {
+        // STEP 6: Handle drag/move with MoveCommand for undo/redo
+        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragStart) {
+            const { x, y } = this.editor.getMousePos(e);
+            const dx = x - this.dragStart.x;
+            const dy = y - this.dragStart.y;
+
+            // Only create command if there was actual movement
+            if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+                // Restore to original positions first
+                // (They were mutated during onMouseMove for preview)
+                this.editor.selectedShapes.forEach((shape, i) => {
+                    const original = this.initialShapeStates[i];
+                    if (shape.nodes && original.nodes) {
+                        shape.nodes = original.nodes.map((n: any) => n.clone());
+                    }
+                });
+
+                // Execute move via Command
+                const command = new MoveShapeCommand(
+                    this.editor.selectedShapes as any[],
+                    dx,
+                    dy
+                );
+                this.editor.history.execute(command);
+            }
+        }
+
+        // STEP 5: Handle resize with ResizeCommand for undo/redo
+        if (this.isResizing && this.editor.selectedShapes.length > 0 && this.initialBounds && this.dragStart) {
+            const { x, y } = this.editor.getMousePos(e);
+
+            // First, restore shapes to original state
+            // (They were mutated during onMouseMove for preview)
+            this.editor.selectedShapes.forEach((shape, i) => {
+                const original = this.initialShapeStates[i];
+                if (shape.nodes && original.nodes) {
+                    shape.nodes = original.nodes.map((n: any) => n.clone());
+                }
+            });
+
+            // Calculate final scale factors
+            const bounds = this.initialBounds;
+            let sx = 1, sy = 1;
+            let fixedX = 0, fixedY = 0;
+
+            const getScale = (current: number, start: number, fixed: number): number => {
+                if (Math.abs(start - fixed) < 1e-6) return 1;
+                return (current - fixed) / (start - fixed);
+            };
+
+            switch (this.resizeHandle) {
+                case 'nw':
+                    fixedX = bounds.maxX; fixedY = bounds.maxY;
+                    sx = getScale(x, this.dragStart.x, fixedX);
+                    sy = getScale(y, this.dragStart.y, fixedY);
+                    break;
+                case 'n':
+                    fixedX = bounds.cx!; fixedY = bounds.maxY;
+                    sy = getScale(y, this.dragStart.y, fixedY);
+                    break;
+                case 'ne':
+                    fixedX = bounds.minX; fixedY = bounds.maxY;
+                    sx = getScale(x, this.dragStart.x, fixedX);
+                    sy = getScale(y, this.dragStart.y, fixedY);
+                    break;
+                case 'e':
+                    fixedX = bounds.minX; fixedY = bounds.cy!;
+                    sx = getScale(x, this.dragStart.x, fixedX);
+                    break;
+                case 'se':
+                    fixedX = bounds.minX; fixedY = bounds.minY;
+                    sx = getScale(x, this.dragStart.x, fixedX);
+                    sy = getScale(y, this.dragStart.y, fixedY);
+                    break;
+                case 's':
+                    fixedX = bounds.cx!; fixedY = bounds.minY;
+                    sy = getScale(y, this.dragStart.y, fixedY);
+                    break;
+                case 'sw':
+                    fixedX = bounds.maxX; fixedY = bounds.minY;
+                    sx = getScale(x, this.dragStart.x, fixedX);
+                    sy = getScale(y, this.dragStart.y, fixedY);
+                    break;
+                case 'w':
+                    fixedX = bounds.maxX; fixedY = bounds.cy!;
+                    sx = getScale(x, this.dragStart.x, fixedX);
+                    break;
+            }
+
+            if (['nw', 'ne', 'se', 'sw'].includes(this.resizeHandle!)) {
+                const s = Math.max(Math.abs(sx), Math.abs(sy));
+                sx = s * Math.sign(sx);
+                sy = s * Math.sign(sy);
+            }
+
+            // Execute resize via Command for undo/redo support
+            const command = new ResizeShapeCommand(
+                this.editor.selectedShapes as any[],
+                sx,
+                sy,
+                { x: fixedX, y: fixedY }
+            );
+            this.editor.history.execute(command);
+        }
+
         if (this.isDragSelecting && this.dragStart) {
             const { x, y } = this.editor.getMousePos(e);
             const width = x - this.dragStart.x;

@@ -378,61 +378,6 @@ export class PathEditor {
             shape.nodes = newNodes;
         }
 
-        this.shapes = [...this.shapes];
-        this.render();
-        this.endAction();
-    }
-
-    startAction() {
-        this.actionStartState = JSON.stringify(this.shapes);
-    }
-
-    endAction() {
-        if (!this.actionStartState) return;
-        const currentShapes = this.shapes;
-        const currentStateStr = JSON.stringify(currentShapes);
-        if (currentStateStr !== this.actionStartState) {
-            const startState = JSON.parse(this.actionStartState);
-            this.history.push(startState);
-        }
-        this.actionStartState = null;
-    }
-
-    undo() {
-        const currentState = this.shapes.map(shape => shape.clone());
-        const previousState = this.history.undo(currentState);
-        if (previousState) {
-            const restoredShapes = previousState.map(s => {
-                if (s instanceof PathShape || s instanceof TextObject) return s;
-                if (s.type === 'text') return TextObject.fromJSON(s);
-                return PathShape.fromJSON(s);
-            });
-            this.shapes = restoredShapes;
-            this.selectedShapes = [];
-            this.render();
-        }
-    }
-
-    redo() {
-        const currentState = this.shapes.map(shape => shape.clone());
-        const nextState = this.history.redo(currentState);
-        if (nextState) {
-            const restoredShapes = nextState.map(s => {
-                if (s instanceof PathShape || s instanceof TextObject) return s;
-                if (s.type === 'text') return TextObject.fromJSON(s);
-                return PathShape.fromJSON(s);
-            });
-            this.shapes = restoredShapes;
-            this.selectedShapes = [];
-            this.render();
-        }
-    }
-
-    zoomIn() {
-        this.setZoom(this.zoom * 1.2);
-    }
-
-    zoomOut() {
         this.setZoom(this.zoom / 1.2);
     }
 
@@ -447,5 +392,38 @@ export class PathEditor {
         const newZoom = Math.max(0.1, Math.min(5, value));
         useStore.getState().setZoom(newZoom);
         // Note: unsubscribe listener will catch this update and update inputManager
+    }
+
+    /**
+     * STEP 7: Simplified undo - now 100% Command Pattern.
+     * No more state cloning!
+     */
+    undo(): void {
+        this.history.undo();
+        this.render();
+    }
+
+    /**
+     * STEP 7: Simplified redo - now 100% Command Pattern.
+     */
+    redo(): void {
+        this.history.redo();
+        this.render();
+    }
+
+    /**
+     * STEP 7: Temporary stub for backward compatibility.
+     * Node manipulation methods still call this, but it's a no-op now.
+     * TODO: Migrate node manipulation to use commands.
+     */
+    startAction(): void {
+        // No-op: Commands handle history now
+    }
+
+    /**
+     * STEP 7: Temporary stub for backward compatibility.
+     */
+    endAction(): void {
+        // No-op: Commands handle history now
     }
 }
