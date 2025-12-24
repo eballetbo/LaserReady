@@ -1,5 +1,5 @@
-import { Geometry } from '../math/geometry';
-import { IShape, ILayer, OperationMode } from '../types/core';
+import { Geometry } from '../../../math/geometry';
+import { IShape, ILayer, OperationMode } from '../../../types/core';
 
 export interface RendererConfig {
     gridSpacing?: number;
