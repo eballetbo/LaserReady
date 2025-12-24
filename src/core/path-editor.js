@@ -14,6 +14,7 @@ import { SVGImporter } from '../utils/svg-importer.js';
 import { HistoryManager } from './history-manager.js';
 import { useStore } from '../store/useStore';
 import { DeleteShapeCommand } from '../commands/delete-shape-command';
+import { MoveShapeCommand } from '../commands/move-shape-command';
 
 /**
  * Main Editor Controller.
@@ -212,6 +213,15 @@ export class PathEditor {
     }
 
     /* ... Remaining methods unchanged ... */
+
+    moveSelected(dx, dy) {
+        if (this.selectedShapes.length > 0) {
+            // We assume startAction is called by the tool onMouseDown
+            const command = new MoveShapeCommand(this.selectedShapes, dx, dy);
+            command.execute();
+            this.render();
+        }
+    }
 
     deleteSelected() {
         if (this.selectedShapes.length > 0) {

@@ -174,9 +174,7 @@ export class SelectTool extends BaseTool {
             const dx = x - this.dragStart.x;
             const dy = y - this.dragStart.y;
 
-            this.editor.selectedShapes.forEach(shape => {
-                shape.move(dx, dy);
-            });
+            this.editor.moveSelected(dx, dy);
 
             this.dragStart = { x, y };
             this.editor.render();
