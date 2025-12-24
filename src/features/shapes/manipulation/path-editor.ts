@@ -106,8 +106,19 @@ export class PathEditor {
     }
 
     set tool(value) {
+        if (this._tool === value) return;
+
+        if (this.activeTool) {
+            this.activeTool.onDeactivate();
+        }
+
         this._tool = value;
         this.activeTool = this.tools[value] || this.tools.select;
+
+        if (this.activeTool) {
+            this.activeTool.onActivate();
+        }
+
         // Update Zustand store to trigger UI updates
         useStore.getState().setTool(value);
     }

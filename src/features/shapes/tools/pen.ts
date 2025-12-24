@@ -149,4 +149,16 @@ export class PenTool extends BaseTool {
             }
         }
     }
+
+    onDeactivate(): void {
+        this.editor.activePath = null;
+        this.editor.previewPoint = null;
+        this.editor.render();
+    }
+
+    onActivate(): void {
+        this.editor.canvas.style.cursor = 'default';
+        this.editor.activePath = null; // Ensure fresh start
+        this.draggingItem = null;
+    }
 }
