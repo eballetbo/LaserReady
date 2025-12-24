@@ -1,7 +1,7 @@
-import { BaseTool, IEditorContext } from '../core/tools/base-tool';
-import { PathNode } from '../features/shapes/path-node';
-import { PathShape } from '../features/shapes/path-shape';
-import { Geometry } from '../core/math/geometry';
+import { BaseTool, IEditorContext } from '../../../core/tools/base-tool';
+import { PathNode } from '../models/path-node';
+import { PathShape } from '../models/path-shape';
+import { Geometry } from '../../../core/math/geometry';
 
 interface DraggingItem {
     type: string;

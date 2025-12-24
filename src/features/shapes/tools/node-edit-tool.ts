@@ -1,5 +1,5 @@
-import { BaseTool, IEditorContext } from '../core/tools/base-tool';
-import { Geometry } from '../core/math/geometry';
+import { BaseTool, IEditorContext } from '../../../core/tools/base-tool';
+import { Geometry } from '../../../core/math/geometry';
 
 interface HitResult {
     type: 'anchor' | 'in' | 'out' | 'create-smooth';

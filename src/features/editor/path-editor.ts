@@ -2,20 +2,20 @@
 import { Geometry } from '../../core/math/geometry';
 import { CanvasRenderer } from './render/canvas-renderer';
 import { InputManager } from './input-manager';
-import { PathNode } from '../shapes/path-node';
-import { PathShape } from '../shapes/path-shape';
+import { PathNode } from '../shapes/models/path-node';
+import { PathShape } from '../shapes/models/path-shape';
 import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/shape-tools';
-import { PenTool } from '../../tools/pen-tool';
-import { SelectTool } from '../../tools/select-tool';
-import { TextTool } from '../../tools/text-tool';
-import { TextObject } from '../../model/text-object';
-import { NodeEditTool } from '../../tools/node-edit-tool';
+import { PenTool } from '../shapes/tools/pen-tool';
+import { SelectTool } from '../shapes/tools/select-tool';
+import { TextTool } from '../shapes/tools/text-tool';
+import { TextObject } from '../shapes/models/text-object';
+import { NodeEditTool } from '../shapes/tools/node-edit-tool';
 import { BooleanOperations } from '../../core/math/boolean';
 import { SVGImporter } from '../../utils/svg-importer';
 import { HistoryManager } from './history-manager';
 import { useStore } from '../../store/useStore';
-import { DeleteShapeCommand } from '../../commands/delete-shape-command';
-import { MoveShapeCommand } from '../../commands/move-shape-command';
+import { DeleteShapeCommand } from '../shapes/commands/delete-shape-command';
+import { MoveShapeCommand } from '../shapes/commands/move-shape-command';
 
 /**
  * Main Editor Controller.

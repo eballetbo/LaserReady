@@ -1,4 +1,4 @@
-import { TextMeasurer } from '../utils/text-measurer';
+import { TextMeasurer } from '../../../utils/text-measurer';
 
 export interface TextStyle {
     fontSize?: number;

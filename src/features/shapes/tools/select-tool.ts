@@ -1,6 +1,6 @@
-import { BaseTool, IEditorContext } from '../core/tools/base-tool';
-import { Geometry, Point, Rect } from '../core/math/geometry';
-import { IShape } from '../types/core';
+import { BaseTool, IEditorContext } from '../../../core/tools/base-tool';
+import { Geometry, Point, Rect } from '../../../core/math/geometry';
+import { IShape } from '../../../types/core';
 
 interface ControlHit {
     type: 'rotate' | 'resize';
