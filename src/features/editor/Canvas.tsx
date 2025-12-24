@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { PathEditor } from '../shapes/manipulation/path-editor';
+import { DEFAULT_GRID_SPACING } from '../../config/constants';
 
 interface CanvasProps {
     material: { width: number; height: number };
@@ -26,7 +27,7 @@ export default function Canvas({
 
         // Initialize Editor
         const editor = new PathEditor(canvasRef.current, {
-            gridSpacing: 25
+            gridSpacing: DEFAULT_GRID_SPACING
         });
         editor.tool = tool;
 

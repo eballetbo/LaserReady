@@ -1,5 +1,20 @@
 import { Geometry } from '../../../core/math/geometry';
 import { IShape, ILayer, OperationMode } from '../../../types/core';
+import {
+    DEFAULT_GRID_COLOR,
+    DEFAULT_GRID_LINE_WIDTH,
+    DEFAULT_LAYER_COLOR,
+    DEFAULT_STROKE_WIDTH,
+    SELECTION_LINE_WIDTH,
+    PEN_PREVIEW_COLOR,
+    PEN_DASH_PATTERN,
+    ROTATION_HANDLE_OFFSET,
+    DEFAULT_FONT_SIZE,
+    DEFAULT_FONT_FAMILY,
+    TEXT_LINE_HEIGHT_MULTIPLIER,
+    TEXT_STROKE_WIDTH,
+    POINT_EQUALITY_THRESHOLD
+} from '../../../config/constants';
 
 export interface RendererConfig {
     gridSpacing?: number;
@@ -32,8 +47,8 @@ export class CanvasRenderer {
     }
 
     drawGrid(spacing: number = 40): void {
-        this.ctx.strokeStyle = '#f0f0f0';
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = DEFAULT_GRID_COLOR;
+        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
         this.ctx.beginPath();
         const step = spacing;
         for (let i = 0; i < this.canvas.width; i += step) { this.ctx.moveTo(i, 0); this.ctx.lineTo(i, this.canvas.height); }
@@ -66,7 +81,7 @@ export class CanvasRenderer {
             const isSelected = selectedShapes.includes(shape);
             // Resolve layer
             const layer = layers ? layers.find(l => l.id === shape.layerId) : null;
-            const layerColor = layer ? layer.color : '#000000';
+            const layerColor = layer ? layer.color : DEFAULT_LAYER_COLOR;
             const layerMode = layer ? layer.mode : 'CUT';
 
             if (shape.type === 'text') {
@@ -134,7 +149,7 @@ export class CanvasRenderer {
             this.ctx.fill();
         }
 
-        const strokeWidth = 2; // Fixed width for visibility, or derived from mode?
+        const strokeWidth = DEFAULT_STROKE_WIDTH;
 
         this.ctx.strokeStyle = isSelected ? config.colorSelection : layerColor;
         this.ctx.lineWidth = strokeWidth;
@@ -143,7 +158,7 @@ export class CanvasRenderer {
         // Selection overlay (always draw if selected, to show selection even if shape is invisible)
         if (isSelected) {
             this.ctx.strokeStyle = config.colorSelection;
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = SELECTION_LINE_WIDTH;
             this.ctx.stroke();
             // Optional: Extra fill for selection
             this.ctx.fillStyle = config.colorSelection;
@@ -164,10 +179,10 @@ export class CanvasRenderer {
             const n = shape.nodes[selectedNodeIndex];
 
             // Helper to check if handle is at anchor
-            const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < 0.1 && Math.abs(p.y - n.y) < 0.1;
+            const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
 
             this.ctx.strokeStyle = config.colorHandleLine;
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
             this.ctx.beginPath();
 
             // Draw In Handle if not at anchor
@@ -197,7 +212,7 @@ export class CanvasRenderer {
 
         // Draw rotation handle
         const handleX = bounds.cx;
-        const handleY = bounds.minY - 20;
+        const handleY = bounds.minY - ROTATION_HANDLE_OFFSET;
 
         this.ctx.beginPath();
         this.ctx.moveTo(bounds.cx, bounds.minY);
@@ -209,7 +224,7 @@ export class CanvasRenderer {
 
         // Draw bounding box
         this.ctx.strokeStyle = config.colorSelection;
-        this.ctx.lineWidth = 1;
+        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
         this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
 
         // Draw 8 resize handles
@@ -245,9 +260,9 @@ export class CanvasRenderer {
         this.ctx.beginPath();
         this.ctx.moveTo(lastNode.x, lastNode.y);
         this.ctx.lineTo(previewPoint.x, previewPoint.y);
-        this.ctx.strokeStyle = '#999';
-        this.ctx.lineWidth = 1;
-        this.ctx.setLineDash([5, 5]);
+        this.ctx.strokeStyle = PEN_PREVIEW_COLOR;
+        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
+        this.ctx.setLineDash(PEN_DASH_PATTERN);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
     }
@@ -255,7 +270,7 @@ export class CanvasRenderer {
     drawSelectionBox(box: any): void {
         this.ctx.fillStyle = box.style.fill;
         this.ctx.strokeStyle = box.style.stroke;
-        this.ctx.lineWidth = 1;
+        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
         this.ctx.fillRect(box.x, box.y, box.width, box.height);
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
     }
@@ -264,10 +279,10 @@ export class CanvasRenderer {
         this.ctx.save();
 
         // Font settings
-        const fontStyle = textObject.fontStyle || 'normal';
-        const fontWeight = textObject.fontWeight || 'normal';
-        const fontSize = textObject.fontSize || 24;
-        const fontFamily = textObject.fontFamily || 'Arial';
+        const fontStyle = textObject.fontStyle || DEFAULT_FONT_FAMILY;
+        const fontWeight = textObject.fontWeight || DEFAULT_FONT_FAMILY;
+        const fontSize = textObject.fontSize || DEFAULT_FONT_SIZE;
+        const fontFamily = textObject.fontFamily || DEFAULT_FONT_FAMILY;
         this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
 
         this.ctx.translate(textObject.x, textObject.y);
@@ -281,7 +296,7 @@ export class CanvasRenderer {
         }
 
         const lines = (textObject.text || '').split('\n');
-        const lineHeight = fontSize * 1.2;
+        const lineHeight = fontSize * TEXT_LINE_HEIGHT_MULTIPLIER;
 
         lines.forEach((line: string, i: number) => {
             if (layerMode === 'ENGRAVE') {
@@ -290,7 +305,7 @@ export class CanvasRenderer {
             } else {
                 // CUT/SCORE: Stroke text
                 this.ctx.strokeStyle = layerColor;
-                this.ctx.lineWidth = 1; // Default thin stroke for text cut/score
+                this.ctx.lineWidth = TEXT_STROKE_WIDTH;
                 this.ctx.strokeText(line, 0, 0 + i * lineHeight);
             }
         });
@@ -303,7 +318,7 @@ export class CanvasRenderer {
             // Ideally textObject has a `getBounds()` method we can assume exists
             const bounds = textObject.getBounds ? textObject.getBounds() : { minX: textObject.x, minY: textObject.y, width: 100, height: 20 };
             this.ctx.strokeStyle = config.colorSelection;
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
         }
     }
