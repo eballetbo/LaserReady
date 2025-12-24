@@ -1,8 +1,26 @@
-import { BaseTool } from './base-tool.js';
-import { Geometry } from '../math/geometry.js';
+import { BaseTool, IEditorContext } from './base-tool';
+import { Geometry, Point, Rect } from '../math/geometry';
+import { IShape } from '../types/core';
+
+interface ControlHit {
+    type: 'rotate' | 'resize';
+    handle?: string;
+}
 
 export class SelectTool extends BaseTool {
-    constructor(editor) {
+    isDraggingShape: boolean;
+    isRotating: boolean;
+    isResizing: boolean;
+    dragStart: Point | null;
+    initialShapeStates: any[]; // Ideally should be PathShape[] but using any for now to match method calls
+    initialBounds: Rect | null;
+    resizeHandle: string | null;
+    rotationCenter: Point | null;
+    rotateStartAngle: number;
+    isDragSelecting: boolean;
+    selectionBox: { x: number; y: number; width: number; height: number; style: { fill: string; stroke: string } } | null;
+
+    constructor(editor: IEditorContext) {
         super(editor);
         this.isDraggingShape = false;
         this.isRotating = false;
@@ -17,7 +35,7 @@ export class SelectTool extends BaseTool {
         this.selectionBox = null;
     }
 
-    onMouseDown(e) {
+    onMouseDown(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
 
         // Check for control handles first (if we have any selection)
@@ -25,23 +43,25 @@ export class SelectTool extends BaseTool {
             const hit = this.getClickedControl(x, y);
             if (hit) {
                 const bounds = Geometry.getCombinedBounds(this.editor.selectedShapes);
-                if (hit.type === 'rotate') {
-                    this.isRotating = true;
-                    this.rotationCenter = { x: bounds.cx, y: bounds.cy };
-                    this.rotateStartAngle = Math.atan2(y - bounds.cy, x - bounds.cy);
-                    this.initialShapeStates = this.editor.selectedShapes.map(s => s.clone());
-                } else if (hit.type === 'resize') {
-                    this.isResizing = true;
-                    this.resizeHandle = hit.handle;
-                    this.initialShapeStates = this.editor.selectedShapes.map(s => s.clone());
-                    this.initialBounds = bounds;
-                    this.dragStart = { x, y };
+                if (bounds) {
+                    if (hit.type === 'rotate') {
+                        this.isRotating = true;
+                        this.rotationCenter = { x: bounds.cx!, y: bounds.cy! };
+                        this.rotateStartAngle = Math.atan2(y - bounds.cy!, x - bounds.cx!);
+                        this.initialShapeStates = this.editor.selectedShapes.map(s => s.clone());
+                    } else if (hit.type === 'resize' && hit.handle) {
+                        this.isResizing = true;
+                        this.resizeHandle = hit.handle;
+                        this.initialShapeStates = this.editor.selectedShapes.map(s => s.clone());
+                        this.initialBounds = bounds;
+                        this.dragStart = { x, y };
+                    }
                 }
                 return;
             }
         }
 
-        let clickedShape = null;
+        let clickedShape: IShape | null = null;
         // Hit test in reverse order (top to bottom)
         for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
             const shape = this.editor.shapes[i];
@@ -86,11 +106,11 @@ export class SelectTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseMove(e) {
+    onMouseMove(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
         this.editor.canvas.style.cursor = 'default';
 
-        if (this.isRotating && this.editor.selectedShapes.length > 0) {
+        if (this.isRotating && this.editor.selectedShapes.length > 0 && this.rotationCenter) {
             const currentAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
             const deltaAngle = currentAngle - this.rotateStartAngle;
 
@@ -117,7 +137,7 @@ export class SelectTool extends BaseTool {
             return;
         }
 
-        if (this.isDragSelecting) {
+        if (this.isDragSelecting && this.dragStart) {
             const width = x - this.dragStart.x;
             const height = y - this.dragStart.y;
 
@@ -170,7 +190,7 @@ export class SelectTool extends BaseTool {
             }
         }
 
-        if (this.isDraggingShape && this.editor.selectedShapes.length > 0) {
+        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragStart) {
             const dx = x - this.dragStart.x;
             const dy = y - this.dragStart.y;
 
@@ -181,14 +201,14 @@ export class SelectTool extends BaseTool {
         }
     }
 
-    onMouseUp(e) {
-        if (this.isDragSelecting) {
+    onMouseUp(e: MouseEvent): void {
+        if (this.isDragSelecting && this.dragStart) {
             const { x, y } = this.editor.getMousePos(e);
             const width = x - this.dragStart.x;
             const height = y - this.dragStart.y;
 
             // Normalize rect for intersection checks
-            const rect = {
+            const rect: Rect = {
                 minX: Math.min(this.dragStart.x, x),
                 maxX: Math.max(this.dragStart.x, x),
                 minY: Math.min(this.dragStart.y, y),
@@ -197,8 +217,8 @@ export class SelectTool extends BaseTool {
 
             const isCrossing = width < 0;
 
-            const newSelection = [];
-            this.editor.shapes.forEach(shape => {
+            const newSelection: IShape[] = [];
+            this.editor.shapes.forEach((shape: IShape) => {
                 if (isCrossing) {
                     if (Geometry.isShapeIntersectingRect(shape, rect)) {
                         newSelection.push(shape);
@@ -233,14 +253,14 @@ export class SelectTool extends BaseTool {
         this.initialBounds = null;
     }
 
-    onKeyDown(e) {
+    onKeyDown(e: KeyboardEvent): void {
         if (e.key === 'Escape') {
             this.editor.selectedShapes = [];
             this.editor.render();
         }
     }
 
-    getClickedControl(x, y) {
+    getClickedControl(x: number, y: number): ControlHit | null {
         const config = this.editor.config;
         const tol2 = (config.handleRadius + 3) ** 2;
         const anchorTol2 = (config.anchorSize / 2 + 2) ** 2;
@@ -249,7 +269,7 @@ export class SelectTool extends BaseTool {
         if (!bounds) return null;
 
         // Check rotation handle
-        const handleX = bounds.cx;
+        const handleX = bounds.cx!;
         const handleY = bounds.minY - 20;
         if (Geometry.getDistance({ x, y }, { x: handleX, y: handleY }) <= tol2) {
             return { type: 'rotate' };
@@ -258,29 +278,31 @@ export class SelectTool extends BaseTool {
         // Check 8 resize handles
         const handles = [
             { type: 'nw', x: bounds.minX, y: bounds.minY },
-            { type: 'n', x: bounds.cx, y: bounds.minY },
+            { type: 'n', x: bounds.cx!, y: bounds.minY },
             { type: 'ne', x: bounds.maxX, y: bounds.minY },
-            { type: 'e', x: bounds.maxX, y: bounds.cy },
+            { type: 'e', x: bounds.maxX, y: bounds.cy! },
             { type: 'se', x: bounds.maxX, y: bounds.maxY },
-            { type: 's', x: bounds.cx, y: bounds.maxY },
+            { type: 's', x: bounds.cx!, y: bounds.maxY },
             { type: 'sw', x: bounds.minX, y: bounds.maxY },
-            { type: 'w', x: bounds.minX, y: bounds.cy }
+            { type: 'w', x: bounds.minX, y: bounds.cy! }
         ];
 
         for (const h of handles) {
             if (Geometry.getDistance({ x, y }, { x: h.x, y: h.y }) <= anchorTol2) {
-                return { type: 'resize', handle: h.type };
+                return { type: 'resize', handle: h.type as string };
             }
         }
         return null;
     }
 
-    handleResize(x, y) {
+    handleResize(x: number, y: number): void {
+        if (!this.initialBounds || !this.dragStart || !this.resizeHandle) return;
+
         const bounds = this.initialBounds;
         let sx = 1, sy = 1;
         let fixedX = 0, fixedY = 0;
 
-        const getScale = (current, start, fixed) => {
+        const getScale = (current: number, start: number, fixed: number): number => {
             if (Math.abs(start - fixed) < 1e-6) return 1;
             return (current - fixed) / (start - fixed);
         };
@@ -292,7 +314,7 @@ export class SelectTool extends BaseTool {
                 sy = getScale(y, this.dragStart.y, fixedY);
                 break;
             case 'n':
-                fixedX = bounds.cx; fixedY = bounds.maxY;
+                fixedX = bounds.cx!; fixedY = bounds.maxY;
                 sy = getScale(y, this.dragStart.y, fixedY);
                 break;
             case 'ne':
@@ -301,7 +323,7 @@ export class SelectTool extends BaseTool {
                 sy = getScale(y, this.dragStart.y, fixedY);
                 break;
             case 'e':
-                fixedX = bounds.minX; fixedY = bounds.cy;
+                fixedX = bounds.minX; fixedY = bounds.cy!;
                 sx = getScale(x, this.dragStart.x, fixedX);
                 break;
             case 'se':
@@ -310,7 +332,7 @@ export class SelectTool extends BaseTool {
                 sy = getScale(y, this.dragStart.y, fixedY);
                 break;
             case 's':
-                fixedX = bounds.cx; fixedY = bounds.minY;
+                fixedX = bounds.cx!; fixedY = bounds.minY;
                 sy = getScale(y, this.dragStart.y, fixedY);
                 break;
             case 'sw':
@@ -319,7 +341,7 @@ export class SelectTool extends BaseTool {
                 sy = getScale(y, this.dragStart.y, fixedY);
                 break;
             case 'w':
-                fixedX = bounds.maxX; fixedY = bounds.cy;
+                fixedX = bounds.maxX; fixedY = bounds.cy!;
                 sx = getScale(x, this.dragStart.x, fixedX);
                 break;
         }

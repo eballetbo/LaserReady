@@ -1,22 +1,27 @@
+import { IShape } from '../types/core';
+
+export interface Point {
+    x: number;
+    y: number;
+}
+
+export interface Rect {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    width?: number;
+    height?: number;
+    cx?: number;
+    cy?: number;
+}
+
 export const Geometry = {
-    /**
-     * Calculates squared Euclidean distance between two points.
-     * @param {Object} p1 - {x, y}
-     * @param {Object} p2 - {x, y}
-     * @returns {number}
-     */
-    getDistance(p1, p2) {
+    getDistance(p1: Point, p2: Point): number {
         return (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
     },
 
-    /**
-     * Rotates a point around a center.
-     * @param {Object} p - {x, y}
-     * @param {Object} center - {x, y}
-     * @param {number} angle - in radians
-     * @returns {Object} {x, y}
-     */
-    rotatePoint(p, center, angle) {
+    rotatePoint(p: Point, center: Point, angle: number): Point {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
         const dx = p.x - center.x;
@@ -27,12 +32,7 @@ export const Geometry = {
         };
     },
 
-    /**
-     * Calculates the bounding box of a set of nodes.
-     * @param {Array} nodes - Array of objects with {x, y}
-     * @returns {Object} Rect {minX, minY, maxX, maxY, width, height, cx, cy}
-     */
-    calculateBoundingBox(nodes) {
+    calculateBoundingBox(nodes: Point[]): Rect {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         nodes.forEach(n => {
             minX = Math.min(minX, n.x);
@@ -49,18 +49,10 @@ export const Geometry = {
         };
     },
 
-    /**
-     * Checks if a point is inside or on the stroke of a bezier path.
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {Object} shape - {nodes: [], closed: boolean}
-     * @param {number} x 
-     * @param {number} y 
-     * @returns {boolean}
-     */
-    isPointInBezierPath(ctx, shape, x, y) {
+    isPointInBezierPath(ctx: CanvasRenderingContext2D, shape: IShape, x: number, y: number): boolean {
         ctx.save();
         ctx.beginPath();
-        if (shape.nodes.length > 0) {
+        if (shape.nodes && shape.nodes.length > 0) {
             ctx.moveTo(shape.nodes[0].x, shape.nodes[0].y);
             for (let i = 0; i < shape.nodes.length; i++) {
                 let nextNode;
@@ -84,48 +76,29 @@ export const Geometry = {
         return hit;
     },
 
-    /**
-     * Checks if rect1 is fully inside rect2.
-     * @param {Object} r1 - {minX, minY, maxX, maxY}
-     * @param {Object} r2 - {minX, minY, maxX, maxY}
-     * @returns {boolean}
-     */
-    isRectInRect(r1, r2) {
+    isRectInRect(r1: Rect, r2: Rect): boolean {
         return r1.minX >= r2.minX &&
             r1.maxX <= r2.maxX &&
             r1.minY >= r2.minY &&
             r1.maxY <= r2.maxY;
     },
 
-    /**
-     * Checks if a shape is fully inside a rectangle.
-     * @param {PathShape} shape 
-     * @param {Object} rect - {minX, minY, maxX, maxY}
-     * @returns {boolean}
-     */
-    isShapeInRect(shape, rect) {
-        let bounds;
+    isShapeInRect(shape: any, rect: Rect): boolean {
+        let bounds: Rect;
         if (shape.getBounds) {
             bounds = shape.getBounds();
         } else {
-            bounds = this.calculateBoundingBox(shape.nodes);
+            bounds = this.calculateBoundingBox(shape.nodes || []);
         }
         return this.isRectInRect(bounds, rect);
     },
 
-    /**
-     * Checks if a shape intersects or is inside a rectangle.
-     * For now, we use bounding box intersection for simplicity.
-     * @param {PathShape} shape 
-     * @param {Object} rect - {minX, minY, maxX, maxY}
-     * @returns {boolean}
-     */
-    isShapeIntersectingRect(shape, rect) {
-        let bounds;
+    isShapeIntersectingRect(shape: any, rect: Rect): boolean {
+        let bounds: Rect;
         if (shape.getBounds) {
             bounds = shape.getBounds();
         } else {
-            bounds = this.calculateBoundingBox(shape.nodes);
+            bounds = this.calculateBoundingBox(shape.nodes || []);
         }
         return !(bounds.maxX < rect.minX ||
             bounds.minX > rect.maxX ||
@@ -133,18 +106,13 @@ export const Geometry = {
             bounds.minY > rect.maxY);
     },
 
-    /**
-     * Calculates the bounding box of multiple shapes.
-     * @param {Array<PathShape>} shapes 
-     * @returns {Object} Combined bounds {minX, minY, maxX, maxY, width, height, cx, cy}
-     */
-    getCombinedBounds(shapes) {
+    getCombinedBounds(shapes: any[]): Rect | null {
         if (!shapes || shapes.length === 0) return null;
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
         shapes.forEach(shape => {
-            let b;
+            let b: Rect | undefined;
             if (shape.getBounds) {
                 b = shape.getBounds();
             } else if (shape.nodes) {
@@ -153,10 +121,12 @@ export const Geometry = {
                 return;
             }
 
-            minX = Math.min(minX, b.minX);
-            minY = Math.min(minY, b.minY);
-            maxX = Math.max(maxX, b.maxX);
-            maxY = Math.max(maxY, b.maxY);
+            if (b) {
+                minX = Math.min(minX, b.minX);
+                minY = Math.min(minY, b.minY);
+                maxX = Math.max(maxX, b.maxX);
+                maxY = Math.max(maxY, b.maxY);
+            }
         });
 
         return {
