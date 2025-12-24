@@ -8,6 +8,7 @@ import { LanguageProvider, useLanguage } from './contexts/language';
 import { Languages } from 'lucide-react';
 import { exportToSVG, downloadSVG } from './utils/svg-exporter';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { PathEditor } from './features/editor/path-editor'; // Import type if available (it is a class)
 
 // --- CONSTANTS ---
 // Material size in MM
@@ -15,7 +16,21 @@ import { useStore } from './store/useStore';
 import { useShallow } from 'zustand/react/shallow';
 
 // --- THEME CONFIGURATION ---
-const THEMES = {
+interface ThemeColors {
+    bg: string;
+    panel: string;
+    border: string;
+    text: string;
+    textMuted: string;
+    canvasWrapper: string;
+    inputBg: string; // Made required to match updated Theme interface logic
+    inputBorder: string;
+    buttonHover: string;
+    iconColor: string;
+    [key: string]: string; // Index signature for Theme interface compatibility
+}
+
+const THEMES: { dark: ThemeColors; light: ThemeColors } = {
     dark: {
         bg: 'bg-[#1a1a1a]',
         panel: 'bg-[#252525]',
@@ -68,21 +83,15 @@ function AppContent() {
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
     // const [material, setMaterial] = useState(INITIAL_MATERIAL); // Removed
     // const [tool, setTool] = useState('select'); // Removed
-    const [editor, setEditor] = useState(null);
-    const [selection, setSelection] = useState([]);
+    const [editor, setEditor] = useState<PathEditor | null>(null);
+    const [selection, setSelection] = useState<any[]>([]); // Typed as any[] for now
 
     const { language, setLanguage, t } = useLanguage();
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
     // --- ACTIONS ---
 
-    const handleClear = () => {
-        editor?.clear();
-    };
-
-    // --- ACTIONS ---
-
-    const applyLaserMode = (modeKey) => {
+    const applyLaserMode = (modeKey: string) => {
         const mode = LASER_MODES[modeKey];
         if (!mode) return;
 
@@ -100,9 +109,10 @@ function AppContent() {
 
     // Global Key handlers
     useEffect(() => {
-        const handleKey = (e) => {
+        const handleKey = (e: KeyboardEvent) => {
             // Ignore if typing in an input
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
             if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
 
@@ -131,18 +141,21 @@ function AppContent() {
         downloadSVG(svgString, 'laser-design.svg');
     };
 
-    const fileInputRef = useRef(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const handleImportClick = () => {
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (f) => {
-            editor?.importSVGString(f.target.result);
+            const result = f.target?.result;
+            if (typeof result === 'string') {
+                editor?.importSVGString(result);
+            }
         };
         reader.readAsText(file);
         e.target.value = ''; // Reset
@@ -181,7 +194,7 @@ function AppContent() {
                                     <button
                                         key={lang}
                                         onClick={() => {
-                                            setLanguage(lang);
+                                            setLanguage(lang as any);
                                             setIsLangMenuOpen(false);
                                         }}
                                         className={`w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${language === lang ? 'font-bold text-red-500' : theme.text}`}
@@ -273,10 +286,10 @@ function AppContent() {
                 <div className={`flex-1 relative overflow-auto ${theme.canvasWrapper} flex justify-center items-center p-12`}>
                     <Canvas
                         material={material}
-                        setEditorInstance={(ed) => {
-                            setEditor(ed);
+                        setEditorInstance={(ed: any) => { // Type as any for now until PathEditor is fully compatible
+                            setEditor(ed as PathEditor);
                             // Hook into selection changes
-                            ed.onSelectionChange = (sel) => setSelection([...sel]);
+                            ed.onSelectionChange = (sel: any[]) => setSelection([...sel]);
                         }}
                         tool={tool}
                     />
@@ -285,7 +298,7 @@ function AppContent() {
                 <RightSidebar
                     theme={theme}
                     selection={selection}
-                    editor={editor}
+                    editor={editor as any} // Cast to any if needed or ensure PathEditor matches RightSidebar props
                     applyLaserMode={applyLaserMode}
                     deleteSelected={deleteSelected}
                 />

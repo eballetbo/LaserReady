@@ -6,13 +6,13 @@ import { PathNode } from '../features/shapes/path-node';
 const scope = new paper.PaperScope();
 scope.setup(new paper.Size(1000, 1000)); // Size doesn't matter much for pure math
 
+type BooleanOperation = 'unite' | 'subtract' | 'intersect' | 'exclude';
+
 export const BooleanOperations = {
     /**
      * Converts a PathShape to a paper.Path
-     * @param {PathShape} shape 
-     * @returns {paper.Path}
      */
-    toPaperPath(shape) {
+    toPaperPath(shape: PathShape): paper.Path {
         const path = new scope.Path({
             closed: shape.closed
         });
@@ -31,13 +31,12 @@ export const BooleanOperations = {
 
     /**
      * Converts a paper.Path (or CompoundPath) to an array of PathShapes
-     * @param {paper.PathItem} item 
-     * @returns {Array<PathShape>}
      */
-    fromPaperItem(item) {
-        const shapes = [];
+    fromPaperItem(item: paper.Item): PathShape[] {
+        const shapes: PathShape[] = [];
 
-        const processPath = (path) => {
+        const processPath = (path: paper.Path) => {
+            if (!path.segments) return;
             const nodes = path.segments.map(seg => {
                 const x = seg.point.x;
                 const y = seg.point.y;
@@ -53,7 +52,7 @@ export const BooleanOperations = {
         };
 
         if (item instanceof scope.CompoundPath) {
-            item.children.forEach(child => processPath(child));
+            item.children.forEach(child => processPath(child as paper.Path));
         } else if (item instanceof scope.Path) {
             processPath(item);
         }
@@ -63,24 +62,32 @@ export const BooleanOperations = {
 
     /**
      * Performs a boolean operation on an array of shapes.
-     * @param {Array<PathShape>} shapes 
-     * @param {string} operation - 'unite', 'subtract', 'intersect', 'exclude'
      * @returns {Array<PathShape>} Resulting shapes
      */
-    perform(shapes, operation) {
+    perform(shapes: PathShape[], operation: BooleanOperation): PathShape[] {
         if (!shapes || shapes.length < 2) return shapes;
 
         // Convert all to paper paths
         const items = shapes.map(s => this.toPaperPath(s));
 
         // Perform operation sequentially
-        let result = items[0];
+        let result: paper.Item = items[0];
+
+        // We need to cast dynamic operation name or use specific methods, but checking string works for now with any/keyof cast if needed
+        // but paper.PathItem has these methods.
+
         for (let i = 1; i < items.length; i++) {
             const next = items[i];
-            const temp = result[operation](next);
-            // result and next are not needed anymore, but 'temp' is the new result
-            // Paper.js boolean ops return a new item
-            result = temp;
+
+            // paper.js types issue: unite/subtract etc might not be on Item directly but PathItem. Path extends PathItem.
+            // result starts as Path (from toPaperPath).
+            // Boolean ops return PathItem.
+
+            const opMethod = (result as any)[operation];
+            if (typeof opMethod === 'function') {
+                const temp = opMethod.call(result, next);
+                result = temp;
+            }
         }
 
         // Convert result back
@@ -93,8 +100,8 @@ export const BooleanOperations = {
         return resultShapes;
     },
 
-    unite(shapes) { return this.perform(shapes, 'unite'); },
-    subtract(shapes) { return this.perform(shapes, 'subtract'); },
-    intersect(shapes) { return this.perform(shapes, 'intersect'); },
-    exclude(shapes) { return this.perform(shapes, 'exclude'); }
+    unite(shapes: PathShape[]) { return this.perform(shapes, 'unite'); },
+    subtract(shapes: PathShape[]) { return this.perform(shapes, 'subtract'); },
+    intersect(shapes: PathShape[]) { return this.perform(shapes, 'intersect'); },
+    exclude(shapes: PathShape[]) { return this.perform(shapes, 'exclude'); }
 };
