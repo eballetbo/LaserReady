@@ -1,16 +1,17 @@
+// @ts-nocheck - Progressive TypeScript migration, refine types incrementally
 import { Geometry } from '../../math/geometry';
 import { CanvasRenderer } from '../../render/canvas-renderer';
 import { InputManager } from './input-manager';
 import { PathNode } from '../shapes/path-node';
 import { PathShape } from '../shapes/path-shape';
-import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/shape-tools.js';
+import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/shape-tools';
 import { PenTool } from '../../tools/pen-tool';
 import { SelectTool } from '../../tools/select-tool';
 import { TextTool } from '../../tools/text-tool';
-import { TextObject } from '../../model/text-object.js';
+import { TextObject } from '../../model/text-object';
 import { NodeEditTool } from '../../tools/node-edit-tool';
-import { BooleanOperations } from '../../math/boolean.js';
-import { SVGImporter } from '../../utils/svg-importer.js';
+import { BooleanOperations } from '../../math/boolean';
+import { SVGImporter } from '../../utils/svg-importer';
 import { HistoryManager } from './history-manager.js';
 import { useStore } from '../../store/useStore';
 import { DeleteShapeCommand } from '../../commands/delete-shape-command';
