@@ -251,6 +251,8 @@ export class SelectTool extends BaseTool {
         this.isDragSelecting = false;
         this.initialShapeStates = [];
         this.initialBounds = null;
+        this.dragStart = null;  // FIX: Reset to prevent move/resize confusion
+        this.resizeHandle = null;  // FIX: Clear resize handle reference
     }
 
     onKeyDown(e: KeyboardEvent): void {
@@ -354,13 +356,18 @@ export class SelectTool extends BaseTool {
 
         this.editor.selectedShapes.forEach((shape, i) => {
             const original = this.initialShapeStates[i];
-            const newShape = original.clone();
-            newShape.scale(sx, sy, { x: fixedX, y: fixedY });
+            const scaledShape = original.clone();
+            scaledShape.scale(sx, sy, { x: fixedX, y: fixedY });
 
-            const index = this.editor.shapes.indexOf(shape);
-            if (index !== -1) {
-                this.editor.shapes[index] = newShape;
-                this.editor.selectedShapes[i] = newShape;
+            // FIX: Instead of replacing the shape instance, copy the transformed nodes
+            // This preserves the shape reference and maintains selection
+            if (shape.nodes && scaledShape.nodes) {
+                shape.nodes = scaledShape.nodes.map((n: any) => n.clone());
+            }
+
+            // Also copy other properties that might have changed
+            if ('rotation' in shape && 'rotation' in scaledShape) {
+                (shape as any).rotation = (scaledShape as any).rotation;
             }
         });
     }
