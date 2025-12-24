@@ -1,113 +1,97 @@
-# LaserReady - Style Guide
+# LaserReady Style Guide
 
-## File Naming Conventions
+## Project Architecture
 
-### React Components (.tsx)
-Use **PascalCase** for React component files.
+### Directory Structure
 
-- ✅ `Toolbar.tsx`
-- ✅ `RightSidebar.tsx`
-- ✅ `PropertiesPanel.tsx`
-- ✅ `AssetLibrary.tsx`
-- ❌ `toolbar.tsx`
-- ❌ `right-sidebar.tsx`
-
-**Rationale**: Component names in JSX/TSX are PascalCase, so file names should match for consistency.
-
-### Logic/Classes/Utilities (.ts)
-Use **kebab-case** for TypeScript files that contain logic, classes, or utilities.
-
-- ✅ `base-tool.ts`
-- ✅ `canvas-renderer.ts`
-- ✅ `path-editor.ts`
-- ✅ `svg-importer.ts`
-- ❌ `BaseTool.ts`
-- ❌ `CanvasRenderer.ts`
-
-**Rationale**: Separates component files from logic files visually, and kebab-case is common in JavaScript/TypeScript ecosystems.
-
-### React Hooks
-Use **camelCase** for custom React hooks.
-
-- ✅ `useStore.ts`
-- ✅ `useLanguage.tsx` (if it includes JSX)
-- ❌ `use-store.ts`
-- ❌ `UseStore.ts`
-
-**Rationale**: React hooks start with "use" in camelCase by convention.
-
-### Type Definition Files
-Use **kebab-case** for type definition files.
-
-- ✅ `core.ts`
-- ✅ `editor.ts`
-- ✅ `layer.ts`
-- ✅ `types.ts`
-
-**Exception**: If a types file is specific to a PascalCase component, it can match the component name (e.g., `Toolbar.types.ts`).
-
-## Directory Structure
-
-```
+```text
 src/
-├── components/          # React components (PascalCase.tsx)
-├── features/           # Feature modules
-│   ├── editor/        # Editor feature
-│   │   └── render/   # Renderer logic (kebab-case.ts)
-│   └── shapes/       # Shapes feature
-├── hooks/             # Custom hooks (camelCase.ts)
-├── store/             # State management (kebab-case.ts)
-├── types/             # Type definitions (kebab-case.ts)
-├── utils/             # Utilities (kebab-case.ts)
-└── tools/             # Tool implementations (kebab-case.ts)
+├── config/              # Application configuration
+│   └── constants.ts     # Centralized constants (colors, sizes, defaults)
+├── core/                # Core functionality
+│   ├── commands/        # Command pattern base
+│   ├── math/            # Mathematical utilities
+│   ├── tools/           # Base tool classes
+│   └── types/           # Core type definitions
+├── features/            # Feature modules
+│   ├── editor/          # Editor feature
+│   ├── shapes/          # Shapes feature
+│   │   ├── commands/    # Shape commands
+│   │   ├── manipulation/\
+│   │   ├── models/      # Shape models
+│   │   ├── tools/       # Shape tools
+│   └── ui/              # UI components
+├── shared/              # Shared components
+│   └── ui/              # Shared UI components (Button, Input, Icon)
+├── store/               # State management
+├── types/               # Global type definitions
+└── utils/               # Utility functions
 ```
 
-## Import Conventions
+## Naming Conventions
 
-### Component Imports
-```typescript
-import Toolbar from './components/Toolbar';
-import { Button } from './components/Button';
-```
+### Files and Directories
 
-### Utility/Logic Imports
-```typescript
-import { PathEditor } from './features/editor/path-editor';
-import { exportToSVG } from './utils/svg-exporter';
-```
+1.  **Component Files**: PascalCase (e.g., `Canvas.tsx`, `Button.tsx`)
+2.  **Utility Files**: kebab-case (e.g., `svg-export.ts`, `text-measure.ts`)
+3.  **Model Files**: Simple names without redundancy (e.g., `path.ts` instead of `path-shape.ts`)
+4.  **Tool Files**: Simple names (e.g., `pen.ts` instead of `pen-tool.ts`)
+5.  **Command Files**: Simple names (e.g., `delete.ts` instead of `delete-shape-command.ts`)
 
-### Hook Imports
-```typescript
-import { useStore } from './store/useStore';
-import { useLanguage } from './contexts/language';
-```
+**Rationale**: The directory provides context. Avoid repeating the context in the filename (DRY Principle applied to file naming).
 
-## TypeScript Naming
+## Technology Stack Guidelines
 
-### Interfaces and Types
-- Use **PascalCase** with an `I` prefix for interfaces: `IShape`, `ILayer`, `ITool`
-- Use **PascalCase** for type aliases: `OperationMode`, `Language`
-- Use **SCREAMING_SNAKE_CASE** for constants: `LASER_MODES`, `DEFAULT_CONFIG`
+### React & Components
 
-### Variables and Functions
-- Use **camelCase**: `selectedShapes`, `handleClick`, `isVisible`
-- Use **PascalCase** for classes: `PathEditor`, `HistoryManager`, `CanvasRenderer`
+- **Functional Components**: Use `const` definition.
+- **Props Interface**: Always define a `Props` interface (even if empty) exported above the component.
+- **File Structure Order**:
+  1. Imports (External -> Internal -> Styles)
+  2. Interfaces/Types
+  3. Component Definition
+  4. Hooks definition
+  5. Helper functions (if logic is complex, extract to custom hook)
+  6. JSX Return
 
-## Best Practices
+### Styling (Tailwind CSS)
 
-1. **Consistency**: Once a pattern is established, maintain it across the entire codebase.
-2. **Clarity**: File names should clearly indicate their purpose and type.
-3. **Searchability**: Consistent naming makes it easier to find files.
-4. **Tooling**: Many IDEs and build tools work better with consistent naming.
+- **Utility First**: Use standard Tailwind classes over arbitrary values (avoid `w-[13px]` unless strictly necessary).
+- **Conditionals**: Use `clsx` or `tailwind-merge` for conditional class names.
+  ```tsx
+  // ✅ DO
+  <div className={clsx('p-4', isActive && 'bg-blue-500')} />
+  
+  // ❌ DON'T
+  <div className={`p-4 ${isActive ? 'bg-blue-500' : ''}`} />
+  ```
 
-## Migration Notes
+### State Management (Zustand)
 
-When renaming files:
-1. Update all import statements
-2. Update any references in configuration files (vite.config.ts, tsconfig.json)
-3. Test the build to ensure no broken imports
-4. Commit renames separately for clarity in git history
+- **Slices Pattern**: Divide store logic into domain-specific slices (`slices/shapes.ts`, `slices/ui.ts`).
+- **Selectors**: Select only what you need to prevent unnecessary re-renders.
+  ```tsx
+  // ✅ DO
+  const zoom = useStore((state) => state.zoom);
+  
+  // ❌ DON'T (triggers re-render on any store change)
+  const { zoom } = useStore();
+  ```
 
----
+### Internationalization (i18n)
 
-**Last Updated**: 2025-12-24
+- **No Hardcoded Strings**: All user-facing text must use the translation hook.
+- **Keys**: Use nested keys for clarity (e.g., `toolbar.tools.pen`).
+  ```tsx
+  // ✅ DO
+  <span>{t('toolbar.tools.select')}</span>
+  
+  // ❌ DON'T
+  <span>Select Tool</span>
+  ```
+
+### Testing
+
+- **Co-location**: Test files reside next to the implementation.
+  - `src/core/math/geometry.ts` -> `src/core/math/geometry.test.ts`
+  - `src/shared/ui/Button.tsx` -> `src/shared/ui/Button.test.tsx
