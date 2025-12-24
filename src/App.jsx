@@ -12,6 +12,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 // --- CONSTANTS ---
 // Material size in MM
 import { useStore } from './store/useStore';
+import { useShallow } from 'zustand/react/shallow';
 
 // --- THEME CONFIGURATION ---
 const THEMES = {
@@ -41,8 +42,6 @@ const THEMES = {
     }
 };
 
-
-
 export default function App() {
     return (
         <LanguageProvider>
@@ -57,7 +56,14 @@ function AppContent() {
         isDarkMode, setDarkMode,
         material, setMaterial,
         tool, setTool
-    } = useStore();
+    } = useStore(useShallow(state => ({
+        isDarkMode: state.isDarkMode,
+        setDarkMode: state.setDarkMode,
+        material: state.material,
+        setMaterial: state.setMaterial,
+        tool: state.tool,
+        setTool: state.setTool
+    })));
 
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
     // const [material, setMaterial] = useState(INITIAL_MATERIAL); // Removed
