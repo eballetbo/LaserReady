@@ -1,7 +1,7 @@
 import { Geometry } from '../math/geometry.js';
 import { CanvasRenderer } from '../render/canvas-renderer.js';
-import { PathNode } from '../model/path-node.js';
-import { PathShape } from '../model/path-shape.js';
+import { PathNode } from '../model/path-node';
+import { PathShape } from '../model/path-shape';
 import { RectTool, CircleTool, PolygonTool, StarTool } from '../tools/shape-tools.js';
 import { PenTool } from '../tools/pen-tool.js';
 import { SelectTool } from '../tools/select-tool.js';

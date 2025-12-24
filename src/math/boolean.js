@@ -1,6 +1,6 @@
 import paper from 'paper';
-import { PathShape } from '../model/path-shape.js';
-import { PathNode } from '../model/path-node.js';
+import { PathShape } from '../model/path-shape';
+import { PathNode } from '../model/path-node';
 
 // Initialize a headless PaperScope for math operations
 const scope = new paper.PaperScope();
