@@ -7,6 +7,7 @@ export class InputManager {
         down?: (x: number, y: number, event: MouseEvent) => void;
         move?: (x: number, y: number, event: MouseEvent) => void;
         up?: (x: number, y: number, event: MouseEvent) => void;
+        contextmenu?: (x: number, y: number, event: MouseEvent) => void;
         keydown?: (event: KeyboardEvent) => void;
     } = {};
 
@@ -14,6 +15,7 @@ export class InputManager {
         mouseDown: (e: MouseEvent) => void;
         mouseMove: (e: MouseEvent) => void;
         mouseUp: (e: MouseEvent) => void;
+        contextMenu: (e: MouseEvent) => void;
         keyDown: (e: KeyboardEvent) => void;
     };
 
@@ -24,6 +26,7 @@ export class InputManager {
             mouseDown: this.handleMouseDown.bind(this),
             mouseMove: this.handleMouseMove.bind(this),
             mouseUp: this.handleMouseUp.bind(this),
+            contextMenu: this.handleContextMenu.bind(this),
             keyDown: this.handleKeyDown.bind(this)
         };
 
@@ -34,6 +37,7 @@ export class InputManager {
         this.canvas.addEventListener('mousedown', this.boundHandlers.mouseDown);
         this.canvas.addEventListener('mousemove', this.boundHandlers.mouseMove);
         window.addEventListener('mouseup', this.boundHandlers.mouseUp);
+        this.canvas.addEventListener('contextmenu', this.boundHandlers.contextMenu);
         window.addEventListener('keydown', this.boundHandlers.keyDown);
     }
 
@@ -41,6 +45,7 @@ export class InputManager {
         this.canvas.removeEventListener('mousedown', this.boundHandlers.mouseDown);
         this.canvas.removeEventListener('mousemove', this.boundHandlers.mouseMove);
         window.removeEventListener('mouseup', this.boundHandlers.mouseUp);
+        this.canvas.removeEventListener('contextmenu', this.boundHandlers.contextMenu);
         window.removeEventListener('keydown', this.boundHandlers.keyDown);
     }
 
@@ -49,12 +54,13 @@ export class InputManager {
         this.pan = pan;
     }
 
-    on(event: 'down' | 'move' | 'up', callback: (x: number, y: number, event: MouseEvent) => void): void;
+    on(event: 'down' | 'move' | 'up' | 'contextmenu', callback: (x: number, y: number, event: MouseEvent) => void): void;
     on(event: 'keydown', callback: (event: KeyboardEvent) => void): void;
     on(event: string, callback: any) {
         if (event === 'down') this.listeners.down = callback;
         if (event === 'move') this.listeners.move = callback;
         if (event === 'up') this.listeners.up = callback;
+        if (event === 'contextmenu') this.listeners.contextmenu = callback;
         if (event === 'keydown') this.listeners.keydown = callback;
     }
 
@@ -84,6 +90,13 @@ export class InputManager {
         if (this.listeners.up) {
             const pos = this.getWorldPos(e);
             this.listeners.up(pos.x, pos.y, e);
+        }
+    }
+
+    private handleContextMenu(e: MouseEvent) {
+        if (this.listeners.contextmenu) {
+            const pos = this.getWorldPos(e);
+            this.listeners.contextmenu(pos.x, pos.y, e);
         }
     }
 

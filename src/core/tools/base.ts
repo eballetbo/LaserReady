@@ -27,6 +27,6 @@ export class BaseTool {
     onMouseDown(event: MouseEvent): void { }
     onMouseMove(event: MouseEvent): void { }
     onMouseUp(event: MouseEvent): void { }
+    onContextMenu(e: MouseEvent): void { } // Right-click
     onKeyDown(event: KeyboardEvent): void { }
 }
-

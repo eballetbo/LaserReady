@@ -81,21 +81,48 @@ export class PenTool extends BaseTool {
 
     onMouseMove(e: MouseEvent) {
         const { x, y } = this.editor.getMousePos(e);
-        this.editor.canvas.style.cursor = 'crosshair';
-        this.editor.previewPoint = { x, y };
 
-        if (this.editor.activePath && this.draggingItem) {
-            const node = this.editor.activePath.nodes[this.draggingItem.index];
-            node.cpOut.x = x;
-            node.cpOut.y = y;
-            node.cpIn.x = node.x - (x - node.x);
-            node.cpIn.y = node.y - (y - node.y);
+        // Only show preview and crosshair when actively drawing
+        if (this.editor.activePath) {
+            this.editor.canvas.style.cursor = 'crosshair';
+            this.editor.previewPoint = { x, y };
+
+            if (this.draggingItem) {
+                const node = this.editor.activePath.nodes[this.draggingItem.index];
+                node.cpOut.x = x;
+                node.cpOut.y = y;
+                node.cpIn.x = node.x - (x - node.x);
+                node.cpIn.y = node.y - (y - node.y);
+            }
+            this.editor.render();
+        } else {
+            // Reset cursor when not drawing
+            this.editor.canvas.style.cursor = 'default';
         }
-        this.editor.render();
     }
 
     onMouseUp(e: MouseEvent) {
         this.draggingItem = null;
+    }
+
+    onContextMenu(e: MouseEvent): void {
+        console.log('DEBUG: PenTool.onContextMenu called, activePath:', !!this.editor.activePath);
+        e.preventDefault(); // Prevent browser context menu
+
+        // Right-click finishes the path without closing it
+        if (this.editor.activePath) {
+            console.log('DEBUG: Finishing path with', this.editor.activePath.nodes.length, 'nodes');
+
+            // Remove the last node (the one being drawn with preview line)
+            if (this.editor.activePath.nodes.length > 1) {
+                this.editor.activePath.nodes.pop();
+                console.log('DEBUG: Removed last node, now', this.editor.activePath.nodes.length, 'nodes');
+            }
+
+            this.editor.activePath = null;
+            this.editor.previewPoint = null;
+            this.editor.render();
+        }
     }
 
     onKeyDown(e: KeyboardEvent) {

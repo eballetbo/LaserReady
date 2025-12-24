@@ -134,6 +134,10 @@ export class PathEditor {
             this.handleMouseUp(e, { x, y });
         });
 
+        this.inputManager.on('contextmenu', (x, y, e) => {
+            this.handleContextMenu(e, { x, y });
+        });
+
         this.inputManager.on('keydown', (e) => {
             this.handleKeyDown(e);
         });
@@ -187,6 +191,10 @@ export class PathEditor {
     handleMouseUp(e, worldPos) {
         if (this.activeTool) this.activeTool.onMouseUp(e, worldPos);
         this.endAction();
+    }
+
+    handleContextMenu(e, worldPos) {
+        if (this.activeTool) this.activeTool.onContextMenu(e, worldPos);
     }
 
     handleKeyDown(e) {
