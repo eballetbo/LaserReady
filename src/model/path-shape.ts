@@ -10,17 +10,15 @@ export interface PathStyle {
 export class PathShape {
     nodes: PathNode[];
     closed: boolean;
-    strokeColor?: string;
-    strokeWidth?: number;
-    fillColor?: string;
     type: string | null;
     params: Record<string, any>;
     id: string;
+    layerId: string;
 
     constructor(
         nodes: PathNode[] = [],
         closed: boolean = false,
-        style: PathStyle = {},
+        layerId: string = 'layer-1', // Default to layer-1
         type: string | null = null,
         params: Record<string, any> = {},
         id?: string
@@ -28,15 +26,12 @@ export class PathShape {
         this.id = id || crypto.randomUUID();
         this.nodes = nodes;
         this.closed = closed;
-        this.strokeColor = style.strokeColor;
-        this.strokeWidth = style.strokeWidth;
-        this.fillColor = style.fillColor;
+        this.layerId = layerId;
         this.type = type;
         this.params = params;
     }
 
     getBounds(): any {
-        // Assuming Geometry.calculateBoundingBox returns an object like {x, y, width, height} or similar
         return Geometry.calculateBoundingBox(this.nodes);
     }
 
@@ -72,20 +67,14 @@ export class PathShape {
 
     clone(): PathShape {
         const newNodes = this.nodes.map(n => n.clone());
-        return new PathShape(newNodes, this.closed, {
-            strokeColor: this.strokeColor,
-            strokeWidth: this.strokeWidth,
-            fillColor: this.fillColor
-        }, this.type, { ...this.params });
+        return new PathShape(newNodes, this.closed, this.layerId, this.type, { ...this.params });
     }
 
     static fromJSON(json: any): PathShape {
-        // Ensure json.nodes is an array before mapping
         const nodes = (json.nodes || []).map((n: any) => PathNode.fromJSON(n));
-        return new PathShape(nodes, json.closed, {
-            strokeColor: json.strokeColor,
-            strokeWidth: json.strokeWidth,
-            fillColor: json.fillColor
-        }, json.type, json.params, json.id);
+        // Fallback: if json.layerId exists use it, else default 'layer-1'
+        // If we wanted to preserve old colors we'd need a more complex migration strategy.
+        const layerId = json.layerId || 'layer-1';
+        return new PathShape(nodes, json.closed, layerId, json.type, json.params, json.id);
     }
 }

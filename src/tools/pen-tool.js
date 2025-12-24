@@ -15,7 +15,7 @@ export class PenTool extends BaseTool {
         if (!this.editor.activePath) {
             // Start new path
             const startNode = new PathNode(x, y);
-            this.editor.activePath = new PathShape([startNode], false);
+            this.editor.activePath = new PathShape([startNode], false, this.editor.activeLayerId);
             this.editor.shapes.push(this.editor.activePath);
             this.editor.selectedShape = this.editor.activePath;
             this.draggingItem = { type: 'anchor', index: 0 };

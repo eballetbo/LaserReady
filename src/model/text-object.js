@@ -1,16 +1,15 @@
 import { TextMeasurer } from '../utils/text-measurer.js';
 export class TextObject {
-    constructor(x, y, text = '', style = {}) {
+    constructor(x, y, text = '', style = {}, layerId = 'layer-1') {
         this.x = x;
         this.y = y;
         this.text = text;
+        this.layerId = layerId;
         this.fontSize = style.fontSize || 24;
         this.fontFamily = style.fontFamily || 'Arial';
         this.fontWeight = style.fontWeight || 'normal';
         this.fontStyle = style.fontStyle || 'normal';
-        this.fillColor = style.fillColor || '#000000';
-        this.strokeColor = style.strokeColor || null;
-        this.strokeWidth = style.strokeWidth || 0;
+        // Removed properties handled by layer: fillColor, strokeColor, strokeWidth
         this.rotation = style.rotation || 0;
         this.scaleX = style.scaleX || 1;
         this.scaleY = style.scaleY || 1;

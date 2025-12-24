@@ -21,9 +21,8 @@ export class TextTool extends BaseTool {
             // Create new text
             const newText = new TextObject(x, y, '', {
                 fontSize: 24,
-                fontFamily: 'Arial',
-                fillColor: this.editor.config.colorStroke // Use stroke color as fill for text by default? Or black?
-            });
+                fontFamily: 'Arial'
+            }, this.editor.activeLayerId);
             this.editor.shapes.push(newText);
             this.editor.selectedShapes = [newText];
             this.startEditing(newText);

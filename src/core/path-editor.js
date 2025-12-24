@@ -112,6 +112,10 @@ export class PathEditor {
         return this._tool;
     }
 
+    get activeLayerId() {
+        return useStore.getState().activeLayerId;
+    }
+
     initEvents() {
         // Delegate to InputManager
         this.inputManager.on('down', (x, y, e) => {
@@ -193,12 +197,13 @@ export class PathEditor {
 
     render() {
         // Read state from Store
-        const { shapes, selectedShapes: selectedIds, tool, zoom } = useStore.getState();
+        const { shapes, selectedShapes: selectedIds, tool, zoom, layers } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
         this.renderer.drawScene(
             shapes,
             selectedObjects,
+            layers,
             this.config,
             tool,
             this.activePath,
@@ -267,6 +272,10 @@ export class PathEditor {
                         });
                     });
                 }
+
+                // Assign active layer to imported shapes
+                const activeLayerId = useStore.getState().activeLayerId;
+                shapes.forEach(shape => shape.layerId = activeLayerId);
 
                 const currentShapes = this.shapes;
                 this.shapes = [...currentShapes, ...shapes];

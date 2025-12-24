@@ -18,7 +18,7 @@ export class RectTool extends BaseTool {
         const n2 = new PathNode(x, y);
         const n3 = new PathNode(x, y);
         const n4 = new PathNode(x, y);
-        const newShape = new PathShape([n1, n2, n3, n4], true, {}, 'rect');
+        const newShape = new PathShape([n1, n2, n3, n4], true, this.editor.activeLayerId, 'rect');
 
         this.editor.shapes.push(newShape);
         this.editor.selectedShape = newShape;
@@ -73,7 +73,7 @@ export class CircleTool extends BaseTool {
         const n2 = new PathNode(x, y);
         const n3 = new PathNode(x, y);
         const n4 = new PathNode(x, y);
-        const newShape = new PathShape([n1, n2, n3, n4], true, {}, 'circle');
+        const newShape = new PathShape([n1, n2, n3, n4], true, this.editor.activeLayerId, 'circle');
 
         this.editor.shapes.push(newShape);
         this.editor.selectedShape = newShape;
@@ -145,7 +145,7 @@ export class PolygonTool extends BaseTool {
         for (let i = 0; i < this.sides; i++) {
             nodes.push(new PathNode(x, y));
         }
-        const newShape = new PathShape(nodes, true, {}, 'polygon', { sides: this.sides });
+        const newShape = new PathShape(nodes, true, this.editor.activeLayerId, 'polygon', { sides: this.sides });
 
         this.editor.shapes.push(newShape);
         this.editor.selectedShape = newShape;
@@ -206,7 +206,7 @@ export class StarTool extends BaseTool {
         for (let i = 0; i < this.points * 2; i++) {
             nodes.push(new PathNode(x, y));
         }
-        const newShape = new PathShape(nodes, true, {}, 'star', { points: this.points, innerRadius: this.innerRadius });
+        const newShape = new PathShape(nodes, true, this.editor.activeLayerId, 'star', { points: this.points, innerRadius: this.innerRadius });
 
         this.editor.shapes.push(newShape);
         this.editor.selectedShape = newShape;

@@ -20,27 +20,26 @@ export class CanvasRenderer {
         this.ctx.stroke();
     }
 
-    drawScene(shapes, selectedShapes, config, toolType, activePath, previewPoint, selectionBox, zoom = 1, pan = { x: 0, y: 0 }, selectedNodeIndex = null) {
+    drawScene(shapes, selectedShapes, layers, config, toolType, activePath, previewPoint, selectionBox, zoom = 1, pan = { x: 0, y: 0 }, selectedNodeIndex = null) {
         this.clear();
 
         this.ctx.save();
         this.ctx.translate(pan.x, pan.y);
         this.ctx.scale(zoom, zoom);
 
-        // Draw grid (scaled? or infinite? Let's scale it for now)
-        // Actually, if we scale the grid, the lines get thicker.
-        // We probably want to draw the grid BEFORE transform, but adjusted for pan/zoom.
-        // Or just draw it here and let it scale. 
-        // Let's try drawing it here first.
         this.drawGrid(config.gridSpacing);
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
+            // Resolve layer
+            const layer = layers ? layers.find(l => l.id === shape.layerId) : null;
+            const layerColor = layer ? layer.color : '#000000';
+            const layerMode = layer ? layer.mode : 'CUT';
 
             if (shape.type === 'text') {
-                this.drawText(shape, isSelected, config);
+                this.drawText(shape, isSelected, config, layerColor, layerMode);
             } else {
-                this.drawPath(shape, isSelected, config);
+                this.drawPath(shape, isSelected, config, layerColor, layerMode);
                 if (isSelected && toolType === 'node-edit') {
                     this.drawNodes(shape, config, selectedNodeIndex);
                 }
@@ -67,7 +66,7 @@ export class CanvasRenderer {
         this.ctx.restore();
     }
 
-    drawPath(shape, isSelected, config) {
+    drawPath(shape, isSelected, config, layerColor, layerMode) {
         if (shape.nodes.length < 2) return;
 
         this.ctx.beginPath();
@@ -91,26 +90,29 @@ export class CanvasRenderer {
 
         if (shape.closed) this.ctx.closePath();
 
-        if (shape.closed) this.ctx.closePath();
-
-        // Use shape properties if available, otherwise config defaults
-        this.ctx.fillStyle = shape.fillColor || config.colorFill;
-        this.ctx.fill();
-
-        const strokeColor = shape.strokeColor || config.colorStroke;
-        const strokeWidth = shape.strokeWidth !== undefined ? shape.strokeWidth : 2;
-
-        if (strokeWidth > 0) {
-            this.ctx.strokeStyle = isSelected ? config.colorSelection : strokeColor;
-            this.ctx.lineWidth = strokeWidth;
-            this.ctx.stroke();
+        // Fill logic based on mode
+        if (layerMode === 'ENGRAVE') {
+            this.ctx.fillStyle = layerColor;
+            this.ctx.fill();
+        } else {
+            // For CUT/SCORE, maybe just a very transparent fill for selection hit area visual?
+            // Or maintain default config fill.
+            this.ctx.fillStyle = config.colorFill;
+            this.ctx.fill();
         }
+
+        const strokeWidth = 2; // Fixed width for visibility, or derived from mode?
+
+        this.ctx.strokeStyle = isSelected ? config.colorSelection : layerColor;
+        this.ctx.lineWidth = strokeWidth;
+        this.ctx.stroke();
 
         // Selection overlay (always draw if selected, to show selection even if shape is invisible)
         if (isSelected) {
             this.ctx.strokeStyle = config.colorSelection;
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
+            // Optional: Extra fill for selection
             this.ctx.fillStyle = config.colorSelection;
             this.ctx.fill();
         }
@@ -225,7 +227,7 @@ export class CanvasRenderer {
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
     }
 
-    drawText(textObject, isSelected, config) {
+    drawText(textObject, isSelected, config, layerColor, layerMode) {
         this.ctx.save();
 
         // Font settings
@@ -235,56 +237,36 @@ export class CanvasRenderer {
         const fontFamily = textObject.fontFamily || 'Arial';
         this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
 
-        // Colors
-        this.ctx.fillStyle = textObject.fillColor || config.colorStroke; // Default to black/stroke color
-
-        // Apply rotation and scaling
-        // We translate to the text position (x, y)
         this.ctx.translate(textObject.x, textObject.y);
 
-        // Apply rotation
         if (textObject.rotation) {
             this.ctx.rotate(textObject.rotation);
         }
 
-        // Apply scaling
         if (textObject.scaleX !== undefined || textObject.scaleY !== undefined) {
             this.ctx.scale(textObject.scaleX || 1, textObject.scaleY || 1);
         }
-
-        // Draw text
-        // Since we translated to (x, y), we draw at (0, 0) relative to the new origin
-        // But wait, textObject.y is the top-left of the bounding box (roughly), 
-        // whereas fillText expects baseline y.
-        // In getBounds, we assumed y is top-left?
-        // No, in getBounds: minY: this.y - this.fontSize
-        // So this.y is the baseline of the first line.
 
         const lines = textObject.text.split('\n');
         const lineHeight = fontSize * 1.2;
 
         lines.forEach((line, i) => {
-            // We draw at 0, 0 + offset because we already translated to (x, y)
-            this.ctx.fillText(line, 0, 0 + i * lineHeight);
-            if (textObject.strokeWidth > 0 && textObject.strokeColor) {
-                this.ctx.strokeStyle = textObject.strokeColor;
-                this.ctx.lineWidth = textObject.strokeWidth;
+            if (layerMode === 'ENGRAVE') {
+                this.ctx.fillStyle = layerColor;
+                this.ctx.fillText(line, 0, 0 + i * lineHeight);
+            } else {
+                // CUT/SCORE: Stroke text
+                this.ctx.strokeStyle = layerColor;
+                this.ctx.lineWidth = 1; // Default thin stroke for text cut/score
                 this.ctx.strokeText(line, 0, 0 + i * lineHeight);
             }
         });
 
-        // Restore context
         this.ctx.restore();
-
-        // We need to return early or skip the original drawing loop because we handled it here
-        // Helper to keep the method structure valid since I'm replacing a block inside drawText
-        // Actually, I should replace the whole drawText method to be safe and clean.
-        // But the tool asks for a chunk.
-        // Let's replace the whole drawText method content.
 
         // Draw selection overlay separately (in world space)
         if (isSelected) {
-            const bounds = textObject.getBounds(); // This is AABB
+            const bounds = textObject.getBounds(); // This might be expensive if using measure
             this.ctx.strokeStyle = config.colorSelection;
             this.ctx.lineWidth = 1;
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
