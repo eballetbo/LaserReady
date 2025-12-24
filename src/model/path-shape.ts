@@ -15,14 +15,17 @@ export class PathShape {
     fillColor?: string;
     type: string | null;
     params: Record<string, any>;
+    id: string;
 
     constructor(
         nodes: PathNode[] = [],
         closed: boolean = false,
         style: PathStyle = {},
         type: string | null = null,
-        params: Record<string, any> = {}
+        params: Record<string, any> = {},
+        id?: string
     ) {
+        this.id = id || crypto.randomUUID();
         this.nodes = nodes;
         this.closed = closed;
         this.strokeColor = style.strokeColor;
@@ -83,6 +86,6 @@ export class PathShape {
             strokeColor: json.strokeColor,
             strokeWidth: json.strokeWidth,
             fillColor: json.fillColor
-        }, json.type, json.params);
+        }, json.type, json.params, json.id);
     }
 }

@@ -11,6 +11,7 @@ import { NodeEditTool } from '../tools/node-edit-tool.js';
 import { BooleanOperations } from '../math/boolean.js';
 import { SVGImporter } from '../utils/svg-importer.js';
 import { HistoryManager } from './history-manager.js';
+import { useStore } from '../store/useStore';
 
 /**
  * Main Editor Controller.
@@ -32,14 +33,14 @@ export class PathEditor {
             colorFill: 'rgba(0, 123, 255, 0.05)',
             colorSelection: 'rgba(0, 123, 255, 0.1)',
             gridSpacing: 40,
-            gridSpacing: 40,
             ...options
         };
 
         this.onSelectionChange = options.onSelectionChange || (() => { });
 
-        this.shapes = [];
-        this.selectedShapes = [];
+        // this.shapes = []; // MOVED TO STORE
+        // this.selectedShapes = []; // MOVED TO STORE
+
         this.tools = {
             select: new SelectTool(this),
             rect: new RectTool(this),
@@ -53,14 +54,14 @@ export class PathEditor {
             pen: new PenTool(this),
             'node-edit': new NodeEditTool(this)
         };
-        this._tool = 'select';
+        this._tool = 'select'; // TODO: Sync with store tool? App sets editor.tool currently.
         this.activeTool = this.tools.select;
 
         this.activePath = null; // For pen tool
         this.previewPoint = null;
         this.selectedNodeIndex = null; // For node edit tool
 
-        this.zoom = 1;
+        this.zoom = 1; // TODO: Sync with store
         this.pan = { x: 0, y: 0 };
 
         this.handleMouseDown = this.handleMouseDown.bind(this);
@@ -69,12 +70,47 @@ export class PathEditor {
         this.handleKeyDown = this.handleKeyDown.bind(this);
 
         this.initEvents();
+
+        // Subscribe to store changes to re-render
+        // We only care about render-affecting state here.
+        this.unsubscribe = useStore.subscribe((state, prevState) => {
+            // For now, just render on any change. 
+            // We can optimize later to check if shapes/selection/tool/zoom/material changed.
+            this.render();
+        });
+
         this.render();
+    }
+
+    // Proxy getter to get shapes from store for tools usage
+    get shapes() {
+        return useStore.getState().shapes;
+    }
+
+    set shapes(value) {
+        useStore.getState().setShapes(value);
+    }
+
+    // Proxy for selectedShapes. 
+    // Tools expect objects, but store has IDs.
+    // We provide a getter that returns objects, and setter that sets IDs.
+    get selectedShapes() {
+        const { shapes, selectedShapes } = useStore.getState();
+        return shapes.filter(s => selectedShapes.includes(s.id));
+    }
+
+    set selectedShapes(value) {
+        // value is array of objects
+        const ids = value.map(s => s.id);
+        useStore.getState().setSelectedShapes(ids);
     }
 
     set tool(value) {
         this._tool = value;
         this.activeTool = this.tools[value] || this.tools.select;
+        // Optionally update store tool if set locally
+        // useStore.getState().setTool(value); 
+        // But App.jsx sets editor.tool from store.tool, so avoid loop.
     }
 
     get tool() {
@@ -93,6 +129,7 @@ export class PathEditor {
         this.canvas.removeEventListener('mousemove', this.handleMouseMove);
         window.removeEventListener('mouseup', this.handleMouseUp);
         window.removeEventListener('keydown', this.handleKeyDown);
+        if (this.unsubscribe) this.unsubscribe();
     }
 
     getMousePos(evt) {
@@ -128,33 +165,50 @@ export class PathEditor {
     }
 
     render() {
+        // Read state from Store
+        const { shapes, selectedShapes: selectedIds, tool, zoom } = useStore.getState();
+
+        // Resolve selected objects
+        const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
+
+        // Use local zoom/pan or store zoom? Store has zoom.
+        // App.jsx sets editor.zoom from store. So we can use this.zoom (which should be synced) 
+        // OR use store zoom directly.
+        // The instructions said "Modify PathEditor to call this renderer passing it the store data".
+        // Let's use store zoom if available.
+        // But pan is local.
+
         this.renderer.drawScene(
-            this.shapes,
-            this.selectedShapes,
+            shapes,
+            selectedObjects,
             this.config,
-            this.tool,
+            tool, // Use store tool? Or local active tool? Store tool is string.
             this.activePath,
             this.previewPoint,
             null, // selectionBox
-            this.zoom,
+            zoom, // Store zoom
             this.pan,
             this.selectedNodeIndex
         );
 
-        // Notify selection change
-        this.onSelectionChange(this.selectedShapes);
+        // Notify selection change (Legacy support if App.jsx still uses it)
+        this.onSelectionChange(selectedObjects);
     }
 
     deleteSelected() {
+        // Use getters/setters which use store
         if (this.selectedShapes.length > 0) {
             this.startAction();
-            this.selectedShapes.forEach(shape => {
-                const index = this.shapes.indexOf(shape);
-                if (index > -1) {
-                    this.shapes.splice(index, 1);
-                }
-            });
+
+            const currentShapes = this.shapes;
+            const currentSelected = this.selectedShapes;
+
+            // Remove selected
+            const newShapes = currentShapes.filter(s => !currentSelected.includes(s));
+
+            this.shapes = newShapes;
             this.selectedShapes = [];
+
             this.render();
             this.endAction();
         }
@@ -196,8 +250,11 @@ export class PathEditor {
                     });
                 }
 
-                this.shapes.push(...shapes);
+                // Add to store via setter
+                const currentShapes = this.shapes;
+                this.shapes = [...currentShapes, ...shapes];
                 this.selectedShapes = shapes; // Select imported shapes
+
                 this.render();
                 this.endAction();
             } else {
@@ -214,19 +271,23 @@ export class PathEditor {
 
         this.startAction();
 
+        // Work with clones to avoid partial mutations before store update
+        // Actually BooleanOperations likely returns NEW shapes
         const resultShapes = BooleanOperations.perform(this.selectedShapes, operation);
 
         // Remove original selected shapes
-        this.selectedShapes.forEach(shape => {
-            const index = this.shapes.indexOf(shape);
-            if (index > -1) this.shapes.splice(index, 1);
-        });
+        const currentSelected = this.selectedShapes;
+        const currentShapes = this.shapes;
+
+        let newShapes = currentShapes.filter(s => !currentSelected.includes(s));
 
         // Add new shapes
-        this.shapes.push(...resultShapes);
+        newShapes = [...newShapes, ...resultShapes];
 
-        // Select result
+        // Update Store
+        this.shapes = newShapes;
         this.selectedShapes = resultShapes;
+
         this.render();
         this.endAction();
     }
@@ -235,11 +296,23 @@ export class PathEditor {
         if (this.selectedShapes.length === 0) return;
 
         this.startAction();
-        this.selectedShapes.forEach(shape => {
+
+        const selected = this.selectedShapes;
+        // Since we are using store, we should map to new objects if we want to be pure,
+        // but PathShape is mutable class. 
+        // If we mutate the objects inside the array, Zustand might not detect deep change unless we replace the array.
+        // Or we should clone.
+
+        // For now: mutate and reset array to trigger update.
+        selected.forEach(shape => {
             if (style.strokeColor !== undefined) shape.strokeColor = style.strokeColor;
             if (style.strokeWidth !== undefined) shape.strokeWidth = style.strokeWidth;
             if (style.fillColor !== undefined) shape.fillColor = style.fillColor;
         });
+
+        // Trigger store update by re-setting shapes
+        this.shapes = [...this.shapes];
+
         this.render();
         this.endAction();
     }
@@ -249,7 +322,8 @@ export class PathEditor {
 
         this.startAction();
 
-        // Regenerate nodes based on type
+        // Mutate shape logic...
+        // ... (Same logic as before) ...
         // Regenerate nodes based on type
         if (shape.type === 'polygon' && shape.params.sides) {
             // Calculate centroid (average of all points)
@@ -281,13 +355,11 @@ export class PathEditor {
         }
 
         if (shape.type === 'star' && shape.params.points && shape.params.innerRadius) {
-            // Calculate centroid (average of all points)
+            // ... (Same logic as before) ...
             let cx = 0, cy = 0;
             shape.nodes.forEach(n => { cx += n.x; cy += n.y; });
             const center = { x: cx / shape.nodes.length, y: cy / shape.nodes.length };
 
-            // Calculate current outer radius
-            // Find the point furthest from center to be the outer radius
             let maxDist = 0;
             shape.nodes.forEach(n => {
                 const dx = n.x - center.x;
@@ -313,56 +385,45 @@ export class PathEditor {
             shape.nodes = newNodes;
         }
 
+        // Update Store
+        this.shapes = [...this.shapes];
+
         this.render();
         this.endAction();
     }
 
     startAction() {
+        // Snapshot current shapes from store
         this.actionStartState = JSON.stringify(this.shapes);
     }
 
     endAction() {
         if (!this.actionStartState) return;
 
-        const currentStateStr = JSON.stringify(this.shapes);
+        const currentShapes = this.shapes;
+        const currentStateStr = JSON.stringify(currentShapes);
+
         if (currentStateStr !== this.actionStartState) {
-            // State changed, push the START state to undo stack
             const startState = JSON.parse(this.actionStartState);
-            // Re-hydrate shapes before pushing? 
-            // HistoryManager stores whatever we give it. 
-            // If we give it plain objects, it stores plain objects.
-            // If we give it PathShapes, it stores PathShapes (but they get stringified anyway).
-            // So it doesn't matter what we push, as long as we re-hydrate on retrieval.
-            // But wait, HistoryManager.push does JSON.stringify internally for duplicate check?
-            // No, I added that.
-            // So we can push plain objects.
             this.history.push(startState);
         }
         this.actionStartState = null;
     }
 
     undo() {
-        // We need to save current state to redo stack before restoring previous state.
-        // But HistoryManager.undo handles the swap.
-        // We just need to give it the current state (as plain objects or shapes? HistoryManager doesn't care).
-        // BUT, if we give it shapes, and it pushes to redo stack, when we redo, we get shapes back?
-        // No, HistoryManager is in-memory, so if we push objects, they stay objects.
-        // BUT, we are using JSON.stringify/parse in startAction/endAction, so we are dealing with plain objects there.
-        // Let's consistently use PathShape instances in the editor, and re-hydrate from history.
-
-        const currentState = this.shapes.map(shape => shape.clone()); // These are PathShapes
+        const currentState = this.shapes.map(shape => shape.clone());
         const previousState = this.history.undo(currentState);
 
         if (previousState) {
-            // previousState might be plain objects if it came from endAction's JSON.parse
-            // OR it might be PathShapes if it came from a previous undo/redo cycle?
-            // Let's assume it can be plain objects and re-hydrate.
-            this.shapes = previousState.map(s => {
+            const restoredShapes = previousState.map(s => {
                 if (s instanceof PathShape || s instanceof TextObject) return s;
                 if (s.type === 'text') return TextObject.fromJSON(s);
                 return PathShape.fromJSON(s);
             });
-            this.selectedShapes = []; // Clear selection to avoid issues
+
+            // Set to store
+            this.shapes = restoredShapes;
+            this.selectedShapes = [];
             this.render();
         }
     }
@@ -372,11 +433,13 @@ export class PathEditor {
         const nextState = this.history.redo(currentState);
 
         if (nextState) {
-            this.shapes = nextState.map(s => {
+            const restoredShapes = nextState.map(s => {
                 if (s instanceof PathShape || s instanceof TextObject) return s;
                 if (s.type === 'text') return TextObject.fromJSON(s);
                 return PathShape.fromJSON(s);
             });
+
+            this.shapes = restoredShapes;
             this.selectedShapes = [];
             this.render();
         }
@@ -391,13 +454,16 @@ export class PathEditor {
     }
 
     resetZoom() {
-        this.zoom = 1;
+        // Update store zoom
+        useStore.getState().setZoom(1);
+        // Local pan reset
         this.pan = { x: 0, y: 0 };
         this.render();
     }
 
     setZoom(value) {
-        this.zoom = Math.max(0.1, Math.min(5, value));
+        const newZoom = Math.max(0.1, Math.min(5, value));
+        useStore.getState().setZoom(newZoom);
         this.render();
     }
 }
