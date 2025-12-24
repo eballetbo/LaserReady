@@ -1,6 +1,6 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { PathShape } from '../models/path-shape';
+import { PathShape } from '../models/path';
 
 export class DeleteShapeCommand implements Command {
     private shapesToDelete: PathShape[];

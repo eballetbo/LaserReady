@@ -1,5 +1,5 @@
 import { Geometry } from '../../../core/math/geometry';
-import { PathNode } from './path-node';
+import { PathNode } from './node';
 
 export interface PathStyle {
     strokeColor?: string;

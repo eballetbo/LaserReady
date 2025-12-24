@@ -1,21 +1,21 @@
 // @ts-nocheck - Progressive TypeScript migration, refine types incrementally
-import { Geometry } from '../../core/math/geometry';
-import { CanvasRenderer } from './render/canvas-renderer';
-import { InputManager } from './input-manager';
-import { PathNode } from '../shapes/models/path-node';
-import { PathShape } from '../shapes/models/path-shape';
-import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/shape-tools';
-import { PenTool } from '../shapes/tools/pen-tool';
-import { SelectTool } from '../shapes/tools/select-tool';
-import { TextTool } from '../shapes/tools/text-tool';
-import { TextObject } from '../shapes/models/text-object';
-import { NodeEditTool } from '../shapes/tools/node-edit-tool';
-import { BooleanOperations } from '../../core/math/boolean';
-import { SVGImporter } from '../../utils/svg-importer';
-import { HistoryManager } from './history-manager';
-import { useStore } from '../../store/useStore';
-import { DeleteShapeCommand } from '../shapes/commands/delete-shape-command';
-import { MoveShapeCommand } from '../shapes/commands/move-shape-command';
+import { Geometry } from '../../../core/math/geometry';
+import { CanvasRenderer } from '../../editor/render/renderer';
+import { InputManager } from '../../editor/input';
+import { PathNode } from '../models/node';
+import { PathShape } from '../models/path';
+import { RectTool, CircleTool, PolygonTool, StarTool } from '../tool-registry';
+import { PenTool } from '../tools/pen';
+import { SelectTool } from '../tools/select';
+import { TextTool } from '../tools/text';
+import { TextObject } from '../models/text';
+import { NodeEditTool } from '../tools/node';
+import { BooleanOperations } from '../../../core/math/boolean';
+import { SVGImporter } from '../../../utils/svg-import';
+import { HistoryManager } from '../../editor/history';
+import { useStore } from '../../../store/useStore';
+import { DeleteShapeCommand } from '../commands/delete';
+import { MoveShapeCommand } from '../commands/move';
 
 /**
  * Main Editor Controller.

@@ -1,5 +1,5 @@
-import { BaseTool, IEditorContext } from '../../../core/tools/base-tool';
-import { TextObject } from '../models/text-object';
+import { BaseTool, IEditorContext } from '../../../core/tools/base';
+import { TextObject } from '../models/text';
 
 export class TextTool extends BaseTool {
     activeText: any | null; // TextObject

@@ -1,6 +1,6 @@
-import { BaseTool } from '../../core/tools/base-tool';
-import { PathNode } from './models/path-node';
-import { PathShape } from './models/path-shape';
+import { BaseTool } from '../../core/tools/base';
+import { PathNode } from './models/node';
+import { PathShape } from './models/path';
 
 interface Point {
     x: number;

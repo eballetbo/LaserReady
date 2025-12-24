@@ -1,17 +1,20 @@
 // Models
-export { PathNode } from './models/path-node';
-export { PathShape } from './models/path-shape';
-export { TextObject } from './models/text-object';
+export { PathNode } from './models/node';
+export { PathShape } from './models/path';
+export { TextObject } from './models/text';
 
 // Tools
-export { SelectTool } from './tools/select-tool';
-export { PenTool } from './tools/pen-tool';
-export { NodeEditTool } from './tools/node-edit-tool';
-export { TextTool } from './tools/text-tool';
+export { SelectTool } from './tools/select';
+export { PenTool } from './tools/pen';
+export { NodeEditTool } from './tools/node';
+export { TextTool } from './tools/text';
 
 // Shape tools (geometric shapes)
-export { RectTool, CircleTool, PolygonTool, StarTool } from './shape-tools';
+export { RectTool, CircleTool, PolygonTool, StarTool } from './tool-registry';
 
 // Commands
-export { DeleteShapeCommand } from './commands/delete-shape-command';
-export { MoveShapeCommand } from './commands/move-shape-command';
+export { DeleteShapeCommand } from './commands/delete';
+export { MoveShapeCommand } from './commands/move';
+
+// Manipulation
+export { PathEditor } from './manipulation/path-editor';

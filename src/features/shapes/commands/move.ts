@@ -1,6 +1,6 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { PathShape } from '../models/path-shape';
+import { PathShape } from '../models/path';
 
 export class MoveShapeCommand implements Command {
     private shapesToMove: PathShape[];

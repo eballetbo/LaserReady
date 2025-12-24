@@ -1,6 +1,6 @@
 import paper from 'paper';
 import { BooleanOperations } from '../core/math/boolean';
-import { PathShape } from '../features/shapes/models/path-shape';
+import { PathShape } from '../features/shapes/models/path';
 
 // Initialize a headless PaperScope for SVG exporting
 const scope = new paper.PaperScope();

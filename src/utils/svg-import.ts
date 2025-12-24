@@ -1,6 +1,6 @@
 import paper from 'paper';
-import { PathShape } from '../features/shapes/models/path-shape';
-import { PathNode } from '../features/shapes/models/path-node';
+import { PathShape } from '../features/shapes/models/path';
+import { PathNode } from '../features/shapes/models/node';
 
 // Initialize a headless PaperScope for SVG importing
 const scope = new paper.PaperScope();

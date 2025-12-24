@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { PathEditor } from './path-editor';
+import { PathEditor } from '../shapes/manipulation/path-editor';
 
 interface CanvasProps {
     material: { width: number; height: number };

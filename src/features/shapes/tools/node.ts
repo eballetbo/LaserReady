@@ -1,4 +1,4 @@
-import { BaseTool, IEditorContext } from '../../../core/tools/base-tool';
+import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { Geometry } from '../../../core/math/geometry';
 
 interface HitResult {

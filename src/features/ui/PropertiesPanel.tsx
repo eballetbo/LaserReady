@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/language';
 import { Settings, Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
 import { LASER_MODES } from '../../utils/laser-modes';
-import { PathEditor } from '../editor/path-editor';
+import { PathEditor } from '../shapes/manipulation/path-editor';
 
 interface Theme {
     iconColor: string;
