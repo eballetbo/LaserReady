@@ -10,6 +10,7 @@ interface DraggingItem {
 
 export class PenTool extends BaseTool {
     draggingItem: DraggingItem | null;
+    continuingFromEnd: boolean = true;
 
     constructor(editor: IEditorContext) {
         super(editor);
@@ -32,21 +33,45 @@ export class PenTool extends BaseTool {
         }
 
         if (!this.editor.activePath) {
+            // Check for path continuation
+            const snapRadius = 25;
+            let pathToContinue: any = null;
+            let continueFromEnd = true;
+
+            for (const shape of this.editor.shapes) {
+                if (shape.type === 'path' && !shape.closed && shape.nodes && shape.nodes.length > 0) {
+                    const firstNode = shape.nodes[0];
+                    const lastNode = shape.nodes[shape.nodes.length - 1];
+                    const distToFirst = Geometry.getDistance({ x, y }, { x: firstNode.x, y: firstNode.y });
+                    const distToLast = Geometry.getDistance({ x, y }, { x: lastNode.x, y: lastNode.y });
+
+                    if (distToFirst <= snapRadius) {
+                        pathToContinue = shape;
+                        continueFromEnd = false; // Prepend
+                        break;
+                    } else if (distToLast <= snapRadius) {
+                        pathToContinue = shape;
+                        continueFromEnd = true; // Append
+                        break;
+                    }
+                }
+            }
+
+            if (pathToContinue) {
+                this.editor.activePath = pathToContinue;
+                this.continuingFromEnd = continueFromEnd;
+                // Don't add a node yet - just activate the path for continuation
+                // The next click will add the node
+                this.editor.render();
+                return;
+            }
+
             // Start new path
             const startNode = new PathNode(x, y);
             this.editor.activePath = new PathShape([startNode], false, this.editor.activeLayerId);
             this.editor.shapes.push(this.editor.activePath);
-            // set selectedShape is not in IEditorContext, usage implies checking where it is.
-            // In base-tool IEditorContext I defined selectedShapes: any[]. But here code uses this.editor.selectedShape = ...
-            // Need to fix IEditorContext or code?
-            // "this.editor.selectedShapes = [this.editor.activePath];" is correct array usage.
-            // Previous code: this.editor.selectedShape = ... (Singular). I suspect invalid JS or editor has a setter?
-            // Looking at path-editor.js, it has `selectedShapes` (array). It does NOT have `selectedShape` (scalar).
-            // So `this.editor.selectedShape = ...` in original JS might have been a bug or I missed a getter/setter.
-            // PathEditor has `activePath`.
-            // I will use `this.editor.selectedShapes = [this.editor.activePath];`.
-            // Don't select activePath - it should render in layer color (black), not selection color (blue)
             this.draggingItem = { type: 'anchor', index: 0 };
+            this.continuingFromEnd = true; // New paths always append
         } else {
             // Continue path
             const startNode = this.editor.activePath.nodes[0];
@@ -61,10 +86,17 @@ export class PenTool extends BaseTool {
                 this.editor.activePath = null;
                 this.editor.previewPoint = null;
             } else {
+
                 // Add new node
                 const newNode = new PathNode(x, y);
-                this.editor.activePath.nodes.push(newNode);
-                this.draggingItem = { type: 'anchor', index: this.editor.activePath.nodes.length - 1 };
+
+                if (this.continuingFromEnd) {
+                    this.editor.activePath.nodes.push(newNode);
+                    this.draggingItem = { type: 'anchor', index: this.editor.activePath.nodes.length - 1 };
+                } else {
+                    this.editor.activePath.nodes.unshift(newNode);
+                    this.draggingItem = { type: 'anchor', index: 0 };
+                }
             }
         }
         this.editor.render();
@@ -77,7 +109,13 @@ export class PenTool extends BaseTool {
         if (this.editor.activePath) {
             // SHIFT CONSTRAINING: Constrain to horizontal, vertical, or 45° angles
             if (e.shiftKey && this.editor.activePath.nodes.length > 0) {
-                const lastNode = this.editor.activePath.nodes[this.editor.activePath.nodes.length - 1];
+                // Determine reference node based on continuation direction
+                let lastNode;
+                if (this.continuingFromEnd) {
+                    lastNode = this.editor.activePath.nodes[this.editor.activePath.nodes.length - 1];
+                } else {
+                    lastNode = this.editor.activePath.nodes[0];
+                }
                 const dx = x - lastNode.x;
                 const dy = y - lastNode.y;
                 const angle = Math.atan2(dy, dx) * (180 / Math.PI);
@@ -100,6 +138,15 @@ export class PenTool extends BaseTool {
                 node.cpIn.x = node.x - (x - node.x);
                 node.cpIn.y = node.y - (y - node.y);
             }
+
+            // Set preview origin for renderer if prepending
+            if (!this.continuingFromEnd && this.editor.activePath.nodes.length > 0) {
+                const firstNode = this.editor.activePath.nodes[0];
+                this.editor.previewOrigin = { x: firstNode.x, y: firstNode.y };
+            } else {
+                this.editor.previewOrigin = null;
+            }
+
             this.editor.render();
         } else {
             // Reset cursor when not drawing
@@ -153,12 +200,14 @@ export class PenTool extends BaseTool {
     onDeactivate(): void {
         this.editor.activePath = null;
         this.editor.previewPoint = null;
+        this.editor.previewOrigin = null;
         this.editor.render();
     }
 
     onActivate(): void {
         this.editor.canvas.style.cursor = 'default';
         this.editor.activePath = null; // Ensure fresh start
+        this.editor.previewOrigin = null;
         this.draggingItem = null;
     }
 }

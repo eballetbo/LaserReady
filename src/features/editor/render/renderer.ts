@@ -67,7 +67,8 @@ export class CanvasRenderer {
         selectionBox: any | null,
         zoom: number = 1,
         pan: { x: number; y: number } = { x: 0, y: 0 },
-        selectedNodeIndex: number | null = null
+        selectedNodeIndex: number | null = null,
+        previewOrigin: { x: number; y: number } | null = null
     ): void {
         this.clear();
 
@@ -103,7 +104,7 @@ export class CanvasRenderer {
 
         // Draw preview line for Pen tool
         if (toolType === 'pen' && activePath && previewPoint) {
-            this.drawPenPreview(activePath, previewPoint);
+            this.drawPenPreview(activePath, previewPoint, previewOrigin);
         }
 
         // Draw selection box
@@ -254,11 +255,17 @@ export class CanvasRenderer {
         this.ctx.fill();
     }
 
-    drawPenPreview(activePath: any, previewPoint: { x: number; y: number }): void {
+    drawPenPreview(activePath: any, previewPoint: { x: number; y: number }, origin: { x: number; y: number } | null = null): void {
         if (!activePath.nodes || activePath.nodes.length === 0) return;
-        const lastNode = activePath.nodes[activePath.nodes.length - 1];
+
+        let startPoint = origin;
+        if (!startPoint) {
+            const lastNode = activePath.nodes[activePath.nodes.length - 1];
+            startPoint = { x: lastNode.x, y: lastNode.y };
+        }
+
         this.ctx.beginPath();
-        this.ctx.moveTo(lastNode.x, lastNode.y);
+        this.ctx.moveTo(startPoint.x, startPoint.y);
         this.ctx.lineTo(previewPoint.x, previewPoint.y);
         this.ctx.strokeStyle = PEN_PREVIEW_COLOR;
         this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;

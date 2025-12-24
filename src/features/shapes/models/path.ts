@@ -19,7 +19,7 @@ export class PathShape {
         nodes: PathNode[] = [],
         closed: boolean = false,
         layerId: string = 'layer-1', // Default to layer-1
-        type: string | null = null,
+        type: string = 'path',
         params: Record<string, any> = {},
         id?: string
     ) {
@@ -67,7 +67,7 @@ export class PathShape {
 
     clone(): PathShape {
         const newNodes = this.nodes.map(n => n.clone());
-        return new PathShape(newNodes, this.closed, this.layerId, this.type, { ...this.params });
+        return new PathShape(newNodes, this.closed, this.layerId, this.type || 'path', { ...this.params });
     }
 
     static fromJSON(json: any): PathShape {

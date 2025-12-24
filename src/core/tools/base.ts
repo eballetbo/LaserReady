@@ -15,6 +15,7 @@ export interface IEditorContext {
     moveSelected: (dx: number, dy: number) => void;
     activeLayerId: string;
     selectionBox: any | null; // Drag selection preview box
+    previewOrigin: { x: number; y: number } | null; // Custom start point for preview line (optional)
 }
 
 export class BaseTool {
