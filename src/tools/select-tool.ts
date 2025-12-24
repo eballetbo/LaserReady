@@ -1,5 +1,5 @@
-import { BaseTool, IEditorContext } from './base-tool';
-import { Geometry, Point, Rect } from '../math/geometry';
+import { BaseTool, IEditorContext } from '../core/tools/base-tool';
+import { Geometry, Point, Rect } from '../core/math/geometry';
 import { IShape } from '../types/core';
 
 interface ControlHit {

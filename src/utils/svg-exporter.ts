@@ -1,5 +1,5 @@
 import paper from 'paper';
-import { BooleanOperations } from '../math/boolean';
+import { BooleanOperations } from '../core/math/boolean';
 import { PathShape } from '../features/shapes/path-shape';
 
 // Initialize a headless PaperScope for SVG exporting

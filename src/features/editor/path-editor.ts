@@ -1,5 +1,5 @@
 // @ts-nocheck - Progressive TypeScript migration, refine types incrementally
-import { Geometry } from '../../math/geometry';
+import { Geometry } from '../../core/math/geometry';
 import { CanvasRenderer } from './render/canvas-renderer';
 import { InputManager } from './input-manager';
 import { PathNode } from '../shapes/path-node';
@@ -10,7 +10,7 @@ import { SelectTool } from '../../tools/select-tool';
 import { TextTool } from '../../tools/text-tool';
 import { TextObject } from '../../model/text-object';
 import { NodeEditTool } from '../../tools/node-edit-tool';
-import { BooleanOperations } from '../../math/boolean';
+import { BooleanOperations } from '../../core/math/boolean';
 import { SVGImporter } from '../../utils/svg-importer';
 import { HistoryManager } from './history-manager';
 import { useStore } from '../../store/useStore';

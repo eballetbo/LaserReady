@@ -1,4 +1,4 @@
-import { BaseTool, IEditorContext } from './base-tool';
+import { BaseTool, IEditorContext } from '../core/tools/base-tool';
 import { TextObject } from '../model/text-object.js';
 
 export class TextTool extends BaseTool {

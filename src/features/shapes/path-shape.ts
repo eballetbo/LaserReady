@@ -1,4 +1,4 @@
-import { Geometry } from '../../math/geometry';
+import { Geometry } from '../../core/math/geometry';
 import { PathNode } from './path-node';
 
 export interface PathStyle {

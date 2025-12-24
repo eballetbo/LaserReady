@@ -1,4 +1,4 @@
-import { Geometry } from '../../../math/geometry';
+import { Geometry } from '../../../core/math/geometry';
 import { IShape, ILayer, OperationMode } from '../../../types/core';
 
 export interface RendererConfig {

@@ -1,4 +1,4 @@
-import { BaseTool } from '../../tools/base-tool';
+import { BaseTool } from '../../core/tools/base-tool';
 import { PathNode } from './path-node';
 import { PathShape } from './path-shape';
 

@@ -1,4 +1,4 @@
-import { Command } from './command';
+import { Command } from '../core/commands/command';
 import { useStore } from '../store/useStore';
 import { PathShape } from '../features/shapes/path-shape';
 
