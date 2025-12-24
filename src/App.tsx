@@ -1,14 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee } from 'lucide-react';
-import Toolbar from './features/ui/Toolbar';
-import RightSidebar from './features/ui/RightSidebar';
-import Canvas from './features/editor/Canvas';
-import { LASER_MODES } from './utils/laser-modes';
+import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee, Languages } from 'lucide-react';
+import { Toolbar, RightSidebar } from './features/ui';
+import { Canvas, PathEditor } from './features/editor';
+import { LASER_MODES, exportToSVG, downloadSVG } from './utils';
 import { LanguageProvider, useLanguage } from './contexts/language';
-import { Languages } from 'lucide-react';
-import { exportToSVG, downloadSVG } from './utils/svg-exporter';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import { PathEditor } from './features/editor/path-editor'; // Import type if available (it is a class)
+
 
 // --- CONSTANTS ---
 // Material size in MM
