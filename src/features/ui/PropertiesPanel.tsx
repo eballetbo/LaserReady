@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/language';
-import { Settings, Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
-import { LASER_MODES } from '../../utils/laser-modes';
+import { Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
 import { PathEditor } from '../shapes/manipulation/path-editor';
+import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 
 interface Theme {
     iconColor: string;
@@ -18,7 +18,7 @@ interface Theme {
 
 interface PropertiesPanelProps {
     theme: Theme;
-    selection: any[]; // PathShape[] | TextObject[] (TextObject is JS)
+    selection: any[]; // PathShape[] | TextObject[]
     editor: PathEditor;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;
@@ -37,7 +37,6 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     useEffect(() => {
         if (selectedObject) {
             const updateDims = () => {
-                // Assuming selectedObject has getBounds(). PathShape and TextObject do.
                 const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
                 setDimensions({
                     x: Math.round(bounds.minX),
@@ -56,16 +55,12 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             if (selectedObject.params?.innerRadius) {
                 setInnerRadius(selectedObject.params.innerRadius);
             }
-            // We don't have event listeners on shapes yet, so this might not update in real-time during drag
-            // But PathEditor re-renders on drag, we might need a way to force update here?
-            // For now, it updates on selection change.
         }
-    }, [selectedObject, selection]); // Update when selection changes
+    }, [selectedObject, selection]);
 
     const updateDimension = (key: string, value: string) => {
         if (!selectedObject) return;
 
-        // Update local state immediately to allow typing
         setDimensions(prev => ({ ...prev, [key]: value }));
 
         const val = parseFloat(value);
@@ -82,7 +77,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             const dy = val - bounds.minY;
             selectedObject.move(0, dy);
         } else if (key === 'w') {
-            if (bounds.width === 0) return; // Avoid division by zero
+            if (bounds.width === 0) return;
             const sx = val / bounds.width;
             selectedObject.scale(sx, 1, { x: bounds.minX, y: bounds.minY });
         } else if (key === 'h') {
@@ -118,92 +113,40 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             {selection.length > 1 ? (
                 <div className="space-y-6">
                     <div>
-                        <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('booleanOperations')}</div>
+                        <SectionHeader>{t('booleanOperations')}</SectionHeader>
                         <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => editor.performBooleanOperation('unite')} className={`p-2 rounded border ${theme.border} ${theme.buttonHover} flex flex-col items-center gap-1`}>
-                                <Combine size={20} /> <span className="text-xs">{t('unite')}</span>
-                            </button>
-                            <button onClick={() => editor.performBooleanOperation('subtract')} className={`p-2 rounded border ${theme.border} ${theme.buttonHover} flex flex-col items-center gap-1`}>
-                                <Minus size={20} /> <span className="text-xs">{t('subtract')}</span>
-                            </button>
-                            <button onClick={() => editor.performBooleanOperation('intersect')} className={`p-2 rounded border ${theme.border} ${theme.buttonHover} flex flex-col items-center gap-1`}>
-                                <SquaresIntersect size={20} /> <span className="text-xs">{t('intersect')}</span>
-                            </button>
-                            <button onClick={() => editor.performBooleanOperation('exclude')} className={`p-2 rounded border ${theme.border} ${theme.buttonHover} flex flex-col items-center gap-1`}>
-                                <XCircle size={20} /> <span className="text-xs">{t('exclude')}</span>
-                            </button>
+                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
                         </div>
                     </div>
-                    <button onClick={deleteSelected} className="w-full py-2 mt-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded hover:bg-red-500/20">
-                        <Trash2 size={16} className="inline mr-2" /> {t('delete')} ({selection.length})
-                    </button>
+                    <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={`${t('delete')} (${selection.length})`} theme={theme} className="mt-4" />
                 </div>
             ) : selectedObject ? (
                 <div className="space-y-6">
                     {/* DIMENSIONS */}
                     <div>
-                        <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('dimensions')}</div>
+                        <SectionHeader>{t('dimensions')}</SectionHeader>
                         <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <label className="text-[10px] text-gray-400 block mb-1">X</label>
-                                <input
-                                    type="number"
-                                    value={dimensions.x}
-                                    onChange={(e) => updateDimension('x', e.target.value)}
-                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] text-gray-400 block mb-1">Y</label>
-                                <input
-                                    type="number"
-                                    value={dimensions.y}
-                                    onChange={(e) => updateDimension('y', e.target.value)}
-                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] text-gray-400 block mb-1">{t('width')}</label>
-                                <input
-                                    type="number"
-                                    value={dimensions.w}
-                                    onChange={(e) => updateDimension('w', e.target.value)}
-                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] text-gray-400 block mb-1">{t('height')}</label>
-                                <input
-                                    type="number"
-                                    value={dimensions.h}
-                                    onChange={(e) => updateDimension('h', e.target.value)}
-                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                />
-                            </div>
+                            <NumberInput label="X" value={dimensions.x} onChange={(v) => updateDimension('x', v)} theme={theme} />
+                            <NumberInput label="Y" value={dimensions.y} onChange={(v) => updateDimension('y', v)} theme={theme} />
+                            <NumberInput label={t('width')} value={dimensions.w} onChange={(v) => updateDimension('w', v)} theme={theme} />
+                            <NumberInput label={t('height')} value={dimensions.h} onChange={(v) => updateDimension('h', v)} theme={theme} />
                         </div>
                     </div>
 
                     {/* PARAMETRIC SETTINGS */}
                     {selectedObject.type === 'polygon' && (
                         <div>
-                            <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('shapeProperties')}</div>
-                            <div>
-                                <label className="text-[10px] text-gray-400 block mb-1">{t('sides')}</label>
-                                <input
-                                    type="number"
-                                    min="3"
-                                    max="12"
-                                    value={sides}
-                                    onChange={(e) => updateParam('sides', e.target.value)}
-                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                />
-                            </div>
+                            <SectionHeader>{t('shapeProperties')}</SectionHeader>
+                            <NumberInput label={t('sides')} value={sides} onChange={(v) => updateParam('sides', v)} min={3} max={12} theme={theme} />
                         </div>
                     )}
 
                     {selectedObject.type === 'text' && (
                         <div>
-                            <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('textProperties')}</div>
+                            <SectionHeader>{t('textProperties')}</SectionHeader>
                             <div className="space-y-2">
                                 <div>
                                     <label className="text-[10px] text-gray-400 block mb-1">{t('content')}</label>
@@ -235,18 +178,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                             <option value="Verdana">Verdana</option>
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] text-gray-400 block mb-1">{t('fontSize')}</label>
-                                        <input
-                                            type="number"
-                                            value={selectedObject.fontSize}
-                                            onChange={(e) => {
-                                                selectedObject.fontSize = parseFloat(e.target.value);
-                                                editor.render();
-                                            }}
-                                            className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                        />
-                                    </div>
+                                    <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => { selectedObject.fontSize = parseFloat(v); editor.render(); }} theme={theme} />
                                 </div>
                                 <div className="flex gap-2">
                                     <button
@@ -274,38 +206,17 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
                     {selectedObject.type === 'star' && (
                         <div>
-                            <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('shapeProperties')}</div>
+                            <SectionHeader>{t('shapeProperties')}</SectionHeader>
                             <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-[10px] text-gray-400 block mb-1">{t('points')}</label>
-                                    <input
-                                        type="number"
-                                        min="3"
-                                        max="20"
-                                        value={points}
-                                        onChange={(e) => updateParam('points', e.target.value)}
-                                        className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-gray-400 block mb-1">{t('innerRadius')}</label>
-                                    <input
-                                        type="number"
-                                        min="0.1"
-                                        max="0.9"
-                                        step="0.05"
-                                        value={innerRadius}
-                                        onChange={(e) => updateParam('innerRadius', e.target.value)}
-                                        className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                    />
-                                </div>
+                                <NumberInput label={t('points')} value={points} onChange={(v) => updateParam('points', v)} min={3} max={20} theme={theme} />
+                                <NumberInput label={t('innerRadius')} value={innerRadius} onChange={(v) => updateParam('innerRadius', v)} min={0.1} max={0.9} step={0.05} theme={theme} />
                             </div>
                         </div>
                     )}
 
                     {/* LASER MODES */}
                     <div>
-                        <div className="text-xs text-gray-500 uppercase font-bold mb-2">{t('laserMode')}</div>
+                        <SectionHeader>{t('laserMode')}</SectionHeader>
                         <div className="grid grid-cols-1 gap-2">
                             <button onClick={() => applyLaserMode('CUT')} className={`p-3 rounded border ${theme.border} hover:bg-red-500/10 hover:border-red-500 flex items-center gap-3 text-left`}>
                                 <div className="w-4 h-4 bg-red-500 rounded-full"></div>
@@ -320,17 +231,14 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <div><div className="font-bold text-sm">{t('engrave')}</div><div className="text-xs opacity-70">{t('engraveDesc')}</div></div>
                             </button>
                         </div>
-                        <button onClick={deleteSelected} className="w-full py-2 mt-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded hover:bg-red-500/20">
-                            <Trash2 size={16} className="inline mr-2" /> {t('delete')}
-                        </button>
+                        <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={t('delete')} theme={theme} className="mt-4" />
                     </div>
                 </div>
             ) : (
                 <div className="text-center text-gray-500 mt-10 text-sm">
                     {t('noSelection')}
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 }
