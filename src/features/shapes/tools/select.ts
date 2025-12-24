@@ -141,11 +141,13 @@ export class SelectTool extends BaseTool {
             const width = x - this.dragStart.x;
             const height = y - this.dragStart.y;
 
-            // Determine style based on direction (Right=Red/Enclosing, Left=Green/Crossing)
+            // Determine style based on direction
+            // Left→Right (width > 0) = Enclosing (Blue)
+            // Right→Left (width < 0) = Crossing (Red)
             const isCrossing = width < 0;
             const style = isCrossing
-                ? { fill: 'rgba(0, 255, 0, 0.1)', stroke: 'green' }
-                : { fill: 'rgba(255, 0, 0, 0.1)', stroke: 'red' };
+                ? { fill: 'rgba(0, 255, 0, 0.1)', stroke: 'green' }       // Crossing
+                : { fill: 'rgba(255, 0, 0, 0.1)', stroke: 'red' };    // Enclosing
 
             this.selectionBox = {
                 x: isCrossing ? x : this.dragStart.x,
@@ -155,16 +157,11 @@ export class SelectTool extends BaseTool {
                 style
             };
 
-            // Pass selectionBox to render
-            this.editor.renderer.drawScene(
-                this.editor.shapes,
-                this.editor.selectedShapes,
-                this.editor.config,
-                this.editor.tool,
-                this.editor.activePath,
-                this.editor.previewPoint,
-                this.selectionBox
-            );
+            // Assign to editor so PathEditor can pass it to renderer
+            this.editor.selectionBox = this.selectionBox;
+
+            // Trigger normal render which will include the selection box
+            this.editor.render();
             return;
         }
 
@@ -347,16 +344,21 @@ export class SelectTool extends BaseTool {
                 maxY: Math.max(this.dragStart.y, y)
             };
 
-            const isCrossing = width < 0;
+            // Determine selection mode based on drag direction
+            const isEnclosing = width > 0; // Left→Right = Enclosing
 
             const newSelection: IShape[] = [];
             this.editor.shapes.forEach((shape: IShape) => {
-                if (isCrossing) {
-                    if (Geometry.isShapeIntersectingRect(shape, rect)) {
+                const shapeBounds = shape.getBounds();
+
+                if (isEnclosing) {
+                    // Enclosing: Shape must be 100% inside selection rect
+                    if (Geometry.rectContainsRect(rect, shapeBounds)) {
                         newSelection.push(shape);
                     }
                 } else {
-                    if (Geometry.isShapeInRect(shape, rect)) {
+                    // Crossing: Shape just needs to touch/intersect
+                    if (Geometry.rectIntersectsRect(rect, shapeBounds)) {
                         newSelection.push(shape);
                     }
                 }
@@ -373,7 +375,9 @@ export class SelectTool extends BaseTool {
                 this.editor.selectedShapes = newSelection;
             }
 
+            // Clear selection box after selection is complete
             this.selectionBox = null;
+            this.editor.selectionBox = null;
             this.editor.render();
         }
 

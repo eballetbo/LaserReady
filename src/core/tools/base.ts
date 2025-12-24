@@ -14,6 +14,7 @@ export interface IEditorContext {
     render: () => void;
     moveSelected: (dx: number, dy: number) => void;
     activeLayerId: string;
+    selectionBox: any | null; // Drag selection preview box
 }
 
 export class BaseTool {

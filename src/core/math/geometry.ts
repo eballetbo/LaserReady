@@ -136,5 +136,27 @@ export const Geometry = {
             cx: (minX + maxX) / 2,
             cy: (minY + maxY) / 2
         };
+    },
+
+    /**
+     * Check if outer rectangle completely contains inner rectangle.
+     * Used for "Enclosing Selection" (Left→Right drag).
+     */
+    rectContainsRect(outer: Rect, inner: Rect): boolean {
+        return inner.minX >= outer.minX &&
+            inner.maxX <= outer.maxX &&
+            inner.minY >= outer.minY &&
+            inner.maxY <= outer.maxY;
+    },
+
+    /**
+     * Check if two rectangles intersect or touch.
+     * Used for "Crossing Selection" (Right→Left drag).
+     */
+    rectIntersectsRect(r1: Rect, r2: Rect): boolean {
+        return !(r1.maxX < r2.minX ||
+            r1.minX > r2.maxX ||
+            r1.maxY < r2.minY ||
+            r1.minY > r2.maxY);
     }
 };

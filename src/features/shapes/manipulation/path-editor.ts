@@ -62,6 +62,7 @@ export class PathEditor {
         this.activePath = null; // For pen tool
         this.previewPoint = null;
         this.selectedNodeIndex = null; // For node edit tool
+        this.selectionBox = null; // For drag selection preview
 
         this.zoom = 1;
         this.pan = { x: 0, y: 0 };
@@ -209,7 +210,7 @@ export class PathEditor {
             tool,
             this.activePath,
             this.previewPoint,
-            null, // selectionBox
+            this.selectionBox, // Pass selection box from SelectTool
             zoom,
             this.pan,
             this.selectedNodeIndex
