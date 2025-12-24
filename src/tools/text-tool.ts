@@ -1,14 +1,17 @@
-import { BaseTool } from './base-tool.js';
+import { BaseTool, IEditorContext } from './base-tool';
 import { TextObject } from '../model/text-object.js';
 
 export class TextTool extends BaseTool {
-    constructor(editor) {
+    activeText: any | null; // TextObject
+    textarea: HTMLTextAreaElement | null;
+
+    constructor(editor: IEditorContext) {
         super(editor);
         this.activeText = null;
         this.textarea = null;
     }
 
-    onMouseDown(e) {
+    onMouseDown(e: MouseEvent) {
         e.preventDefault();
         const { x, y } = this.editor.getMousePos(e);
 
@@ -30,12 +33,12 @@ export class TextTool extends BaseTool {
         this.editor.render();
     }
 
-    findClickedText(x, y) {
+    findClickedText(x: number, y: number): any | null {
         // Simple bounds check
         for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
             const shape = this.editor.shapes[i];
             if (shape.type === 'text') {
-                const bounds = shape.getBounds();
+                const bounds = shape.getBounds ? shape.getBounds() : { minX: shape.x, minY: shape.y, maxX: shape.x + 100, maxY: shape.y + 20 };
                 if (x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY) {
                     return shape;
                 }
@@ -44,7 +47,7 @@ export class TextTool extends BaseTool {
         return null;
     }
 
-    startEditing(textObject) {
+    startEditing(textObject: any) {
         if (this.activeText === textObject && this.textarea) return;
 
         this.finishEditing(); // Finish previous editing if any
@@ -64,9 +67,9 @@ export class TextTool extends BaseTool {
         this.textarea.focus();
 
         // Sync input
-        this.textarea.addEventListener('input', (e) => {
+        this.textarea.addEventListener('input', (e: Event) => {
             if (this.activeText) {
-                this.activeText.text = e.target.value;
+                this.activeText.text = (e.target as HTMLTextAreaElement).value;
                 this.editor.render();
             }
         });
@@ -104,7 +107,7 @@ export class TextTool extends BaseTool {
         }
     }
 
-    onKeyDown(e) {
+    onKeyDown(e: KeyboardEvent) {
         // If we are editing, textarea handles input.
         // But we might want to handle Escape to cancel/finish.
         if (e.key === 'Escape') {
