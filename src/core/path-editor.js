@@ -13,6 +13,7 @@ import { BooleanOperations } from '../math/boolean.js';
 import { SVGImporter } from '../utils/svg-importer.js';
 import { HistoryManager } from './history-manager.js';
 import { useStore } from '../store/useStore';
+import { DeleteShapeCommand } from '../commands/delete-shape-command';
 
 /**
  * Main Editor Controller.
@@ -215,11 +216,10 @@ export class PathEditor {
     deleteSelected() {
         if (this.selectedShapes.length > 0) {
             this.startAction();
-            const currentShapes = this.shapes;
-            const currentSelected = this.selectedShapes;
-            const newShapes = currentShapes.filter(s => !currentSelected.includes(s));
-            this.shapes = newShapes;
-            this.selectedShapes = [];
+
+            const command = new DeleteShapeCommand(this.selectedShapes);
+            command.execute();
+
             this.render();
             this.endAction();
         }
