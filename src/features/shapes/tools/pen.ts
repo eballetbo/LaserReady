@@ -33,7 +33,7 @@ export class PenTool extends BaseTool {
             // So `this.editor.selectedShape = ...` in original JS might have been a bug or I missed a getter/setter.
             // PathEditor has `activePath`.
             // I will use `this.editor.selectedShapes = [this.editor.activePath];`.
-            this.editor.selectedShapes = [this.editor.activePath];
+            // Don't select activePath - it should render in layer color (black), not selection color (blue)
             this.draggingItem = { type: 'anchor', index: 0 };
         } else {
             // Continue path
