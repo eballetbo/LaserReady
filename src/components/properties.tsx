@@ -2,8 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/language';
 import { Settings, Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
 import { LASER_MODES } from '../utils/laser-modes';
+import { PathEditor } from '../features/editor/path-editor';
 
-export default function PropertiesPanel({ theme, selection, editor, applyLaserMode, deleteSelected, isEmbedded }) {
+interface Theme {
+    iconColor: string;
+    buttonHover: string;
+    border: string;
+    panel: string;
+    text: string;
+    textMuted: string;
+    inputBg?: string;
+    inputBorder?: string;
+    [key: string]: string | undefined;
+}
+
+interface PropertiesPanelProps {
+    theme: Theme;
+    selection: any[]; // PathShape[] | TextObject[] (TextObject is JS)
+    editor: PathEditor;
+    applyLaserMode: (mode: string) => void;
+    deleteSelected: () => void;
+    isEmbedded: boolean;
+}
+
+export default function PropertiesPanel({ theme, selection, editor, applyLaserMode, deleteSelected, isEmbedded }: PropertiesPanelProps) {
     const { t } = useLanguage();
     const [dimensions, setDimensions] = useState({ x: 0, y: 0, w: 0, h: 0 });
     const [sides, setSides] = useState(6);
@@ -15,7 +37,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     useEffect(() => {
         if (selectedObject) {
             const updateDims = () => {
-                const bounds = selectedObject.getBounds();
+                // Assuming selectedObject has getBounds(). PathShape and TextObject do.
+                const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
                 setDimensions({
                     x: Math.round(bounds.minX),
                     y: Math.round(bounds.minY),
@@ -39,7 +62,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         }
     }, [selectedObject, selection]); // Update when selection changes
 
-    const updateDimension = (key, value) => {
+    const updateDimension = (key: string, value: string) => {
         if (!selectedObject) return;
 
         // Update local state immediately to allow typing
@@ -48,7 +71,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         const val = parseFloat(value);
         if (isNaN(val)) return;
 
-        const bounds = selectedObject.getBounds();
+        const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
 
         editor.startAction();
 
@@ -70,23 +93,17 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
         editor.render();
         editor.endAction();
-
-        // We don't update local state here because we want to keep what the user typed.
-        // The useEffect will handle updating state if selection changes.
-        // However, if we want to reflect the *actual* bounds after a complex operation (like scaling constraints),
-        // we might need to, but for simple scaling/moving, the input value is the truth.
-        // Actually, if we scale, the other dimension might change if we were maintaining aspect ratio (not implemented yet).
-        // For now, let's trust the input value for the field being edited.
     };
 
-    const updateParam = (key, value) => {
-        if (key === 'sides') setSides(value);
-        if (key === 'points') setPoints(value);
-        if (key === 'innerRadius') setInnerRadius(value);
+    const updateParam = (key: string, value: string) => {
+        let val = parseFloat(value);
+
+        if (key === 'sides') setSides(val);
+        if (key === 'points') setPoints(val);
+        if (key === 'innerRadius') setInnerRadius(val);
 
         if (!selectedObject || !selectedObject.params) return;
 
-        let val = parseFloat(value);
         if (isNaN(val)) return;
         if (key === 'sides' && val < 3) return;
         if (key === 'points' && val < 3) return;
@@ -195,13 +212,6 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         onChange={(e) => {
                                             selectedObject.text = e.target.value;
                                             editor.render();
-                                            // Force update to keep input in sync if needed, 
-                                            // but usually direct object mutation + render is enough for canvas,
-                                            // but for React input we need state or force update.
-                                            // Since we don't have local state for text content here, 
-                                            // we rely on parent re-render or we should add local state.
-                                            // Let's add a forceUpdate or use local state.
-                                            // For now, let's just mutate and force update via setDimensions (hacky) or better, add local state.
                                         }}
                                         className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                         rows={3}

@@ -10,12 +10,22 @@ import {
     Check, X, Plus, Minus,
     AlertCircle, Info, HelpCircle,
     Facebook, Twitter, Instagram, Linkedin,
-    Github, Chrome, Globe, Wifi
+    Github, Chrome, Globe, Wifi,
+    LucideIcon
 } from 'lucide-react';
 import { useLanguage } from '../contexts/language';
 
+interface IconDef {
+    icon: LucideIcon;
+    name: string;
+}
+
+interface IconCategories {
+    [key: string]: IconDef[];
+}
+
 // Organize icons into categories
-const LUCIDE_ICONS = {
+const LUCIDE_ICONS: IconCategories = {
     shapes: [
         { icon: Star, name: 'Star' },
         { icon: Heart, name: 'Heart' },
@@ -71,14 +81,30 @@ const LUCIDE_ICONS = {
     ]
 };
 
-const LIBRARIES = {
+const LIBRARIES: { [key: string]: { name: string; categories: IconCategories } } = {
     lucide: {
         name: 'Lucide Icons',
         categories: LUCIDE_ICONS
     }
 };
 
-export default function AssetLibrary({ theme }) {
+interface Theme {
+    iconColor: string;
+    buttonHover: string;
+    border: string;
+    panel: string;
+    text: string;
+    textMuted: string;
+    inputBg?: string; // Optional to match potential variations, but we try to be strict
+    inputBorder?: string;
+    [key: string]: string | undefined;
+}
+
+interface AssetLibraryProps {
+    theme: Theme;
+}
+
+export default function AssetLibrary({ theme }: AssetLibraryProps) {
     const { t } = useLanguage();
     const [selectedLibrary, setSelectedLibrary] = useState('lucide');
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -96,7 +122,7 @@ export default function AssetLibrary({ theme }) {
         return currentLibrary.categories[selectedCategory] || [];
     }, [currentLibrary, selectedCategory]);
 
-    const handleDragStart = (e, IconComponent) => {
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, IconComponent: LucideIcon) => {
         // Render icon to SVG string
         const svgString = renderToStaticMarkup(
             <IconComponent

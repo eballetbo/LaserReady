@@ -3,10 +3,31 @@ import { Settings, Library } from 'lucide-react';
 import { useLanguage } from '../contexts/language';
 import PropertiesPanel from './properties';
 import AssetLibrary from './asset-library';
+import { PathEditor } from '../features/editor/path-editor';
 
-export default function RightSidebar({ theme, selection, editor, applyLaserMode, deleteSelected }) {
+interface Theme {
+    iconColor: string;
+    buttonHover: string;
+    border: string;
+    panel: string;
+    text: string;
+    textMuted: string;
+    inputBg?: string;
+    inputBorder?: string;
+    [key: string]: string | undefined;
+}
+
+interface RightSidebarProps {
+    theme: Theme;
+    selection: any[];
+    editor: PathEditor;
+    applyLaserMode: (mode: string) => void;
+    deleteSelected: () => void;
+}
+
+export default function RightSidebar({ theme, selection, editor, applyLaserMode, deleteSelected }: RightSidebarProps) {
     const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState('properties');
+    const [activeTab, setActiveTab] = useState<'properties' | 'library'>('properties');
 
     return (
         <div className={`w-72 ${theme.panel} border-l ${theme.border} flex flex-col shrink-0 z-20`}>

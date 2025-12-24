@@ -1,3 +1,4 @@
+import React from 'react';
 import { useLanguage } from '../contexts/language';
 import {
     MousePointer2,
@@ -10,11 +11,33 @@ import {
     SplinePointer,
     ChevronRight,
     Star,
-    Type
+    Type,
+    LucideIcon
 } from 'lucide-react';
 
+interface Theme {
+    iconColor: string;
+    buttonHover: string;
+    border: string;
+    panel: string;
+    text?: string;
+    textMuted?: string;
+    inputBg?: string;
+    inputBorder?: string;
+    [key: string]: string | undefined;
+}
 
-const ToolButton = ({ active, icon: Icon, label, onClick, theme, hasSubmenu, onSubmenuClick }) => (
+interface ToolButtonProps {
+    active: boolean;
+    icon: LucideIcon;
+    label: string;
+    onClick: () => void;
+    theme: Theme;
+    hasSubmenu?: boolean;
+    onSubmenuClick?: React.ReactNode;
+}
+
+const ToolButton: React.FC<ToolButtonProps> = ({ active, icon: Icon, label, onClick, theme, hasSubmenu, onSubmenuClick }) => (
     <div className="relative group/btn">
         <button
             onClick={onClick}
@@ -42,7 +65,14 @@ const ToolButton = ({ active, icon: Icon, label, onClick, theme, hasSubmenu, onS
     </div>
 );
 
-export default function Toolbar({ tool, setTool, theme, addText }) {
+interface ToolbarProps {
+    tool: string;
+    setTool: (tool: string) => void;
+    theme: Theme;
+    addText?: any; // Unused but kept for API compatibility
+}
+
+export default function Toolbar({ tool, setTool, theme, addText }: ToolbarProps) {
     const { t } = useLanguage();
     return (
         <div className={`flex flex-col gap-2 p-2 ${theme.panel} border-r ${theme.border} h-full w-16 items-center shadow-sm z-10`}>
