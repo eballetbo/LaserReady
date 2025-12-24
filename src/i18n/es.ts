@@ -1,4 +1,6 @@
-export const es = {
+import { Translation } from './en';
+
+export const es: Translation = {
     // Toolbar
     select: "Seleccionar",
     nodeEdit: "Editar Nodos",

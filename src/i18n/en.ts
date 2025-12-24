@@ -1,4 +1,74 @@
-export const en = {
+export interface Translation {
+    // Toolbar
+    select: string;
+    nodeEdit: string;
+    rect: string;
+    circle: string;
+    polygon: string;
+    penTool: string;
+
+    // Properties Panel
+    properties: string;
+    booleanOperations: string;
+    unite: string;
+    subtract: string;
+    intersect: string;
+    exclude: string;
+    delete: string;
+    dimensions: string;
+    width: string;
+    height: string;
+    laserMode: string;
+    cut: string;
+    cutDesc: string;
+    score: string;
+    scoreDesc: string;
+    engrave: string;
+    engraveDesc: string;
+    noSelection: string;
+
+    // App
+    editorAlpha: string;
+    area: string;
+    import: string;
+    export: string;
+    undo: string;
+    redo: string;
+    zoomIn: string;
+    zoomOut: string;
+    resetZoom: string;
+
+    // Language
+    language: string;
+    lang_en: string;
+    lang_es: string;
+    lang_ca: string;
+
+    // Shapes
+    shapes: string;
+    triangle: string;
+    pentagon: string;
+    star: string;
+
+    // Properties
+    shapeProperties: string;
+    sides: string;
+    points: string;
+    innerRadius: string;
+
+    // Asset Library
+    library: string;
+    dragAndDrop: string;
+
+    // Text Tool
+    textTool: string;
+    textProperties: string;
+    content: string;
+    fontFamily: string;
+    fontSize: string;
+}
+
+export const en: Translation = {
     // Toolbar
     select: "Select",
     nodeEdit: "Node Edit",

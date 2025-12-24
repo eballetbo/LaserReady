@@ -21,7 +21,3 @@ declare module '*/path-editor.js' {
         getMousePos(e: any): { x: number, y: number };
     }
 }
-
-declare module '*/translations' {
-    export const translations: Record<string, any>;
-}
