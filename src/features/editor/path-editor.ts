@@ -12,7 +12,7 @@ import { TextObject } from '../../model/text-object';
 import { NodeEditTool } from '../../tools/node-edit-tool';
 import { BooleanOperations } from '../../math/boolean';
 import { SVGImporter } from '../../utils/svg-importer';
-import { HistoryManager } from './history-manager.js';
+import { HistoryManager } from './history-manager';
 import { useStore } from '../../store/useStore';
 import { DeleteShapeCommand } from '../../commands/delete-shape-command';
 import { MoveShapeCommand } from '../../commands/move-shape-command';

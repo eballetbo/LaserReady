@@ -2,7 +2,12 @@
  * Manages the history stack for undo/redo operations.
  */
 export class HistoryManager {
-    constructor(limit = 50) {
+    private limit: number;
+    private undoStack: any[];
+    private redoStack: any[];
+    private lastStateStr: string | null;
+
+    constructor(limit: number = 50) {
         this.limit = limit;
         this.undoStack = [];
         this.redoStack = [];
@@ -11,9 +16,9 @@ export class HistoryManager {
 
     /**
      * Pushes a new state to the history.
-     * @param {any} state The state to save.
+     * @param state The state to save.
      */
-    push(state) {
+    push(state: any): void {
         const stateStr = JSON.stringify(state);
 
         // Avoid duplicates
@@ -33,10 +38,10 @@ export class HistoryManager {
 
     /**
      * Returns the previous state and moves current state to redo stack.
-     * @param {any} currentState The current state before undoing (to be pushed to redo).
-     * @returns {any} The previous state.
+     * @param currentState The current state before undoing (to be pushed to redo).
+     * @returns The previous state.
      */
-    undo(currentState) {
+    undo(currentState: any): any | null {
         if (this.undoStack.length === 0) return null;
 
         const previousState = this.undoStack.pop();
@@ -59,10 +64,10 @@ export class HistoryManager {
 
     /**
      * Returns the next state and moves current state to undo stack.
-     * @param {any} currentState The current state before redoing (to be pushed to undo).
-     * @returns {any} The next state.
+     * @param currentState The current state before redoing (to be pushed to undo).
+     * @returns The next state.
      */
-    redo(currentState) {
+    redo(currentState: any): any | null {
         if (this.redoStack.length === 0) return null;
 
         const nextState = this.redoStack.pop();
@@ -73,15 +78,15 @@ export class HistoryManager {
         return nextState;
     }
 
-    canUndo() {
+    canUndo(): boolean {
         return this.undoStack.length > 0;
     }
 
-    canRedo() {
+    canRedo(): boolean {
         return this.redoStack.length > 0;
     }
 
-    clear() {
+    clear(): void {
         this.undoStack = [];
         this.redoStack = [];
         this.lastStateStr = null;
