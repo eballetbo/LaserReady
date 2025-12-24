@@ -1,6 +1,6 @@
 import paper from 'paper';
-import { PathShape } from '../model/path-shape';
-import { PathNode } from '../model/path-node';
+import { PathShape } from '../features/shapes/path-shape';
+import { PathNode } from '../features/shapes/path-node';
 
 
 // Initialize a headless PaperScope for SVG importing

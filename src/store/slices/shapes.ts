@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { PathShape } from '../../model/path-shape';
+import { PathShape } from '../../features/shapes/path-shape';
 import { LaserLayer } from '../../types/layer';
 
 export interface ShapesSlice {

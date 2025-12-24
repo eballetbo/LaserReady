@@ -1,6 +1,6 @@
 import { BaseTool } from './base-tool.js';
-import { PathNode } from '../model/path-node';
-import { PathShape } from '../model/path-shape';
+import { PathNode } from '../features/shapes/path-node';
+import { PathShape } from '../features/shapes/path-shape';
 import { Geometry } from '../math/geometry.js';
 
 export class PenTool extends BaseTool {

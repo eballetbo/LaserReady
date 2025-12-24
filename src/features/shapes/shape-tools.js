@@ -1,6 +1,6 @@
-import { BaseTool } from './base-tool.js';
-import { PathNode } from '../model/path-node';
-import { PathShape } from '../model/path-shape';
+import { BaseTool } from '../../tools/base-tool.js';
+import { PathNode } from './path-node';
+import { PathShape } from './path-shape';
 
 export class RectTool extends BaseTool {
     constructor(editor) {

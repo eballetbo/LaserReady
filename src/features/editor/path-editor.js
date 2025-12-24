@@ -1,20 +1,20 @@
-import { Geometry } from '../math/geometry.js';
-import { CanvasRenderer } from '../render/canvas-renderer.js';
+import { Geometry } from '../../math/geometry';
+import { CanvasRenderer } from '../../render/canvas-renderer.js';
 import { InputManager } from './input-manager';
-import { PathNode } from '../model/path-node';
-import { PathShape } from '../model/path-shape';
-import { RectTool, CircleTool, PolygonTool, StarTool } from '../tools/shape-tools.js';
-import { PenTool } from '../tools/pen-tool.js';
-import { SelectTool } from '../tools/select-tool.js';
-import { TextTool } from '../tools/text-tool.js';
-import { TextObject } from '../model/text-object.js';
-import { NodeEditTool } from '../tools/node-edit-tool.js';
-import { BooleanOperations } from '../math/boolean.js';
-import { SVGImporter } from '../utils/svg-importer.js';
+import { PathNode } from '../shapes/path-node';
+import { PathShape } from '../shapes/path-shape';
+import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/shape-tools.js';
+import { PenTool } from '../../tools/pen-tool.js';
+import { SelectTool } from '../../tools/select-tool.js';
+import { TextTool } from '../../tools/text-tool.js';
+import { TextObject } from '../../model/text-object.js';
+import { NodeEditTool } from '../../tools/node-edit-tool.js';
+import { BooleanOperations } from '../../math/boolean.js';
+import { SVGImporter } from '../../utils/svg-importer.js';
 import { HistoryManager } from './history-manager.js';
-import { useStore } from '../store/useStore';
-import { DeleteShapeCommand } from '../commands/delete-shape-command';
-import { MoveShapeCommand } from '../commands/move-shape-command';
+import { useStore } from '../../store/useStore';
+import { DeleteShapeCommand } from '../../commands/delete-shape-command';
+import { MoveShapeCommand } from '../../commands/move-shape-command';
 
 /**
  * Main Editor Controller.
