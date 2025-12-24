@@ -3,6 +3,7 @@ import { Geometry, Point, Rect } from '../../../core/math/geometry';
 import { IShape } from '../../../types/core';
 import { ResizeShapeCommand } from '../commands/resize';
 import { MoveShapeCommand } from '../commands/move';
+import { RotateShapeCommand } from '../commands/rotate';
 
 interface ControlHit {
     type: 'rotate' | 'resize';
@@ -112,23 +113,20 @@ export class SelectTool extends BaseTool {
         const { x, y } = this.editor.getMousePos(e);
         this.editor.canvas.style.cursor = 'default';
 
+
         if (this.isRotating && this.editor.selectedShapes.length > 0 && this.rotationCenter) {
             const currentAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
             const deltaAngle = currentAngle - this.rotateStartAngle;
 
+            // Rotate preview: restore original, then apply rotation in-place
             this.editor.selectedShapes.forEach((shape, i) => {
                 const original = this.initialShapeStates[i];
-                const newShape = original.clone();
-                newShape.rotate(deltaAngle, this.rotationCenter);
-
-                // Update the shape in the editor's list
-                const index = this.editor.shapes.indexOf(shape);
-                if (index !== -1) {
-                    this.editor.shapes[index] = newShape;
-                    // Update reference in selectedShapes
-                    this.editor.selectedShapes[i] = newShape;
-                }
+                // Restore nodes to original state first
+                shape.nodes = original.nodes.map((n: any) => n.clone());
+                // Then apply current rotation
+                shape.rotate(deltaAngle, this.rotationCenter);
             });
+
             this.editor.render();
             return;
         }
@@ -204,6 +202,33 @@ export class SelectTool extends BaseTool {
     }
 
     onMouseUp(e: MouseEvent): void {
+        // Handle rotation with RotateCommand for undo/redo
+        if (this.isRotating && this.editor.selectedShapes.length > 0 && this.rotationCenter) {
+            const { x, y } = this.editor.getMousePos(e);
+
+            // Restore shapes to original state first
+            this.editor.selectedShapes.forEach((shape, i) => {
+                const original = this.initialShapeStates[i];
+                if (shape.nodes && original.nodes) {
+                    shape.nodes = original.nodes.map((n: any) => n.clone());
+                }
+            });
+
+            // Calculate final rotation angle
+            const currentAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
+            const deltaAngle = currentAngle - this.rotateStartAngle;
+
+            // Only create command if there was actual rotation
+            if (Math.abs(deltaAngle) > 0.001) {
+                const command = new RotateShapeCommand(
+                    this.editor.selectedShapes as any[],
+                    deltaAngle,
+                    this.rotationCenter
+                );
+                this.editor.history.execute(command);
+            }
+        }
+
         // STEP 6: Handle drag/move with MoveCommand for undo/redo
         if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragStart) {
             const { x, y } = this.editor.getMousePos(e);
