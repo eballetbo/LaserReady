@@ -81,20 +81,26 @@ export class SelectTool extends BaseTool {
         }
 
         if (clickedShape) {
-            if (e.shiftKey) {
-                // Toggle selection
-                const index = this.editor.selectedShapes.indexOf(clickedShape);
+            if (e.ctrlKey || e.metaKey) {
+                // Ctrl/Cmd + Click: Toggle selection
+                const currentSelection = this.editor.selectedShapes;
+                const index = currentSelection.findIndex(s => s.id === clickedShape.id);
                 if (index > -1) {
-                    this.editor.selectedShapes.splice(index, 1);
+                    // Remove: create new array without this shape
+                    this.editor.selectedShapes = currentSelection.filter(s => s.id !== clickedShape.id);
                 } else {
-                    this.editor.selectedShapes.push(clickedShape);
+                    // Add: create new array with this shape
+                    this.editor.selectedShapes = [...currentSelection, clickedShape];
+                }
+            } else if (e.shiftKey) {
+                // Shift + Click: Add to selection (not toggle)
+                const currentSelection = this.editor.selectedShapes;
+                if (!currentSelection.some(s => s.id === clickedShape.id)) {
+                    this.editor.selectedShapes = [...currentSelection, clickedShape];
                 }
             } else {
-                // If clicked shape is not already selected, select it exclusively
-                // If it IS selected, keep selection (might be starting a drag of multiple items)
-                if (!this.editor.selectedShapes.includes(clickedShape)) {
-                    this.editor.selectedShapes = [clickedShape];
-                }
+                // Single Click: Deselect all, select clicked
+                this.editor.selectedShapes = [clickedShape];
             }
             this.isDraggingShape = true;
             this.dragStart = { x, y };
