@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Settings, Library } from 'lucide-react';
-import { useLanguage } from '../contexts/language';
+import { useLanguage } from '../../contexts/language';
 import PropertiesPanel from './PropertiesPanel';
 import AssetLibrary from './AssetLibrary';
-import { PathEditor } from '../features/editor/path-editor';
+import { PathEditor } from '../editor/path-editor';
 
 interface Theme {
     iconColor: string;

@@ -13,7 +13,7 @@ import {
     Github, Chrome, Globe, Wifi,
     LucideIcon
 } from 'lucide-react';
-import { useLanguage } from '../contexts/language';
+import { useLanguage } from '../../contexts/language';
 
 interface IconDef {
     icon: LucideIcon;

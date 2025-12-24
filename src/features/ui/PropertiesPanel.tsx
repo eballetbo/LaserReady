@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from '../contexts/language';
+import { useLanguage } from '../../contexts/language';
 import { Settings, Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
-import { LASER_MODES } from '../utils/laser-modes';
-import { PathEditor } from '../features/editor/path-editor';
+import { LASER_MODES } from '../../utils/laser-modes';
+import { PathEditor } from '../editor/path-editor';
 
 interface Theme {
     iconColor: string;
