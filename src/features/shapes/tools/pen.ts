@@ -17,7 +17,19 @@ export class PenTool extends BaseTool {
     }
 
     onMouseDown(e: MouseEvent) {
-        const { x, y } = this.editor.getMousePos(e);
+        let { x, y } = this.editor.getMousePos(e);
+
+        // SHIFT CONSTRAINING: Apply to node placement
+        if (e.shiftKey && this.editor.activePath && this.editor.activePath.nodes.length > 0) {
+            const lastNode = this.editor.activePath.nodes[this.editor.activePath.nodes.length - 1];
+            const dx = x - lastNode.x;
+            const dy = y - lastNode.y;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const snapAngle = Math.round(angle / 45) * 45;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            x = lastNode.x + distance * Math.cos(snapAngle * Math.PI / 180);
+            y = lastNode.y + distance * Math.sin(snapAngle * Math.PI / 180);
+        }
 
         if (!this.editor.activePath) {
             // Start new path
@@ -59,10 +71,25 @@ export class PenTool extends BaseTool {
     }
 
     onMouseMove(e: MouseEvent) {
-        const { x, y } = this.editor.getMousePos(e);
+        let { x, y } = this.editor.getMousePos(e);
 
         // Only show preview and crosshair when actively drawing
         if (this.editor.activePath) {
+            // SHIFT CONSTRAINING: Constrain to horizontal, vertical, or 45° angles
+            if (e.shiftKey && this.editor.activePath.nodes.length > 0) {
+                const lastNode = this.editor.activePath.nodes[this.editor.activePath.nodes.length - 1];
+                const dx = x - lastNode.x;
+                const dy = y - lastNode.y;
+                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+                // Snap to nearest 45° angle
+                const snapAngle = Math.round(angle / 45) * 45;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                x = lastNode.x + distance * Math.cos(snapAngle * Math.PI / 180);
+                y = lastNode.y + distance * Math.sin(snapAngle * Math.PI / 180);
+            }
+
             this.editor.canvas.style.cursor = 'crosshair';
             this.editor.previewPoint = { x, y };
 
