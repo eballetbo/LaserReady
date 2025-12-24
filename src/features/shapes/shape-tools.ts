@@ -1,15 +1,23 @@
-import { BaseTool } from '../../tools/base-tool.js';
+import { BaseTool } from '../../tools/base-tool';
 import { PathNode } from './path-node';
 import { PathShape } from './path-shape';
 
+interface Point {
+    x: number;
+    y: number;
+}
+
 export class RectTool extends BaseTool {
-    constructor(editor) {
+    isDragging: boolean;
+    dragStart: Point | null;
+
+    constructor(editor: any) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
     }
 
-    onMouseDown(e) {
+    onMouseDown(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
         this.isDragging = true;
         this.dragStart = { x, y };
@@ -25,12 +33,12 @@ export class RectTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseMove(e) {
+    onMouseMove(e: MouseEvent): void {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        let w = x - this.dragStart.x;
-        let h = y - this.dragStart.y;
+        let w = x - this.dragStart!.x;
+        let h = y - this.dragStart!.y;
 
         if (e.shiftKey) {
             const d = Math.max(Math.abs(w), Math.abs(h));
@@ -40,31 +48,34 @@ export class RectTool extends BaseTool {
 
         const n = this.editor.selectedShape.nodes;
 
-        n[1].x = this.dragStart.x + w; n[1].y = this.dragStart.y;
-        n[2].x = this.dragStart.x + w; n[2].y = this.dragStart.y + h;
-        n[3].x = this.dragStart.x; n[3].y = this.dragStart.y + h;
+        n[1].x = this.dragStart!.x + w; n[1].y = this.dragStart!.y;
+        n[2].x = this.dragStart!.x + w; n[2].y = this.dragStart!.y + h;
+        n[3].x = this.dragStart!.x; n[3].y = this.dragStart!.y + h;
 
-        n.forEach(node => {
+        n.forEach((node: PathNode) => {
             node.cpIn.x = node.x; node.cpIn.y = node.y;
             node.cpOut.x = node.x; node.cpOut.y = node.y;
         });
         this.editor.render();
     }
 
-    onMouseUp(e) {
+    onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
     }
 }
 
 export class CircleTool extends BaseTool {
-    constructor(editor) {
+    isDragging: boolean;
+    dragStart: Point | null;
+
+    constructor(editor: any) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
     }
 
-    onMouseDown(e) {
+    onMouseDown(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
         this.isDragging = true;
         this.dragStart = { x, y };
@@ -80,12 +91,12 @@ export class CircleTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseMove(e) {
+    onMouseMove(e: MouseEvent): void {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        let w = x - this.dragStart.x;
-        let h = y - this.dragStart.y;
+        let w = x - this.dragStart!.x;
+        let h = y - this.dragStart!.y;
 
         if (e.shiftKey) {
             const d = Math.max(Math.abs(w), Math.abs(h));
@@ -95,8 +106,8 @@ export class CircleTool extends BaseTool {
 
         const rx = Math.abs(w) / 2;
         const ry = Math.abs(h) / 2;
-        const cx = this.dragStart.x + w / 2;
-        const cy = this.dragStart.y + h / 2;
+        const cx = this.dragStart!.x + w / 2;
+        const cy = this.dragStart!.y + h / 2;
         const kappa = 0.552284749831;
         const ox = rx * kappa;
         const oy = ry * kappa;
@@ -122,26 +133,30 @@ export class CircleTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e) {
+    onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
     }
 }
 
 export class PolygonTool extends BaseTool {
-    constructor(editor, sides = 6) {
+    isDragging: boolean;
+    dragStart: Point | null;
+    sides: number;
+
+    constructor(editor: any, sides: number = 6) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
         this.sides = sides;
     }
 
-    onMouseDown(e) {
+    onMouseDown(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
         this.isDragging = true;
         this.dragStart = { x, y };
 
-        const nodes = [];
+        const nodes: PathNode[] = [];
         for (let i = 0; i < this.sides; i++) {
             nodes.push(new PathNode(x, y));
         }
@@ -152,12 +167,12 @@ export class PolygonTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseMove(e) {
+    onMouseMove(e: MouseEvent): void {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        let w = x - this.dragStart.x;
-        let h = y - this.dragStart.y;
+        let w = x - this.dragStart!.x;
+        let h = y - this.dragStart!.y;
 
         if (e.shiftKey) {
             const d = Math.max(Math.abs(w), Math.abs(h));
@@ -167,8 +182,8 @@ export class PolygonTool extends BaseTool {
 
         const rx = Math.abs(w) / 2;
         const ry = Math.abs(h) / 2;
-        const cx = this.dragStart.x + w / 2;
-        const cy = this.dragStart.y + h / 2;
+        const cx = this.dragStart!.x + w / 2;
+        const cy = this.dragStart!.y + h / 2;
         const sides = this.sides;
         const n = this.editor.selectedShape.nodes;
 
@@ -182,14 +197,19 @@ export class PolygonTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e) {
+    onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
     }
 }
 
 export class StarTool extends BaseTool {
-    constructor(editor, points = 5, innerRadius = 0.382) {
+    isDragging: boolean;
+    dragStart: Point | null;
+    points: number;
+    innerRadius: number;
+
+    constructor(editor: any, points: number = 5, innerRadius: number = 0.382) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
@@ -197,12 +217,12 @@ export class StarTool extends BaseTool {
         this.innerRadius = innerRadius; // Ratio 0-1
     }
 
-    onMouseDown(e) {
+    onMouseDown(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
         this.isDragging = true;
         this.dragStart = { x, y };
 
-        const nodes = [];
+        const nodes: PathNode[] = [];
         for (let i = 0; i < this.points * 2; i++) {
             nodes.push(new PathNode(x, y));
         }
@@ -213,12 +233,12 @@ export class StarTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseMove(e) {
+    onMouseMove(e: MouseEvent): void {
         if (!this.isDragging || !this.editor.selectedShape) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        let w = x - this.dragStart.x;
-        let h = y - this.dragStart.y;
+        let w = x - this.dragStart!.x;
+        let h = y - this.dragStart!.y;
 
         if (e.shiftKey) {
             const d = Math.max(Math.abs(w), Math.abs(h));
@@ -228,8 +248,8 @@ export class StarTool extends BaseTool {
 
         const rx = Math.abs(w) / 2;
         const ry = Math.abs(h) / 2;
-        const cx = this.dragStart.x + w / 2;
-        const cy = this.dragStart.y + h / 2;
+        const cx = this.dragStart!.x + w / 2;
+        const cy = this.dragStart!.y + h / 2;
 
         const outerRx = rx;
         const outerRy = ry;
@@ -253,7 +273,7 @@ export class StarTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e) {
+    onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
     }
