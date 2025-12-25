@@ -84,6 +84,9 @@ export class RectTool extends BaseTool {
             // Now execute command to add it back (and push to history)
             const command = new CreateShapeCommand(this.editor.selectedShape);
             this.editor.history.execute(command);
+
+            // Clear temporary selection to prevent duplicate history entries on subsequent events
+            this.editor.selectedShape = null;
         }
     }
 }
@@ -164,6 +167,7 @@ export class CircleTool extends BaseTool {
             this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
             const command = new CreateShapeCommand(this.editor.selectedShape);
             this.editor.history.execute(command);
+            this.editor.selectedShape = null;
         }
     }
 }
@@ -234,6 +238,7 @@ export class PolygonTool extends BaseTool {
             this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
             const command = new CreateShapeCommand(this.editor.selectedShape);
             this.editor.history.execute(command);
+            this.editor.selectedShape = null;
         }
     }
 }
@@ -316,6 +321,7 @@ export class StarTool extends BaseTool {
             this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
             const command = new CreateShapeCommand(this.editor.selectedShape);
             this.editor.history.execute(command);
+            this.editor.selectedShape = null;
         }
     }
 }
