@@ -8,7 +8,6 @@ import { RotateShapeCommand } from './rotate';
 import { PathShape } from '../models/path';
 import { GroupShape } from '../models/group';
 import { PathNode } from '../models/node';
-import { Point } from '../../../core/math/geometry';
 
 // Setup Mock Data
 const createShape1 = () => {
