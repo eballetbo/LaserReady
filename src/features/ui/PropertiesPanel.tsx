@@ -140,6 +140,15 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     </div>
 
+                    {selectedObject.type === 'group' && (
+                        <div>
+                            <SectionHeader>{t('grouping') || 'Grouping'}</SectionHeader>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
+                            </div>
+                        </div>
+                    )}
+
                     {/* PARAMETRIC SETTINGS */}
                     {selectedObject.type === 'polygon' && (
                         <div>
