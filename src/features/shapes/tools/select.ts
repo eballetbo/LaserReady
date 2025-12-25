@@ -1,6 +1,5 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { Geometry, Point, Rect } from '../../../core/math/geometry';
-import { CanvasController } from '../../editor/controller';
 import { IShape } from '../types';
 import { ResizeShapeCommand } from '../commands/resize';
 import { MoveShapeCommand } from '../commands/move';
@@ -69,13 +68,7 @@ export class SelectTool extends BaseTool {
         // Hit test in reverse order (top to bottom)
         for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
             const shape = this.editor.shapes[i];
-            if (shape.type === 'text') {
-                const bounds = shape.getBounds();
-                if (x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY) {
-                    clickedShape = shape;
-                    break;
-                }
-            } else if (Geometry.isPointInBezierPath(this.editor.ctx, shape, x, y)) {
+            if (this.hitTestShape(shape, x, y)) {
                 clickedShape = shape;
                 break;
             }
@@ -180,13 +173,7 @@ export class SelectTool extends BaseTool {
         } else {
             let hover = false;
             for (const s of this.editor.shapes) {
-                if (s.type === 'text') {
-                    const b = s.getBounds();
-                    if (x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY) {
-                        hover = true;
-                        break;
-                    }
-                } else if (Geometry.isPointInBezierPath(this.editor.ctx, s, x, y)) {
+                if (this.hitTestShape(s, x, y)) {
                     hover = true;
                     break;
                 }
@@ -220,7 +207,12 @@ export class SelectTool extends BaseTool {
             // Restore shapes to original state first
             this.editor.selectedShapes.forEach((shape, i) => {
                 const original = this.initialShapeStates[i];
-                if (shape.nodes && original.nodes) {
+                if (shape.type === 'group') {
+                    const g = shape as any;
+                    const o = original as any;
+                    g.x = o.x; g.y = o.y; g.rotation = o.rotation;
+                    g.children = o.children.map((c: any) => c.clone());
+                } else if (shape.nodes && original.nodes) {
                     shape.nodes = original.nodes.map((n: any) => n.clone());
                 }
             });
@@ -241,7 +233,6 @@ export class SelectTool extends BaseTool {
         }
 
         // STEP 6: Handle drag/move with MoveCommand for undo/redo
-        // STEP 6: Handle drag/move with MoveCommand for undo/redo
         if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragStart && this.initialShapeStates.length > 0) {
             // Calculate total displacement by comparing current first node with initial first node
             // Note: This matches the logic that shapes were mutually moved by same delta
@@ -257,9 +248,14 @@ export class SelectTool extends BaseTool {
             let totalDx = 0;
             let totalDy = 0;
 
-            if (shape.nodes && shape.nodes.length > 0 && original.nodes && original.nodes.length > 0) {
-                totalDx = shape.nodes[0].x - original.nodes[0].x;
-                totalDy = shape.nodes[0].y - original.nodes[0].y;
+            // Use getBounds for robust delta calculation across all shape types
+            const currentBounds = shape.getBounds ? shape.getBounds() : shape;
+            const originalBounds = original.getBounds ? original.getBounds() : original;
+
+            if (currentBounds && originalBounds) {
+                // Use minX/minY to calculate delta
+                totalDx = currentBounds.minX - originalBounds.minX;
+                totalDy = currentBounds.minY - originalBounds.minY;
             }
 
             // Only create command if there was actual movement
@@ -268,14 +264,21 @@ export class SelectTool extends BaseTool {
                 // (They were mutated during onMouseMove for preview)
                 this.editor.selectedShapes.forEach((shape, i) => {
                     const original = this.initialShapeStates[i];
-                    if (shape.nodes && original.nodes) {
+                    if (shape.type === 'group') {
+                        const g = shape as any;
+                        const o = original as any;
+                        g.x = o.x; g.y = o.y; g.rotation = o.rotation;
+                        // For move, we mainly care about position, but children must be reset too 
+                        // because they were moved recursively
+                        g.children = o.children.map((c: any) => c.clone());
+                    } else if (shape.nodes && original.nodes) {
                         shape.nodes = original.nodes.map((n: any) => n.clone());
                     }
                 });
 
                 // Execute move via Command (which applies the delta AND pushes to history)
                 const command = new MoveShapeCommand(
-                    this.editor,
+                    this.editor as any,
                     this.editor.selectedShapes as any[],
                     totalDx,
                     totalDy
@@ -292,7 +295,12 @@ export class SelectTool extends BaseTool {
             // (They were mutated during onMouseMove for preview)
             this.editor.selectedShapes.forEach((shape, i) => {
                 const original = this.initialShapeStates[i];
-                if (shape.nodes && original.nodes) {
+                if (shape.type === 'group') {
+                    const g = shape as any;
+                    const o = original as any;
+                    g.x = o.x; g.y = o.y; g.rotation = o.rotation;
+                    g.children = o.children.map((c: any) => c.clone());
+                } else if (shape.nodes && original.nodes) {
                     shape.nodes = original.nodes.map((n: any) => n.clone());
                 }
             });
@@ -535,5 +543,20 @@ export class SelectTool extends BaseTool {
                 (shape as any).rotation = (scaledShape as any).rotation;
             }
         });
+    }
+    private hitTestShape(shape: IShape, x: number, y: number): boolean {
+        if (shape.type === 'group') {
+            const group = shape as any;
+            if (!group.children) return false;
+            // Check children recursively
+            return group.children.some((child: IShape) => this.hitTestShape(child, x, y));
+        } else if (shape.type === 'text') {
+            const bounds = shape.getBounds ? shape.getBounds() : null;
+            if (!bounds) return false;
+            return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
+        } else {
+            // Default path hit test
+            return Geometry.isPointInBezierPath(this.editor.ctx, shape, x, y);
+        }
     }
 }

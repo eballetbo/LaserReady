@@ -9,6 +9,7 @@ export interface IShape {
     rotation?: number;
     params?: Record<string, any>;
     nodes?: any[];
+    children?: IShape[]; // For groups
     // Style overrides
     strokeColor?: string;
     strokeWidth?: number;
@@ -19,4 +20,6 @@ export interface IShape {
     getBounds?(): any; // Rect?
     toJSON?(): any;
     clone?(): IShape;
+    rotate?(angle: number, center: { x: number; y: number }): void;
+    scale?(sx: number, sy: number, center: { x: number; y: number }): void;
 }

@@ -1,13 +1,13 @@
 import { StateCreator } from 'zustand';
-import { PathShape } from '../../features/shapes/models/path';
+import { IShape } from '../../features/shapes/types';
 import { LaserLayer } from '../../types/layer';
 
 export interface ShapesSlice {
-    shapes: PathShape[];
+    shapes: IShape[];
     selectedShapes: string[];
     layers: LaserLayer[];
     activeLayerId: string;
-    setShapes: (shapes: PathShape[]) => void;
+    setShapes: (shapes: IShape[]) => void;
     setSelectedShapes: (ids: string[]) => void;
     setLayers: (layers: LaserLayer[]) => void;
     setActiveLayerId: (id: string) => void;

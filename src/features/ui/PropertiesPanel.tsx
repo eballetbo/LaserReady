@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/language';
-import { Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
+import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 'lucide-react';
 import { CanvasController } from '../../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 
@@ -114,6 +114,10 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                 <div className="space-y-6">
                     <div>
                         <SectionHeader>{t('booleanOperations')}</SectionHeader>
+                        <div className="grid grid-cols-2 gap-2 mb-6">
+                            <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('group') || 'Group'} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                             <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
                             <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />

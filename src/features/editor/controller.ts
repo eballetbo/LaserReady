@@ -18,6 +18,8 @@ import { DeleteShapeCommand } from '../shapes/commands/delete';
 import { MoveShapeCommand } from '../shapes/commands/move';
 import { UpdateStyleCommand } from '../shapes/commands/style';
 import { BooleanCommand } from '../shapes/commands/boolean';
+import { GroupCommand } from '../shapes/commands/group';
+import { UngroupCommand } from '../shapes/commands/ungroup';
 
 /**
  * Main Editor Controller.
@@ -243,6 +245,20 @@ export class CanvasController {
         if (e.key === 'Delete' || e.key === 'Backspace') return;
         if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) return;
 
+        // Group (Ctrl+G)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+            e.preventDefault();
+            this.groupSelected();
+            return;
+        }
+
+        // Ungroup (Ctrl+U)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+            e.preventDefault();
+            this.ungroupSelected();
+            return;
+        }
+
         this.startAction();
         if (this.activeTool) this.activeTool.onKeyDown(e);
         this.endAction();
@@ -360,6 +376,23 @@ export class CanvasController {
         if (this.selectedShapes.length === 0) return;
 
         const command = new UpdateStyleCommand(this.selectedShapes, style);
+        this.history.execute(command);
+    }
+
+    groupSelected() {
+        if (this.selectedShapes.length < 2) return;
+        // Import GroupCommand dynamically or at top (need to add import)
+        // assuming import I added earlier or will add
+        const command = new GroupCommand(this.selectedShapes);
+        this.history.execute(command);
+    }
+
+    ungroupSelected() {
+        if (this.selectedShapes.length === 0) return;
+        const groups = this.selectedShapes.filter(s => s.type === 'group');
+        if (groups.length === 0) return;
+
+        const command = new UngroupCommand(groups);
         this.history.execute(command);
     }
 

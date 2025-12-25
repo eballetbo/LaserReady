@@ -80,19 +80,7 @@ export class CanvasRenderer {
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
-            // Resolve layer
-            const layer = layers ? layers.find(l => l.id === shape.layerId) : null;
-            const layerColor = layer ? layer.color : DEFAULT_LAYER_COLOR;
-            const layerMode = layer ? layer.mode : 'CUT';
-
-            if (shape.type === 'text') {
-                this.drawText(shape, isSelected, config, layerColor, layerMode);
-            } else {
-                this.drawPath(shape, isSelected, config, layerColor, layerMode);
-                if (isSelected && toolType === 'node-edit') {
-                    this.drawNodes(shape, config, selectedNodeIndex);
-                }
-            }
+            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, selectedNodeIndex);
         });
 
         if (selectedShapes.length > 0 && toolType === 'select') {
@@ -113,6 +101,67 @@ export class CanvasRenderer {
         }
 
         this.ctx.restore();
+    }
+
+    renderShape(
+        shape: IShape,
+        isSelected: boolean,
+        selectedShapes: IShape[],
+        layers: ILayer[],
+        config: RendererConfig,
+        toolType: string,
+        selectedNodeIndex: number | null
+    ): void {
+        const layer = layers ? layers.find(l => l.id === shape.layerId) : null;
+        const layerColor = layer ? layer.color : DEFAULT_LAYER_COLOR;
+        const layerMode = layer ? layer.mode : 'CUT';
+
+        if (shape.type === 'group') {
+            this.drawGroup(shape, isSelected, selectedShapes, layers, config, toolType, selectedNodeIndex);
+        } else if (shape.type === 'text') {
+            this.drawText(shape, isSelected, config, layerColor, layerMode);
+        } else {
+            this.drawPath(shape, isSelected, config, layerColor, layerMode);
+            if (isSelected && toolType === 'node-edit') {
+                this.drawNodes(shape, config, selectedNodeIndex);
+            }
+        }
+    }
+
+    drawGroup(
+        group: any,
+        isSelected: boolean,
+        selectedShapes: IShape[],
+        layers: ILayer[],
+        config: RendererConfig,
+        toolType: string,
+        selectedNodeIndex: number | null
+    ) {
+        if (!group.children) return;
+
+        // Draw children inheriting selection state from group
+
+        group.children.forEach((child: any) => {
+            // Pass isSelected (inheriting from group) so children render with selection color (blue)
+            // This ensures visual feedback that the group contents are selected
+            this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, null);
+        });
+
+        if (isSelected) {
+            // Draw selection bounds for group
+            // We need group bounds.
+            // Assuming group.getBounds() or Geometry.getCombinedBounds(group.children)
+            let bounds;
+            if (group.getBounds) {
+                bounds = group.getBounds();
+            } else {
+                bounds = Geometry.getCombinedBounds(group.children);
+            }
+
+            if (bounds) {
+                this.drawSelectionBounds(bounds, config);
+            }
+        }
     }
 
     drawPath(shape: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode): void {
