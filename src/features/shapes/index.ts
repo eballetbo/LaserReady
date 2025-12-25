@@ -10,7 +10,7 @@ export { NodeEditTool } from './tools/node';
 export { TextTool } from './tools/text';
 
 // Shape tools (geometric shapes)
-export { RectTool, CircleTool, PolygonTool, StarTool } from './tool-registry';
+export * from './registry';
 
 // Commands
 export { CreateShapeCommand } from './commands/create';

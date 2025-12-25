@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { HistoryManager } from './history';
-import { RectTool } from '../shapes/tool-registry';
+import { RectTool } from '../shapes/registry';
 import { SelectTool } from '../shapes/tools/select';
 import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';

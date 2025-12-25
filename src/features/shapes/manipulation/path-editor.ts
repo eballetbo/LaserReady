@@ -4,7 +4,7 @@ import { CanvasRenderer } from '../../editor/render/renderer';
 import { InputManager } from '../../editor/input';
 import { PathNode } from '../models/node';
 import { PathShape } from '../models/path';
-import { RectTool, CircleTool, PolygonTool, StarTool } from '../tool-registry';
+import { RectTool, CircleTool, PolygonTool, StarTool } from '../registry';
 import { PenTool } from '../tools/pen';
 import { SelectTool } from '../tools/select';
 import { TextTool } from '../tools/text';
