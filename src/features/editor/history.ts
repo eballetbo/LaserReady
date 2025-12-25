@@ -23,12 +23,10 @@ export class HistoryManager {
      * @param command The command to execute
      */
     execute(command: Command): void {
-        console.log('[History] Executing command:', command);
         command.execute();
 
         // Add command to undo stack
         this.undoStack.push(command);
-        console.log('[History] UndoStack size:', this.undoStack.length);
 
         if (this.undoStack.length > this.limit) {
             this.undoStack.shift();
@@ -71,7 +69,6 @@ export class HistoryManager {
      * @returns The previous state (only for legacy), or null
      */
     undo(currentState?: any): any | null {
-        console.log('[History] Undo called. Stack size:', this.undoStack.length);
         if (this.undoStack.length === 0) return null;
 
         const item = this.undoStack.pop();
@@ -79,7 +76,6 @@ export class HistoryManager {
         // STEP 3: Detect if item is a Command
         if (item && typeof item === 'object' && 'execute' in item && 'undo' in item) {
             // It's a Command!
-            console.log('[History] Undoing command:', item);
             item.undo();  // Command handles restoration itself
             this.redoStack.push(item);
             return null;  // Commands don't return state
