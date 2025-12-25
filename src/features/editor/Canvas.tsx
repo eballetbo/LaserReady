@@ -1,20 +1,25 @@
+
 import React, { useEffect, useRef } from 'react';
-import { PathEditor } from '../shapes/manipulation/path-editor';
+import { CanvasController } from './controller';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 
 interface CanvasProps {
     material: { width: number; height: number };
-    setEditorInstance?: (editor: any) => void; // PathEditor type is not fully exported as a TS type yet, using any for now or I can assume it matches
+    setEditorInstance?: (editor: CanvasController) => void;
     tool: string;
+    onInit: (editor: CanvasController) => void;
+    onSelectionChange?: (selection: any[]) => void;
 }
 
 export default function Canvas({
     material,
     setEditorInstance,
-    tool
+    tool,
+    onInit,
+    onSelectionChange
 }: CanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const editorRef = useRef<any | null>(null); // Type as any for now until PathEditor is fully typed
+    const editorRef = useRef<CanvasController | null>(null); // Update ref type to CanvasController
 
     useEffect(() => {
         if (editorRef.current) {
@@ -26,13 +31,15 @@ export default function Canvas({
         if (!canvasRef.current) return;
 
         // Initialize Editor
-        const editor = new PathEditor(canvasRef.current, {
+        const editor = new CanvasController(canvasRef.current, {
+            onSelectionChange,
             gridSpacing: DEFAULT_GRID_SPACING
         });
         editor.tool = tool;
 
         editorRef.current = editor;
         if (setEditorInstance) setEditorInstance(editor);
+        onInit(editor); // Call onInit here
 
         return () => {
             if (editor && typeof editor.dispose === 'function') {

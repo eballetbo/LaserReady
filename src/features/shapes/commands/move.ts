@@ -1,14 +1,16 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
+import { CanvasController } from '../../editor/controller';
 import { PathShape } from '../models/path';
+import { IShape } from '../types';
 
 export class MoveShapeCommand implements Command {
-    private shapesToMove: PathShape[];
+    private shapesToMove: IShape[];
     private dx: number;
     private dy: number;
 
-    constructor(shapesToMove: PathShape[], dx: number, dy: number) {
-        this.shapesToMove = shapesToMove;
+    constructor(editor: CanvasController, shapes: IShape[], dx: number, dy: number) {
+        this.shapesToMove = shapes;
         this.dx = dx;
         this.dy = dy;
     }
@@ -16,7 +18,7 @@ export class MoveShapeCommand implements Command {
     execute(): void {
         // We mutate the shapes directly because they are mutable objects in our model currently.
         // However, to be Redux/Zustand pure, we should clone. 
-        // But PathEditor expects mutation for performance during drag?
+        // But CanvasController expects mutation for performance during drag?
         // If we clone every frame of drag, it might be slow.
         // BUT, the command pattern implies atomic operations.
         // If this command is executed 60fps, we want to update the store 60fps.

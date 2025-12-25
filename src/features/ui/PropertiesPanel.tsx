@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/language';
 import { Trash2, Combine, Minus, SquaresIntersect, XCircle } from 'lucide-react';
-import { PathEditor } from '../shapes/manipulation/path-editor';
+import { CanvasController } from '../../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 
 interface Theme {
@@ -19,7 +19,7 @@ interface Theme {
 interface PropertiesPanelProps {
     theme: Theme;
     selection: any[]; // PathShape[] | TextObject[]
-    editor: PathEditor;
+    editor: CanvasController | null;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;
     isEmbedded: boolean;
@@ -59,7 +59,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     }, [selectedObject, selection]);
 
     const updateDimension = (key: string, value: string) => {
-        if (!selectedObject) return;
+        if (!selectedObject || !editor) return;
 
         setDimensions(prev => ({ ...prev, [key]: value }));
 
@@ -97,7 +97,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         if (key === 'points') setPoints(val);
         if (key === 'innerRadius') setInnerRadius(val);
 
-        if (!selectedObject || !selectedObject.params) return;
+        if (!selectedObject || !selectedObject.params || !editor) return;
 
         if (isNaN(val)) return;
         if (key === 'sides' && val < 3) return;
@@ -115,10 +115,10 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     <div>
                         <SectionHeader>{t('booleanOperations')}</SectionHeader>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
+                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
                         </div>
                     </div>
                     <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={`${t('delete')} (${selection.length})`} theme={theme} className="mt-4" />
@@ -154,7 +154,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         value={selectedObject.text}
                                         onChange={(e) => {
                                             selectedObject.text = e.target.value;
-                                            editor.render();
+                                            editor?.render();
                                         }}
                                         className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                         rows={3}
@@ -167,7 +167,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                             value={selectedObject.fontFamily}
                                             onChange={(e) => {
                                                 selectedObject.fontFamily = e.target.value;
-                                                editor.render();
+                                                editor?.render();
                                             }}
                                             className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                         >
@@ -178,13 +178,13 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                             <option value="Verdana">Verdana</option>
                                         </select>
                                     </div>
-                                    <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => { selectedObject.fontSize = parseFloat(v); editor.render(); }} theme={theme} />
+                                    <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => { selectedObject.fontSize = parseFloat(v); editor?.render(); }} theme={theme} />
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => {
                                             selectedObject.fontWeight = selectedObject.fontWeight === 'bold' ? 'normal' : 'bold';
-                                            editor.render();
+                                            editor?.render();
                                         }}
                                         className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontWeight === 'bold' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
                                     >
@@ -193,7 +193,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     <button
                                         onClick={() => {
                                             selectedObject.fontStyle = selectedObject.fontStyle === 'italic' ? 'normal' : 'italic';
-                                            editor.render();
+                                            editor?.render();
                                         }}
                                         className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontStyle === 'italic' ? 'bg-gray-200 dark:bg-gray-700' : ''} italic`}
                                     >

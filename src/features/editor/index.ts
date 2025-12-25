@@ -1,4 +1,4 @@
 export { default as Canvas } from './Canvas';
-export { PathEditor } from '../shapes/manipulation/path-editor';
+export { CanvasController } from './controller';
 export { HistoryManager } from './history';
 export { InputManager } from './input';

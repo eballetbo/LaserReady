@@ -1,6 +1,7 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { Geometry, Point, Rect } from '../../../core/math/geometry';
-import { IShape } from '../../../types/core';
+import { CanvasController } from '../../editor/controller';
+import { IShape } from '../types';
 import { ResizeShapeCommand } from '../commands/resize';
 import { MoveShapeCommand } from '../commands/move';
 import { RotateShapeCommand } from '../commands/rotate';
@@ -165,7 +166,7 @@ export class SelectTool extends BaseTool {
                 style
             };
 
-            // Assign to editor so PathEditor can pass it to renderer
+            // Assign    editor: CanvasController; can pass it to renderer
             this.editor.selectionBox = this.selectionBox;
 
             // Trigger normal render which will include the selection box
@@ -274,6 +275,7 @@ export class SelectTool extends BaseTool {
 
                 // Execute move via Command (which applies the delta AND pushes to history)
                 const command = new MoveShapeCommand(
+                    this.editor,
                     this.editor.selectedShapes as any[],
                     totalDx,
                     totalDy

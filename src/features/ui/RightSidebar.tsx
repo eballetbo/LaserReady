@@ -3,7 +3,7 @@ import { Settings, Library } from 'lucide-react';
 import { useLanguage } from '../../contexts/language';
 import PropertiesPanel from './PropertiesPanel';
 import AssetLibrary from './AssetLibrary';
-import { PathEditor } from '../shapes/manipulation/path-editor';
+import { CanvasController } from '../../editor/controller';
 
 interface Theme {
     iconColor: string;
@@ -20,7 +20,7 @@ interface Theme {
 interface RightSidebarProps {
     theme: Theme;
     selection: any[];
-    editor: PathEditor;
+    editor: CanvasController | null;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;
 }

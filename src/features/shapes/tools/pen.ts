@@ -1,6 +1,7 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { PathNode } from '../models/node';
 import { PathShape } from '../models/path';
+import { CanvasController } from '../../editor/controller';
 import { Geometry } from '../../../core/math/geometry';
 import { CreateShapeCommand } from '../commands/create';
 
@@ -13,9 +14,10 @@ export class PenTool extends BaseTool {
     draggingItem: DraggingItem | null;
     continuingFromEnd: boolean = true;
 
-    constructor(editor: IEditorContext) {
+    constructor(editor: CanvasController) {
         super(editor);
         this.draggingItem = null;
+        this.continuingFromEnd = false;
     }
 
     onMouseDown(e: MouseEvent) {
@@ -188,27 +190,40 @@ export class PenTool extends BaseTool {
         this.draggingItem = null;
     }
 
-    onContextMenu(e: MouseEvent): void {
-        console.log('DEBUG: PenTool.onContextMenu called, activePath:', !!this.editor.activePath);
-        e.preventDefault(); // Prevent browser context menu
+    onContextMenu(e: MouseEvent) {
+        e.preventDefault();
 
-        // Right-click finishes the path without closing it
+        // Finish current path
         if (this.editor.activePath) {
-            console.log('DEBUG: Finishing path with', this.editor.activePath.nodes.length, 'nodes');
 
-            // Remove the last node (the one being drawn with preview line)
-            if (this.editor.activePath.nodes.length > 1) {
-                this.editor.activePath.nodes.pop();
-                console.log('DEBUG: Removed last node, now', this.editor.activePath.nodes.length, 'nodes');
+            if (this.editor.activePath.nodes.length < 2) {
+                // Remove if too short (single point) check? 
+                // Or just keep logic:
+                // Commit path
+                const path = this.editor.activePath;
+                // Ideally create shape command
+
+                // If the path has only 1 node, it might not be visible or useful.
+                if (path.nodes.length === 1) {
+                    // abort
+                    this.editor.activePath = null;
+                    this.editor.previewPoint = null;
+                    this.editor.render();
+                    return;
+                }
+
+                // If last node is temporary (preview point might be added as node?), 
+                // PenTool logic usually handles preview separately.
+
+                // Just push command
+                const cmd = new CreateShapeCommand(path);
+                this.editor.history.execute(cmd);
+
+            } else {
+                // Regular commit
+                const cmd = new CreateShapeCommand(this.editor.activePath);
+                this.editor.history.execute(cmd);
             }
-
-            // Command Pattern: Commit the finished path
-            // Remove from store first (because it was added during drawing)
-            const currentShapes = this.editor.shapes;
-            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.activePath.id);
-
-            const command = new CreateShapeCommand(this.editor.activePath);
-            this.editor.history.execute(command);
 
             this.editor.activePath = null;
             this.editor.previewPoint = null;

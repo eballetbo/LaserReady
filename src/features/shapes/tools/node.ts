@@ -1,4 +1,5 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
+import { CanvasController } from '../../editor/controller';
 import { Geometry } from '../../../core/math/geometry';
 
 interface HitResult {
@@ -9,7 +10,7 @@ interface HitResult {
 export class NodeEditTool extends BaseTool {
     draggingItem: HitResult | null;
 
-    constructor(editor: IEditorContext) {
+    constructor(editor: CanvasController) {
         super(editor);
         this.draggingItem = null;
     }
@@ -23,7 +24,7 @@ export class NodeEditTool extends BaseTool {
                 if (hit.type === 'anchor') {
                     // Update IEditorContext to include selectedNodeIndex? 
                     // BaseTool definition has it? No.
-                    // But editor instance is PathEditor which has it.
+                    // But editor instance is CanvasController which has it.
                     // We can cast editor to any or update IEditorContext.
                     // For now, casting or assuming loose contract as IEditorContext properties are open in my previous viewing?
                     // In base-tool.ts IEditorContext did NOT have selectedNodeIndex.
@@ -119,7 +120,7 @@ export class NodeEditTool extends BaseTool {
                 if (Geometry.getDistance({ x, y }, n.cpIn) ** 2 <= tol2) return { type: 'in', index: i };
                 // Using **2 to match squared tolerance logic I assumed. 
                 // Wait, getDistance returns Actual Distance. 
-                // So comparison should be `dist <= tol` (not squared) OR `dist**2 <= tol2`.
+                // So comparison should be `dist <= tol` (not squared) OR `dist ** 2 <= tol2`.
                 // Original code: `getDistance(...) <= tol2`.
                 // If `tol2` is squared tolerance, `getDistance` (linear) <= `tol2` (squared) is usually generous (e.g. 5 <= 25).
                 // I'll stick to logic: Distance vs Radius+Buffer.
@@ -128,12 +129,12 @@ export class NodeEditTool extends BaseTool {
                 // So hit area is huge? Maybe intentional?
                 // I will keep original logic structure mostly but be aware.
                 // Actually `Geometry.getDistance` returns sqrt.
-                // If original code had `tol2 = (radius+3)**2`, it implies checking against squared distance.
+                // If original code had `tol2 = (radius + 3) ** 2`, it implies checking against squared distance.
                 // BUT it called `Geometry.getDistance`.
                 // So `dist <= distSquared` logic is buggy unless intentional for large hit area.
                 // I will assume `dist <= distSquared` was the code so I reproduce it, or fix it?
-                // I'll fix it to `dist <= Math.sqrt(tol2)` i.e. `dist <= radius+3`
-                // `const tol = config.handleRadius + 3;`
+                // I'll fix it to `dist <= Math.sqrt(tol2)` i.e. `dist <= radius + 3`
+                // `const tol = config.handleRadius + 3; `
                 // `if (Geometry.getDistance(...) <= tol) ...`
                 // This is cleaner safer TS.
             }

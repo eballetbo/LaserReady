@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee, Languages } from 'lucide-react';
 import { Toolbar, RightSidebar } from './features/ui';
-import { Canvas, PathEditor } from './features/editor';
+import { Canvas } from './features/editor';
+import { CanvasController } from './features/shapes';
 import { LASER_MODES, exportToSVG, downloadSVG } from './utils';
 import { LanguageProvider, useLanguage } from './contexts/language';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -80,7 +81,7 @@ function AppContent() {
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
     // const [material, setMaterial] = useState(INITIAL_MATERIAL); // Removed
     // const [tool, setTool] = useState('select'); // Removed
-    const [editor, setEditor] = useState<PathEditor | null>(null);
+    const [editor, setEditor] = useState<CanvasController | null>(null);
     const [selection, setSelection] = useState<any[]>([]); // Typed as any[] for now
 
     const { language, setLanguage, t } = useLanguage();
@@ -234,10 +235,10 @@ function AppContent() {
                     </div>
 
                     <div className="flex items-center gap-1 mr-4">
-                        <button onClick={() => editor?.zoomOut()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomOut')}>
+                        <button onClick={() => editor && editor.setZoom(editor.zoom / 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomOut')}>
                             <ZoomOut size={18} />
                         </button>
-                        <button onClick={() => editor?.zoomIn()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomIn')}>
+                        <button onClick={() => editor && editor.setZoom(editor.zoom * 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomIn')}>
                             <ZoomIn size={18} />
                         </button>
                         <button onClick={() => editor?.resetZoom()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('resetZoom')}>
@@ -283,19 +284,20 @@ function AppContent() {
                 <div className={`flex-1 relative overflow-auto ${theme.canvasWrapper} flex justify-center items-center p-12`}>
                     <Canvas
                         material={material}
-                        setEditorInstance={(ed: any) => { // Type as any for now until PathEditor is fully compatible
-                            setEditor(ed as PathEditor);
+                        setEditorInstance={(ed: CanvasController) => {
+                            setEditor(ed);
                             // Hook into selection changes
                             ed.onSelectionChange = (sel: any[]) => setSelection([...sel]);
                         }}
                         tool={tool}
+                        onInit={(ed: CanvasController) => setEditor(ed)}
                     />
                 </div>
 
                 <RightSidebar
                     theme={theme}
                     selection={selection}
-                    editor={editor as any} // Cast to any if needed or ensure PathEditor matches RightSidebar props
+                    editor={editor}
                     applyLaserMode={applyLaserMode}
                     deleteSelected={deleteSelected}
                 />

@@ -1,28 +1,48 @@
 // @ts-nocheck - Progressive TypeScript migration, refine types incrementally
-import { Geometry } from '../../../core/math/geometry';
-import { CanvasRenderer } from '../../editor/render/renderer';
-import { InputManager } from '../../editor/input';
-import { PathNode } from '../models/node';
-import { PathShape } from '../models/path';
-import { RectTool, CircleTool, PolygonTool, StarTool } from '../registry';
-import { PenTool } from '../tools/pen';
-import { SelectTool } from '../tools/select';
-import { TextTool } from '../tools/text';
-import { TextObject } from '../models/text';
-import { NodeEditTool } from '../tools/node';
-import { BooleanOperations } from '../../../core/math/boolean';
-import { SVGImporter } from '../../../utils/svg-import';
-import { HistoryManager } from '../../editor/history';
-import { useStore } from '../../../store/useStore';
-import { DeleteShapeCommand } from '../commands/delete';
-import { MoveShapeCommand } from '../commands/move';
-import { UpdateStyleCommand } from '../commands/style';
+import { Geometry } from '../../core/math/geometry';
+import { CanvasRenderer } from './render/renderer';
+import { InputManager } from './input';
+import { PathNode } from '../shapes/models/node';
+import { PathShape } from '../shapes/models/path';
+import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/registry';
+import { PenTool } from '../shapes/tools/pen';
+import { SelectTool } from '../shapes/tools/select';
+import { TextTool } from '../shapes/tools/text';
+import { TextObject } from '../shapes/models/text';
+import { NodeEditTool } from '../shapes/tools/node';
+import { BooleanOperations } from '../../core/math/boolean';
+import { SVGImporter } from '../../utils/svg-import';
+import { HistoryManager } from './history';
+import { useStore } from '../../store/useStore';
+import { DeleteShapeCommand } from '../shapes/commands/delete';
+import { MoveShapeCommand } from '../shapes/commands/move';
+import { UpdateStyleCommand } from '../shapes/commands/style';
 
 /**
  * Main Editor Controller.
  */
-export class PathEditor {
-    constructor(canvasElement, options = {}) {
+export class CanvasController {
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+    renderer: CanvasRenderer;
+    inputManager: InputManager;
+    history: HistoryManager;
+    config: any;
+    onSelectionChange: (selection: any[]) => void;
+    tools: Record<string, any>;
+    _tool: string;
+    activeTool: any;
+    activePath: PathShape | null;
+    previewPoint: { x: number; y: number } | null;
+    selectedNodeIndex: number | null;
+    selectionBox: any | null;
+    previewOrigin: { x: number; y: number } | null;
+    zoom: number;
+    pan: { x: number; y: number };
+    unsubscribe: () => void;
+    selectedShape?: any; // Temporary selection for creation tools
+
+    constructor(canvasElement: HTMLCanvasElement, options = {}) {
         this.canvas = canvasElement;
         this.ctx = this.canvas.getContext('2d');
         this.renderer = new CanvasRenderer(this.canvas);
@@ -255,7 +275,7 @@ export class PathEditor {
     moveSelected(dx, dy) {
         if (this.selectedShapes.length > 0) {
             // We assume startAction is called by the tool onMouseDown
-            const command = new MoveShapeCommand(this.selectedShapes, dx, dy);
+            const command = new MoveShapeCommand(this, this.selectedShapes, dx, dy);
             command.execute();
             this.render();
         }

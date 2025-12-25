@@ -19,5 +19,5 @@ export { MoveShapeCommand } from './commands/move';
 export { ResizeShapeCommand } from './commands/resize';
 export { RotateShapeCommand } from './commands/rotate';
 
-// Manipulation
-export { PathEditor } from './manipulation/path-editor';
+// Core Editor
+export { CanvasController } from '../editor/controller';
