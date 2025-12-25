@@ -16,6 +16,7 @@ import { HistoryManager } from '../../editor/history';
 import { useStore } from '../../../store/useStore';
 import { DeleteShapeCommand } from '../commands/delete';
 import { MoveShapeCommand } from '../commands/move';
+import { UpdateStyleCommand } from '../commands/style';
 
 /**
  * Main Editor Controller.
@@ -340,16 +341,9 @@ export class PathEditor {
 
     applyStyle(style) {
         if (this.selectedShapes.length === 0) return;
-        this.startAction();
-        const selected = this.selectedShapes;
-        selected.forEach(shape => {
-            if (style.strokeColor !== undefined) shape.strokeColor = style.strokeColor;
-            if (style.strokeWidth !== undefined) shape.strokeWidth = style.strokeWidth;
-            if (style.fillColor !== undefined) shape.fillColor = style.fillColor;
-        });
-        this.shapes = [...this.shapes];
-        this.render();
-        this.endAction();
+
+        const command = new UpdateStyleCommand(this.selectedShapes, style);
+        this.history.execute(command);
     }
 
     updateShape(shape) {

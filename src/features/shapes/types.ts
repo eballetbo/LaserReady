@@ -9,4 +9,8 @@ export interface IShape {
     rotation?: number;
     params?: Record<string, any>;
     nodes?: any[];
+    // Style overrides
+    strokeColor?: string;
+    strokeWidth?: number;
+    fillColor?: string;
 }

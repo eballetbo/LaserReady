@@ -14,6 +14,9 @@ export class PathShape {
     params: Record<string, any>;
     id: string;
     layerId: string;
+    strokeColor?: string;
+    strokeWidth?: number;
+    fillColor?: string;
 
     constructor(
         nodes: PathNode[] = [],
@@ -21,7 +24,10 @@ export class PathShape {
         layerId: string = 'layer-1', // Default to layer-1
         type: string = 'path',
         params: Record<string, any> = {},
-        id?: string
+        id?: string,
+        strokeColor?: string,
+        strokeWidth?: number,
+        fillColor?: string
     ) {
         this.id = id || crypto.randomUUID();
         this.nodes = nodes;
@@ -29,6 +35,9 @@ export class PathShape {
         this.layerId = layerId;
         this.type = type;
         this.params = params;
+        this.strokeColor = strokeColor;
+        this.strokeWidth = strokeWidth;
+        this.fillColor = fillColor;
     }
 
     getBounds(): any {
@@ -67,7 +76,17 @@ export class PathShape {
 
     clone(): PathShape {
         const newNodes = this.nodes.map(n => n.clone());
-        return new PathShape(newNodes, this.closed, this.layerId, this.type || 'path', { ...this.params });
+        return new PathShape(
+            newNodes,
+            this.closed,
+            this.layerId,
+            this.type || 'path',
+            { ...this.params },
+            undefined, // New ID
+            this.strokeColor,
+            this.strokeWidth,
+            this.fillColor
+        );
     }
 
     static fromJSON(json: any): PathShape {
@@ -75,6 +94,16 @@ export class PathShape {
         // Fallback: if json.layerId exists use it, else default 'layer-1'
         // If we wanted to preserve old colors we'd need a more complex migration strategy.
         const layerId = json.layerId || 'layer-1';
-        return new PathShape(nodes, json.closed, layerId, json.type, json.params, json.id);
+        return new PathShape(
+            nodes,
+            json.closed,
+            layerId,
+            json.type,
+            json.params,
+            json.id,
+            json.strokeColor,
+            json.strokeWidth,
+            json.fillColor
+        );
     }
 }

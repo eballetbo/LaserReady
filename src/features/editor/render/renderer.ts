@@ -139,8 +139,16 @@ export class CanvasRenderer {
 
         if (shape.closed) this.ctx.closePath();
 
-        // Fill logic based on mode
-        if (layerMode === 'ENGRAVE') {
+        if (shape.closed) this.ctx.closePath();
+
+        // Style resolution: Shape Override -> Layer Default -> Fallback
+
+        // 1. Fill Override
+        if (shape.fillColor) {
+            this.ctx.fillStyle = shape.fillColor;
+            this.ctx.fill();
+        } else if (layerMode === 'ENGRAVE') {
+            // Default Engrave behavior
             this.ctx.fillStyle = layerColor;
             this.ctx.fill();
         } else {
@@ -150,9 +158,13 @@ export class CanvasRenderer {
             this.ctx.fill();
         }
 
-        const strokeWidth = DEFAULT_STROKE_WIDTH;
+        // 2. Stroke Width Override
+        const strokeWidth = shape.strokeWidth !== undefined ? shape.strokeWidth : DEFAULT_STROKE_WIDTH;
 
-        this.ctx.strokeStyle = isSelected ? config.colorSelection : layerColor;
+        // 3. Stroke Color Override
+        const strokeColor = isSelected ? config.colorSelection : (shape.strokeColor || layerColor);
+
+        this.ctx.strokeStyle = strokeColor;
         this.ctx.lineWidth = strokeWidth;
         this.ctx.stroke();
 
