@@ -17,6 +17,7 @@ import { useStore } from '../../store/useStore';
 import { DeleteShapeCommand } from '../shapes/commands/delete';
 import { MoveShapeCommand } from '../shapes/commands/move';
 import { UpdateStyleCommand } from '../shapes/commands/style';
+import { BooleanCommand } from '../shapes/commands/boolean';
 
 /**
  * Main Editor Controller.
@@ -345,18 +346,14 @@ export class CanvasController {
         }
     }
 
-    performBooleanOperation(operation) {
+    performBooleanOperation(operation: 'unite' | 'subtract' | 'intersect' | 'exclude') {
         if (this.selectedShapes.length < 2) return;
-        this.startAction();
-        const resultShapes = BooleanOperations.perform(this.selectedShapes, operation);
-        const currentSelected = this.selectedShapes;
-        const currentShapes = this.shapes;
-        let newShapes = currentShapes.filter(s => !currentSelected.includes(s));
-        newShapes = [...newShapes, ...resultShapes];
-        this.shapes = newShapes;
-        this.selectedShapes = resultShapes;
-        this.render();
-        this.endAction();
+
+        // Pass a copy of the array to command to avoid reference issues if state changes
+        // although selectedShapes getter returns a new array filter.
+        // It's safe.
+        const command = new BooleanCommand(this.selectedShapes, operation);
+        this.history.execute(command);
     }
 
     applyStyle(style) {
