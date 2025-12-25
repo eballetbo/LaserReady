@@ -147,7 +147,10 @@ export class CanvasRenderer {
             this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, null);
         });
 
-        if (isSelected) {
+        // Only draw group bounds if it is explicitly selected AND is the only thing selected.
+        // 1. includes(group): Prevents nested children from drawing bounds when parent is selected.
+        // 2. length === 1: Prevents individual bounds when multiple items are selected (global box is used).
+        if (selectedShapes.includes(group) && selectedShapes.length === 1) {
             // Draw selection bounds for group
             // We need group bounds.
             // Assuming group.getBounds() or Geometry.getCombinedBounds(group.children)
