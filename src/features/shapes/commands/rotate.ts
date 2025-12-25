@@ -24,7 +24,11 @@ export class RotateShapeCommand implements Command {
                 const g = shape as any;
                 return {
                     type: 'group',
-                    children: g.children ? g.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c))) : [],
+                    children: g.children ? g.children.map((c: any) => {
+                        const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
+                        clone.id = c.id; // Preserve ID
+                        return clone;
+                    }) : [],
                     x: g.x,
                     y: g.y,
                     rotation: g.rotation
@@ -60,7 +64,11 @@ export class RotateShapeCommand implements Command {
 
             if (shape.type === 'group' && original.type === 'group') {
                 const g = shape as any;
-                g.children = original.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c)));
+                g.children = original.children.map((c: any) => {
+                    const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
+                    clone.id = c.id; // Preserve ID
+                    return clone;
+                });
                 g.x = original.x;
                 g.y = original.y;
                 g.rotation = original.rotation;

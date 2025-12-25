@@ -26,9 +26,11 @@ export class ResizeShapeCommand implements Command {
                 const g = shape as any; // GroupShape
                 return {
                     type: 'group',
-                    // valid Clone? 
-                    // relying on children.map(clone) if available
-                    children: g.children ? g.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c))) : [],
+                    children: g.children ? g.children.map((c: any) => {
+                        const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
+                        clone.id = c.id; // Preserve ID for history
+                        return clone;
+                    }) : [],
                     x: g.x,
                     y: g.y,
                     rotation: g.rotation
@@ -65,7 +67,11 @@ export class ResizeShapeCommand implements Command {
 
             if (shape.type === 'group' && original.type === 'group') {
                 const g = shape as any;
-                g.children = original.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c)));
+                g.children = original.children.map((c: any) => {
+                    const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
+                    clone.id = c.id; // Preserve ID when restoring
+                    return clone;
+                });
                 g.x = original.x;
                 g.y = original.y;
                 g.rotation = original.rotation;
