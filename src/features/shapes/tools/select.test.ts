@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SelectTool } from './select';
 import { PathShape } from '../models/path';
 import { PathNode } from '../models/node';
+import { useStore } from '../../../store/useStore';
 
 describe('SelectTool - Resize Bug', () => {
     let mockEditor: any;
@@ -9,6 +10,13 @@ describe('SelectTool - Resize Bug', () => {
     let testShape: PathShape;
 
     beforeEach(() => {
+        // Reset store
+        useStore.setState({
+            shapes: [],
+            selectedShapes: [],
+            tool: 'select'
+        });
+
         // Create mock editor context
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d')!;
@@ -20,12 +28,24 @@ describe('SelectTool - Resize Bug', () => {
             new PathNode(100, 100),
             new PathNode(0, 100)
         ], true);
+        testShape.id = 'test-shape';
+
+        useStore.setState({
+            shapes: [testShape],
+            selectedShapes: [testShape.id]
+        });
 
         mockEditor = {
             canvas,
             ctx,
-            shapes: [testShape],
-            selectedShapes: [testShape],
+            get shapes() { return useStore.getState().shapes; },
+            get selectedShapes() {
+                const { shapes, selectedShapes } = useStore.getState();
+                return shapes.filter(s => selectedShapes.includes(s.id));
+            },
+            set selectedShapes(value: any[]) {
+                useStore.getState().setSelectedShapes(value.map(s => s.id));
+            },
             tool: 'select',
             activePath: null,
             previewPoint: null,
@@ -36,6 +56,11 @@ describe('SelectTool - Resize Bug', () => {
             getMousePos: vi.fn((e: MouseEvent) => ({ x: e.clientX, y: e.clientY })),
             render: vi.fn(),
             moveSelected: vi.fn(),
+            history: {
+                execute: vi.fn((cmd: any) => cmd.execute()),
+                undo: vi.fn(),
+                redo: vi.fn()
+            },
             renderer: {
                 drawScene: vi.fn()
             }
