@@ -104,6 +104,8 @@ export class SelectTool extends BaseTool {
             }
             this.isDraggingShape = true;
             this.dragStart = { x, y };
+            // Capture initial state for MoveCommand
+            this.initialShapeStates = this.editor.selectedShapes.map(shape => shape.clone());
         } else {
             // Clicked empty space
             if (!e.shiftKey) {
@@ -197,7 +199,12 @@ export class SelectTool extends BaseTool {
             const dx = x - this.dragStart.x;
             const dy = y - this.dragStart.y;
 
-            this.editor.moveSelected(dx, dy);
+            // Direct mutation for preview (avoids history spam)
+            this.editor.selectedShapes.forEach(shape => {
+                if ('move' in shape) {
+                    (shape as any).move(dx, dy);
+                }
+            });
 
             this.dragStart = { x, y };
             this.editor.render();
@@ -233,13 +240,29 @@ export class SelectTool extends BaseTool {
         }
 
         // STEP 6: Handle drag/move with MoveCommand for undo/redo
-        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragStart) {
-            const { x, y } = this.editor.getMousePos(e);
-            const dx = x - this.dragStart.x;
-            const dy = y - this.dragStart.y;
+        // STEP 6: Handle drag/move with MoveCommand for undo/redo
+        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragStart && this.initialShapeStates.length > 0) {
+            // Calculate total displacement by comparing current first node with initial first node
+            // Note: This matches the logic that shapes were mutually moved by same delta
+
+            // NOTE: We can't rely on 'dragStart' for total delta because it was reset during drag
+            // We must compare current state with initial state.
+
+            const shape = this.editor.selectedShapes[0];
+            const original = this.initialShapeStates[0];
+
+            // Assume PathShape with nodes
+            // Delta = current - original
+            let totalDx = 0;
+            let totalDy = 0;
+
+            if (shape.nodes && shape.nodes.length > 0 && original.nodes && original.nodes.length > 0) {
+                totalDx = shape.nodes[0].x - original.nodes[0].x;
+                totalDy = shape.nodes[0].y - original.nodes[0].y;
+            }
 
             // Only create command if there was actual movement
-            if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+            if (Math.abs(totalDx) > 0.01 || Math.abs(totalDy) > 0.01) {
                 // Restore to original positions first
                 // (They were mutated during onMouseMove for preview)
                 this.editor.selectedShapes.forEach((shape, i) => {
@@ -249,12 +272,12 @@ export class SelectTool extends BaseTool {
                     }
                 });
 
-                // Execute move via Command
+                // Execute move via Command (which applies the delta AND pushes to history)
                 const command = new MoveShapeCommand(
                     this.editor.selectedShapes as any[],
-                    dx,
-                    dy
-                );
+                    totalDx,
+                    totalDy
+                ); // FIX: Removed trailing comma inside call
                 this.editor.history.execute(command);
             }
         }

@@ -1,6 +1,7 @@
 import { BaseTool } from '../../core/tools/base';
 import { PathNode } from './models/node';
 import { PathShape } from './models/path';
+import { CreateShapeCommand } from './commands/create';
 
 interface Point {
     x: number;
@@ -62,6 +63,28 @@ export class RectTool extends BaseTool {
     onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
+
+        if (this.editor.selectedShape) {
+            // Remove the temporary shape directly from store first
+            // This is necessary because we added it directly in onMouseDown
+            const currentShapes = this.editor.shapes;
+            const index = currentShapes.indexOf(this.editor.selectedShape);
+            if (index > -1) {
+                // Silently remove from array to avoid double-add when executing command
+                // Note: We need to use setter to update store if we want to be clean,
+                // but here we just want to hand it over to Command.
+                // Actually, cleaner way:
+                // Command.execute() adds it.
+                // So we should remove it from the "live" array before calling history.execute
+
+                // We must update the store to remove it physically
+                this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
+            }
+
+            // Now execute command to add it back (and push to history)
+            const command = new CreateShapeCommand(this.editor.selectedShape);
+            this.editor.history.execute(command);
+        }
     }
 }
 
@@ -136,6 +159,12 @@ export class CircleTool extends BaseTool {
     onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
+        if (this.editor.selectedShape) {
+            const currentShapes = this.editor.shapes;
+            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
+            const command = new CreateShapeCommand(this.editor.selectedShape);
+            this.editor.history.execute(command);
+        }
     }
 }
 
@@ -200,6 +229,12 @@ export class PolygonTool extends BaseTool {
     onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
+        if (this.editor.selectedShape) {
+            const currentShapes = this.editor.shapes;
+            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
+            const command = new CreateShapeCommand(this.editor.selectedShape);
+            this.editor.history.execute(command);
+        }
     }
 }
 
@@ -276,5 +311,11 @@ export class StarTool extends BaseTool {
     onMouseUp(e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
+        if (this.editor.selectedShape) {
+            const currentShapes = this.editor.shapes;
+            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.selectedShape.id);
+            const command = new CreateShapeCommand(this.editor.selectedShape);
+            this.editor.history.execute(command);
+        }
     }
 }

@@ -2,6 +2,7 @@ import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { PathNode } from '../models/node';
 import { PathShape } from '../models/path';
 import { Geometry } from '../../../core/math/geometry';
+import { CreateShapeCommand } from '../commands/create';
 
 interface DraggingItem {
     type: string;
@@ -201,6 +202,14 @@ export class PenTool extends BaseTool {
                 console.log('DEBUG: Removed last node, now', this.editor.activePath.nodes.length, 'nodes');
             }
 
+            // Command Pattern: Commit the finished path
+            // Remove from store first (because it was added during drawing)
+            const currentShapes = this.editor.shapes;
+            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.activePath.id);
+
+            const command = new CreateShapeCommand(this.editor.activePath);
+            this.editor.history.execute(command);
+
             this.editor.activePath = null;
             this.editor.previewPoint = null;
             this.editor.render();
@@ -210,6 +219,13 @@ export class PenTool extends BaseTool {
     onKeyDown(e: KeyboardEvent) {
         if (this.editor.activePath) {
             if (e.key === 'Enter') {
+                // Command Pattern: Commit the finished path
+                const currentShapes = this.editor.shapes;
+                this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.activePath.id);
+
+                const command = new CreateShapeCommand(this.editor.activePath);
+                this.editor.history.execute(command);
+
                 this.editor.activePath = null;
                 this.editor.previewPoint = null;
                 this.editor.render();

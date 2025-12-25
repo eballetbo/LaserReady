@@ -16,6 +16,8 @@ export interface IEditorContext {
     activeLayerId: string;
     selectionBox: any | null; // Drag selection preview box
     previewOrigin: { x: number; y: number } | null; // Custom start point for preview line (optional)
+    history: any; // HistoryManager
+    selectedShape?: any; // Temporary selection for creation tools
 }
 
 export class BaseTool {
