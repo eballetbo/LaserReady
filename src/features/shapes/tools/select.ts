@@ -123,10 +123,27 @@ export class SelectTool extends BaseTool {
             // Rotate preview: restore original, then apply rotation in-place
             this.editor.selectedShapes.forEach((shape, i) => {
                 const original = this.initialShapeStates[i];
-                // Restore nodes to original state first
-                shape.nodes = original.nodes.map((n: any) => n.clone());
+                if (!original) return; // Guard against missing state
+
+                // Restore state first
+                if (shape.type === 'group') {
+                    const g = shape as any;
+                    const o = original as any;
+                    // If original was captured correctly, g and o should match types
+                    if (o.type === 'group') {
+                        g.x = o.x; g.y = o.y; g.rotation = o.rotation;
+                        if (o.children) {
+                            g.children = o.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c)));
+                        }
+                    }
+                } else if (shape.nodes && original.nodes) {
+                    shape.nodes = original.nodes.map((n: any) => n.clone());
+                }
+
                 // Then apply current rotation
-                shape.rotate(deltaAngle, this.rotationCenter);
+                if (typeof (shape as any).rotate === 'function') {
+                    (shape as any).rotate(deltaAngle, this.rotationCenter);
+                }
             });
 
             this.editor.render();
@@ -536,6 +553,17 @@ export class SelectTool extends BaseTool {
             // This preserves the shape reference and maintains selection
             if (shape.nodes && scaledShape.nodes) {
                 shape.nodes = scaledShape.nodes.map((n: any) => n.clone());
+            } else if (shape.type === 'group') {
+                // For groups, we need to sync the children structure
+                const g = shape as any;
+                const s = scaledShape as any;
+                // We assume same structure / order
+                g.children = s.children; // Or better: s.children.map(c => c.clone()) to avoid ref issues? 
+                // But clone() deep clones. s is already a clone. 
+                // We want shape (the live object) to match s (the preview transform). 
+                // s.children are new instances from clone().
+                // So updating g.children = s.children is technically replacing children with new refs.
+                // This is fine for preview.
             }
 
             // Also copy other properties that might have changed

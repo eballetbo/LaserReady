@@ -117,6 +117,31 @@ export class GroupShape implements IShape {
         });
     }
 
+    rotate(angle: number, center: { x: number, y: number }): void {
+        this.children.forEach(child => {
+            if (typeof (child as any).rotate === 'function') {
+                (child as any).rotate(angle, center);
+            }
+        });
+        // We might want to update this.rotation, but usually it's derived or relative.
+        // For now, let's just track it loosely if needed.
+        this.rotation += angle;
+    }
+
+    scale(sx: number, sy: number, center: { x: number, y: number }): void {
+        this.children.forEach(child => {
+            if (typeof (child as any).scale === 'function') {
+                (child as any).scale(sx, sy, center);
+            }
+        });
+        // Update position? x/y are top-left usually, derived from bounds.
+        // We don't strictly maintain x/y for Groups as authoritative, bounds are.
+        // But let's update them to be safe via bounds
+        const b = this.getBounds();
+        this.x = b.minX;
+        this.y = b.minY;
+    }
+
     clone(): GroupShape {
         // Deep clone children
         const newChildren = this.children.map(c => {

@@ -1,7 +1,6 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { PathShape } from '../models/path';
-import { PathNode } from '../models/node';
+import { IShape } from '../types';
 import { Point } from '../../../core/math/geometry';
 
 /**
@@ -9,26 +8,44 @@ import { Point } from '../../../core/math/geometry';
  * Stores original nodes state for restoration.
  */
 export class RotateShapeCommand implements Command {
-    private shapesToRotate: PathShape[];
+    private shapesToRotate: IShape[];
     private angle: number;
     private center: Point;
-    private originalStates: Array<{ nodes: PathNode[] }>;
+    private originalStates: any[];
 
-    constructor(shapesToRotate: PathShape[], angle: number, center: Point) {
+    constructor(shapesToRotate: IShape[], angle: number, center: Point) {
         this.shapesToRotate = shapesToRotate;
         this.angle = angle;
         this.center = center;
 
         // Store original state for undo
-        this.originalStates = shapesToRotate.map(shape => ({
-            nodes: shape.nodes.map(n => n.clone())
-        }));
+        this.originalStates = shapesToRotate.map(shape => {
+            if (shape.type === 'group') {
+                const g = shape as any;
+                return {
+                    type: 'group',
+                    children: g.children ? g.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c))) : [],
+                    x: g.x,
+                    y: g.y,
+                    rotation: g.rotation
+                };
+            } else if (shape.nodes) {
+                return {
+                    type: 'path',
+                    nodes: shape.nodes.map((n: any) => n.clone()),
+                    rotation: (shape as any).rotation
+                };
+            }
+            return { type: 'other', ...shape };
+        });
     }
 
     execute(): void {
         // Apply rotation to each shape
         this.shapesToRotate.forEach(shape => {
-            shape.rotate(this.angle, this.center);
+            if (typeof (shape as any).rotate === 'function') {
+                (shape as any).rotate(this.angle, this.center);
+            }
         });
 
         // Trigger store update to re-render
@@ -40,7 +57,19 @@ export class RotateShapeCommand implements Command {
         // Restore original state for each shape
         this.shapesToRotate.forEach((shape, i) => {
             const original = this.originalStates[i];
-            shape.nodes = original.nodes.map(n => n.clone());
+
+            if (shape.type === 'group' && original.type === 'group') {
+                const g = shape as any;
+                g.children = original.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c)));
+                g.x = original.x;
+                g.y = original.y;
+                g.rotation = original.rotation;
+            } else if (original.nodes && shape.nodes) {
+                shape.nodes = original.nodes.map((n: any) => n.clone());
+                if (original.rotation !== undefined) {
+                    (shape as any).rotation = original.rotation;
+                }
+            }
         });
 
         // Trigger store update
