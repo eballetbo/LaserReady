@@ -43,7 +43,7 @@ export class ResizeShapeCommand implements Command {
                 };
             }
             // Fallback for simple shapes without nodes or children (e.g. Rect/Circle if not path-based)
-            return { type: 'other', ...shape };
+            return { ...shape };
         });
     }
 
@@ -82,6 +82,10 @@ export class ResizeShapeCommand implements Command {
                 if (original.rotation !== undefined) {
                     (shape as any).rotation = original.rotation;
                 }
+            } else {
+                // Restore simple shape properties (x, y, scales, etc.)
+                const { type, ...props } = original;
+                Object.assign(shape, props);
             }
         });
 
