@@ -1,4 +1,4 @@
-import { IShape } from '../types/core';
+import { IShape } from '../../types/core';
 
 export interface Point {
     x: number;
