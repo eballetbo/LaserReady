@@ -27,7 +27,7 @@ export const PEN_PREVIEW_COLOR = '#999';
 // ========================================
 export const ANCHOR_SIZE = 8;
 export const HANDLE_RADIUS = 5;
-export const DEFAULT_STROKE_WIDTH = 2;
+export const DEFAULT_STROKE_WIDTH = 1;
 export const SELECTION_LINE_WIDTH = 2;
 export const PEN_DASH_PATTERN = [5, 5] as const;
 export const ROTATION_HANDLE_OFFSET = 20;
