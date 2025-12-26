@@ -1,188 +1,229 @@
-import { BaseTool, IEditorContext } from '../../../core/tools/base';
+import { BaseTool } from '../../../core/tools/base';
 import { CanvasController } from '../../editor/controller';
 import { Geometry } from '../../../core/math/geometry';
+import { MoveNodeCommand } from '../commands/move-node';
+import { PathNode } from '../models/node';
 
-interface HitResult {
-    type: 'anchor' | 'in' | 'out' | 'create-smooth';
-    index: number;
+type DragTargetType = 'ANCHOR' | 'HANDLE_IN' | 'HANDLE_OUT';
+
+interface DragState {
+    type: DragTargetType;
+    nodeIndex: number;
+    initialNode: PathNode;
 }
 
 export class NodeEditTool extends BaseTool {
-    draggingItem: HitResult | null;
+    dragState: DragState | null;
+    declare editor: CanvasController;
 
     constructor(editor: CanvasController) {
         super(editor);
-        this.draggingItem = null;
+        this.dragState = null;
+    }
+
+    onActivate() {
+        this.editor.canvas.style.cursor = 'default';
+        this.editor.render();
+    }
+
+    onDeactivate() {
+        this.editor.canvas.style.cursor = 'default';
+        this.editor.selectedNodeIndex = null;
+        this.editor.render();
     }
 
     onMouseDown(e: MouseEvent) {
         const { x, y } = this.editor.getMousePos(e);
+        this.dragState = null;
 
-        if (this.editor.selectedShapes.length === 1) {
-            const hit = this.getClickedControl(x, y);
-            if (hit) {
-                if (hit.type === 'anchor') {
-                    // Update IEditorContext to include selectedNodeIndex? 
-                    // BaseTool definition has it? No.
-                    // But editor instance is CanvasController which has it.
-                    // We can cast editor to any or update IEditorContext.
-                    // For now, casting or assuming loose contract as IEditorContext properties are open in my previous viewing?
-                    // In base-tool.ts IEditorContext did NOT have selectedNodeIndex.
-                    // I will access it dynamically or ignore TS error for now, OR better, extend IEditorContext locally.
-                    (this.editor as any).selectedNodeIndex = hit.index;
+        const selection = this.editor.selectedShapes;
+        // Only support single path editing for now
+        if (selection.length !== 1) {
+            this.handleSelectionClick(x, y);
+            return;
+        }
 
-                    if (e.altKey) {
-                        // Alt + Drag on Anchor -> Create Smooth (pull out handles)
-                        this.draggingItem = { type: 'create-smooth', index: hit.index };
-                    } else {
-                        // Normal Drag on Anchor
-                        this.draggingItem = hit;
-                    }
-                } else {
-                    // Dragging a handle
-                    this.draggingItem = hit;
+        const shape = selection[0];
+        // Ensure it's a path shape or compatible
+        if (!shape.nodes) {
+            this.handleSelectionClick(x, y);
+            return;
+        }
+
+        // 1. Hit Test Handles (High Priority)
+        if (this.editor.selectedNodeIndex !== null) {
+            const index = this.editor.selectedNodeIndex;
+            if (index >= 0 && index < shape.nodes.length) {
+                const node = shape.nodes[index];
+                const handleParam = this.getHitHandle(x, y, node);
+                if (handleParam) {
+                    this.dragState = {
+                        type: handleParam,
+                        nodeIndex: index,
+                        initialNode: node.clone()
+                    };
+                    this.editor.render();
+                    return;
                 }
-                this.editor.render();
-                return;
             }
         }
 
-        // If clicking empty space or another shape
-        let clickedShape: any | null = null;
-        for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
-            if (Geometry.isPointInBezierPath(this.editor.ctx, this.editor.shapes[i], x, y)) {
-                clickedShape = this.editor.shapes[i];
-                break;
+        // 2. Hit Test Anchors
+        const anchorIndex = this.getHitAnchor(x, y, shape);
+        if (anchorIndex !== -1) {
+            this.editor.selectedNodeIndex = anchorIndex;
+            const node = shape.nodes[anchorIndex];
+
+            // Check for Alt key to reset handles or smooth
+            if (e.altKey) {
+                // Future: Smooth logic
             }
-        }
 
-        if (clickedShape) {
-            this.editor.selectedShapes = [clickedShape];
-            (this.editor as any).selectedNodeIndex = null; // Reset node selection when selecting shape
-            this.editor.render();
-        } else {
-            this.editor.selectedShapes = [];
-            (this.editor as any).selectedNodeIndex = null;
-            this.editor.render();
-        }
-    }
-
-    onMouseMove(e: MouseEvent) {
-        const { x, y } = this.editor.getMousePos(e);
-        this.editor.canvas.style.cursor = 'default';
-
-        if (this.draggingItem && this.editor.selectedShapes.length === 1) {
-            this.handleDrag(x, y);
+            this.dragState = {
+                type: 'ANCHOR',
+                nodeIndex: anchorIndex,
+                initialNode: node.clone()
+            };
             this.editor.render();
             return;
         }
 
-        // Cursor updates
-        if (this.editor.selectedShapes.length === 1) {
-            const hit = this.getClickedControl(x, y);
-            if (hit) {
-                this.editor.canvas.style.cursor = 'grab';
+        // 3. Clicked empty space or valid shape body
+        this.handleSelectionClick(x, y);
+    }
+
+    onMouseMove(e: MouseEvent) {
+        const { x, y } = this.editor.getMousePos(e);
+
+        // Handling Drag
+        if (this.dragState && this.editor.selectedShapes.length === 1) {
+            const shape = this.editor.selectedShapes[0];
+            if (!shape.nodes) return;
+            const node = shape.nodes[this.dragState.nodeIndex];
+
+            if (this.dragState.type === 'ANCHOR') {
+                const dx = x - node.x;
+                const dy = y - node.y;
+                node.translate(dx, dy);
+            } else if (this.dragState.type === 'HANDLE_IN') {
+                node.cpIn.x = x;
+                node.cpIn.y = y;
+            } else if (this.dragState.type === 'HANDLE_OUT') {
+                node.cpOut.x = x;
+                node.cpOut.y = y;
             }
+
+            this.editor.render();
+            return;
         }
+
+        // Handling Cursor Hover
+        this.updateCursor(x, y);
     }
 
     onMouseUp(e: MouseEvent) {
-        this.draggingItem = null;
+        if (this.dragState && this.editor.selectedShapes.length === 1) {
+            const shape = this.editor.selectedShapes[0];
+            if (!shape.nodes) return;
+            const node = shape.nodes[this.dragState.nodeIndex];
+            const initial = this.dragState.initialNode;
+
+            // Check if changed
+            const hasChanged =
+                node.x !== initial.x || node.y !== initial.y ||
+                node.cpIn.x !== initial.cpIn.x || node.cpIn.y !== initial.cpIn.y ||
+                node.cpOut.x !== initial.cpOut.x || node.cpOut.y !== initial.cpOut.y;
+
+            if (hasChanged) {
+                // Execute command
+                const command = new MoveNodeCommand(
+                    shape.id,
+                    this.dragState.nodeIndex,
+                    initial,
+                    node.clone()
+                );
+                this.editor.history.execute(command);
+            }
+        }
+        this.dragState = null;
     }
 
-    onDoubleClick(e: MouseEvent) {
-        const { x, y } = this.editor.getMousePos(e); // BaseTool definition might not include onDoubleClick.
-        // If BaseTool doesn't have onDoubleClick, this won't be called by Editor unless Editor supports it.
-        // Assuming Editor supports it as per original code.
-        if (this.editor.selectedShapes.length === 1) {
-            const hit = this.getClickedControl(x, y);
-            if (hit && hit.type === 'anchor') {
-                // Double click anchor -> Reset to Sharp
-                const node = this.editor.selectedShapes[0].nodes[hit.index];
-                node.cpIn.x = node.x; node.cpIn.y = node.y;
-                node.cpOut.x = node.x; node.cpOut.y = node.y;
-                this.editor.render();
-            }
+    onKeyDown(e: KeyboardEvent) {
+        // Delete selected node
+        if ((e.key === 'Delete' || e.key === 'Backspace') && this.editor.selectedNodeIndex !== null) {
+            // TODO: Implement DeleteNodeCommand
+            // For now just ignore or let editor handle shape deletion if no node selected
         }
     }
 
-    getClickedControl(x: number, y: number): HitResult | null {
-        const config = this.editor.config;
-        const tol2 = (config.handleRadius + 3) ** 2;
-        const anchorTol2 = (config.anchorSize / 2 + 2) ** 2;
-        const shape = this.editor.selectedShapes[0];
+    // --- Helpers ---
 
-        if ((this.editor as any).selectedNodeIndex !== null) {
-            const i = (this.editor as any).selectedNodeIndex;
-            if (i >= 0 && i < shape.nodes.length) {
-                const n = shape.nodes[i];
-                // Check handles for selected node
-                if (Geometry.getDistance({ x, y }, n.cpIn) ** 2 <= tol2) return { type: 'in', index: i };
-                // Using **2 to match squared tolerance logic I assumed. 
-                // Wait, getDistance returns Actual Distance. 
-                // So comparison should be `dist <= tol` (not squared) OR `dist ** 2 <= tol2`.
-                // Original code: `getDistance(...) <= tol2`.
-                // If `tol2` is squared tolerance, `getDistance` (linear) <= `tol2` (squared) is usually generous (e.g. 5 <= 25).
-                // I'll stick to logic: Distance vs Radius+Buffer.
-                // If handleRadius=5, tol=8. tolSq=64.
-                // If I click 10px away, dist=10. 10 <= 64. True. 
-                // So hit area is huge? Maybe intentional?
-                // I will keep original logic structure mostly but be aware.
-                // Actually `Geometry.getDistance` returns sqrt.
-                // If original code had `tol2 = (radius + 3) ** 2`, it implies checking against squared distance.
-                // BUT it called `Geometry.getDistance`.
-                // So `dist <= distSquared` logic is buggy unless intentional for large hit area.
-                // I will assume `dist <= distSquared` was the code so I reproduce it, or fix it?
-                // I'll fix it to `dist <= Math.sqrt(tol2)` i.e. `dist <= radius + 3`
-                // `const tol = config.handleRadius + 3; `
-                // `if (Geometry.getDistance(...) <= tol) ...`
-                // This is cleaner safer TS.
-            }
+    private handleSelectionClick(x: number, y: number) {
+        // Try to select a shape under cursor
+        const clickedShape = this.findShapeAt(x, y);
+        if (clickedShape) {
+            this.editor.selectedShapes = [clickedShape];
+            this.editor.selectedNodeIndex = null;
+        } else {
+            this.editor.selectedShapes = [];
+            this.editor.selectedNodeIndex = null;
         }
+        this.editor.render();
+    }
 
-        // Let's implement cleaner Hit Test
-        // Handles
-        if ((this.editor as any).selectedNodeIndex !== null) {
-            const i = (this.editor as any).selectedNodeIndex;
-            if (i >= 0 && i < shape.nodes.length) {
-                const n = shape.nodes[i];
-                const handleTol = config.handleRadius + 3;
-                if (Geometry.getDistance({ x, y }, n.cpIn) <= handleTol) return { type: 'in', index: i };
-                if (Geometry.getDistance({ x, y }, n.cpOut) <= handleTol) return { type: 'out', index: i };
+    private findShapeAt(x: number, y: number): any | null {
+        for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
+            if (Geometry.isPointInBezierPath(this.editor.ctx, this.editor.shapes[i], x, y)) {
+                return this.editor.shapes[i];
             }
-        }
-
-        // Anchors
-        const anchorTol = config.anchorSize / 2 + 2;
-        for (let i = 0; i < shape.nodes.length; i++) {
-            const n = shape.nodes[i];
-            if (Geometry.getDistance({ x, y }, { x: n.x, y: n.y }) <= anchorTol) return { type: 'anchor', index: i };
         }
         return null;
     }
 
-    handleDrag(x: number, y: number) {
-        if (!this.draggingItem) return;
+    private getHitHandle(x: number, y: number, node: PathNode): DragTargetType | null {
+        const r = this.editor.config.handleRadius + 2; // Tolerance
+        if (Geometry.getDistance({ x, y }, node.cpIn) <= r) return 'HANDLE_IN';
+        if (Geometry.getDistance({ x, y }, node.cpOut) <= r) return 'HANDLE_OUT';
+        return null;
+    }
+
+    private getHitAnchor(x: number, y: number, shape: any): number {
+        const r = this.editor.config.anchorSize / 2 + 3; // Tolerance
+        for (let i = 0; i < shape.nodes.length; i++) {
+            const node = shape.nodes[i];
+            if (Geometry.getDistance({ x, y }, { x: node.x, y: node.y }) <= r) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private updateCursor(x: number, y: number) {
+        if (this.editor.selectedShapes.length !== 1) {
+            this.editor.canvas.style.cursor = 'default';
+            return;
+        }
 
         const shape = this.editor.selectedShapes[0];
-        const node = shape.nodes[this.draggingItem.index];
+        if (!shape.nodes) return;
 
-        if (this.draggingItem.type === 'anchor') {
-            const dx = x - node.x;
-            const dy = y - node.y;
-            node.translate(dx, dy);
-        } else if (this.draggingItem.type === 'create-smooth') {
-            // Pull out cpOut to mouse
-            node.cpOut.x = x; node.cpOut.y = y;
-            // Mirror cpIn
-            const dx = x - node.x;
-            const dy = y - node.y;
-            node.cpIn.x = node.x - dx;
-            node.cpIn.y = node.y - dy;
-        } else if (this.draggingItem.type === 'in') {
-            node.cpIn.x = x; node.cpIn.y = y;
-        } else if (this.draggingItem.type === 'out') {
-            node.cpOut.x = x; node.cpOut.y = y;
+        // Check Handles
+        if (this.editor.selectedNodeIndex !== null) {
+            const index = this.editor.selectedNodeIndex;
+            if (index < shape.nodes.length) {
+                if (this.getHitHandle(x, y, shape.nodes[index])) {
+                    this.editor.canvas.style.cursor = 'grab';
+                    return;
+                }
+            }
         }
+
+        // Check Anchors
+        if (this.getHitAnchor(x, y, shape) !== -1) {
+            this.editor.canvas.style.cursor = 'crosshair';
+            return;
+        }
+
+        this.editor.canvas.style.cursor = 'default';
     }
 }
