@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/language';
 import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 'lucide-react';
-import { CanvasController } from '../../editor/controller';
+import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 
