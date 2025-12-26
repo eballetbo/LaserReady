@@ -67,4 +67,5 @@ export const ca: Translation = {
     content: "Contingut",
     fontFamily: "Font",
     fontSize: "Mida",
+    convertToPath: "Convertir a Camí",
 };

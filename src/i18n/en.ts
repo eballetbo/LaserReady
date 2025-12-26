@@ -66,6 +66,7 @@ export interface Translation {
     content: string;
     fontFamily: string;
     fontSize: string;
+    convertToPath: string;
 }
 
 export const en: Translation = {
@@ -135,4 +136,5 @@ export const en: Translation = {
     content: "Content",
     fontFamily: "Font Family",
     fontSize: "Font Size",
+    convertToPath: "Convert to Path",
 };

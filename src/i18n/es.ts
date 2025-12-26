@@ -67,4 +67,5 @@ export const es: Translation = {
     content: "Contenido",
     fontFamily: "Fuente",
     fontSize: "Tamaño",
+    convertToPath: "Convertir a Trayecto",
 };

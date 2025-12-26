@@ -224,7 +224,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                             }
                                         }}
                                         icon={Combine}
-                                        label={t('convertToPath') || 'Convert to Path'}
+                                        label={t('convertToPath')}
                                         theme={theme}
                                         className="w-full"
                                     />
