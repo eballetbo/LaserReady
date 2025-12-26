@@ -231,6 +231,14 @@ export class SelectTool extends BaseTool {
                     g.children = o.children.map((c: any) => c.clone());
                 } else if (shape.nodes && original.nodes) {
                     shape.nodes = original.nodes.map((n: any) => n.clone());
+                } else {
+                    // Restore parametric properties (Text, Rect, Circle, etc.)
+                    const s = shape as any;
+                    const o = original as any;
+                    s.x = o.x; s.y = o.y; s.rotation = o.rotation;
+                    if (o.scaleX !== undefined) s.scaleX = o.scaleX;
+                    if (o.scaleY !== undefined) s.scaleY = o.scaleY;
+                    if (o.fontSize !== undefined) s.fontSize = o.fontSize;
                 }
             });
 
@@ -290,6 +298,14 @@ export class SelectTool extends BaseTool {
                         g.children = o.children.map((c: any) => c.clone());
                     } else if (shape.nodes && original.nodes) {
                         shape.nodes = original.nodes.map((n: any) => n.clone());
+                    } else {
+                        // Restore parametric properties
+                        const s = shape as any;
+                        const o = original as any;
+                        s.x = o.x; s.y = o.y; s.rotation = o.rotation;
+                        if (o.scaleX !== undefined) s.scaleX = o.scaleX;
+                        if (o.scaleY !== undefined) s.scaleY = o.scaleY;
+                        if (o.fontSize !== undefined) s.fontSize = o.fontSize;
                     }
                 });
 
@@ -319,6 +335,14 @@ export class SelectTool extends BaseTool {
                     g.children = o.children.map((c: any) => c.clone());
                 } else if (shape.nodes && original.nodes) {
                     shape.nodes = original.nodes.map((n: any) => n.clone());
+                } else {
+                    // Restore parametric properties
+                    const s = shape as any;
+                    const o = original as any;
+                    s.x = o.x; s.y = o.y; s.rotation = o.rotation;
+                    if (o.scaleX !== undefined) s.scaleX = o.scaleX;
+                    if (o.scaleY !== undefined) s.scaleY = o.scaleY;
+                    if (o.fontSize !== undefined) s.fontSize = o.fontSize;
                 }
             });
 
@@ -405,7 +429,8 @@ export class SelectTool extends BaseTool {
 
             const newSelection: IShape[] = [];
             this.editor.shapes.forEach((shape: IShape) => {
-                const shapeBounds = shape.getBounds();
+                const shapeBounds = shape.getBounds ? shape.getBounds() : { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0, cx: 0, cy: 0 };
+
 
                 if (isEnclosing) {
                     // Enclosing: Shape must be 100% inside selection rect
@@ -557,14 +582,18 @@ export class SelectTool extends BaseTool {
                 // For groups, we need to sync the children structure
                 const g = shape as any;
                 const s = scaledShape as any;
-                // We assume same structure / order
-                g.children = s.children; // Or better: s.children.map(c => c.clone()) to avoid ref issues? 
-                // But clone() deep clones. s is already a clone. 
-                // We want shape (the live object) to match s (the preview transform). 
-                // s.children are new instances from clone().
-                // So updating g.children = s.children is technically replacing children with new refs.
-                // This is fine for preview.
+                g.children = s.children;
+            } else if (shape.type === 'text') {
+                const t = shape as any;
+                const s = scaledShape as any;
+                t.fontSize = s.fontSize;
+                t.scaleX = s.scaleX;
+                t.scaleY = s.scaleY;
             }
+
+            // Sync position for all shapes (important for parameters shapes like Text)
+            if ('x' in shape) (shape as any).x = (scaledShape as any).x;
+            if ('y' in shape) (shape as any).y = (scaledShape as any).y;
 
             // Also copy other properties that might have changed
             if ('rotation' in shape && 'rotation' in scaledShape) {

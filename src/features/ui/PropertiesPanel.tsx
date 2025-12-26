@@ -3,6 +3,7 @@ import { useLanguage } from '../../contexts/language';
 import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 'lucide-react';
 import { CanvasController } from '../../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
+import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 
 interface Theme {
     iconColor: string;
@@ -212,6 +213,21 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     >
                                         I
                                     </button>
+                                </div>
+                                <div className="mt-4">
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => {
+                                            if (editor) {
+                                                const command = new ConvertToPathCommand(selectedObject);
+                                                editor.history.execute(command);
+                                            }
+                                        }}
+                                        icon={Combine}
+                                        label={t('convertToPath') || 'Convert to Path'}
+                                        theme={theme}
+                                        className="w-full"
+                                    />
                                 </div>
                             </div>
                         </div>

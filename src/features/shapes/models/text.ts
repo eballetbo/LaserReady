@@ -1,4 +1,5 @@
 import { TextMeasurer } from '../../../utils/text-measure';
+import { IShape } from '../types';
 
 export interface TextStyle {
     fontSize?: number;
@@ -29,7 +30,8 @@ export interface Point {
     y: number;
 }
 
-export class TextObject {
+export class TextObject implements IShape {
+    id: string;
     x: number;
     y: number;
     text: string;
@@ -42,12 +44,14 @@ export class TextObject {
     scaleX: number;
     scaleY: number;
     type: string;
+    closed: boolean = false;
     // Legacy properties that might exist but are handled by layers
     fillColor?: string;
     strokeColor?: string;
     strokeWidth?: number;
 
     constructor(x: number, y: number, text: string = '', style: TextStyle = {}, layerId: string = 'layer-1') {
+        this.id = crypto.randomUUID();
         this.x = x;
         this.y = y;
         this.text = text;
@@ -77,15 +81,50 @@ export class TextObject {
         const w = maxWidth * Math.abs(this.scaleX);
         const h = height * Math.abs(this.scaleY);
 
+        // Previous logic assumed anchor was at baseline left
+        // Corners relative to anchor (0,0 in local space)
+        // Note: minY = y - fontSize * scaleY implies top is at -fontSize*scaleY relative to anchor y.
+
+        const top = -this.fontSize * this.scaleY;
+        const bottom = -this.fontSize * this.scaleY + h;
+        const left = 0;
+        const right = w;
+
+        const corners = [
+            { x: left, y: top },
+            { x: right, y: top },
+            { x: right, y: bottom },
+            { x: left, y: bottom }
+        ];
+
+        const cos = Math.cos(this.rotation);
+        const sin = Math.sin(this.rotation);
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+        corners.forEach(p => {
+            // Rotate
+            const rx = p.x * cos - p.y * sin;
+            const ry = p.x * sin + p.y * cos;
+            // Translate back to world
+            const wx = this.x + rx;
+            const wy = this.y + ry;
+
+            minX = Math.min(minX, wx);
+            minY = Math.min(minY, wy);
+            maxX = Math.max(maxX, wx);
+            maxY = Math.max(maxY, wy);
+        });
+
         return {
-            minX: this.x,
-            minY: this.y - this.fontSize * this.scaleY,
-            maxX: this.x + w,
-            maxY: this.y - this.fontSize * this.scaleY + h,
-            width: w,
-            height: h,
-            cx: this.x + w / 2,
-            cy: this.y - this.fontSize * this.scaleY + h / 2
+            minX,
+            minY,
+            maxX,
+            maxY,
+            width: maxX - minX,
+            height: maxY - minY,
+            cx: (minX + maxX) / 2,
+            cy: (minY + maxY) / 2
         };
     }
 
@@ -109,8 +148,19 @@ export class TextObject {
     }
 
     scale(sx: number, sy: number, center: Point): void {
-        this.scaleX *= sx;
-        this.scaleY *= sy;
+        const isUniform = Math.abs(Math.abs(sx) - Math.abs(sy)) < 0.001;
+
+        if (isUniform) {
+            // Apply to fontSize
+            this.fontSize *= Math.abs(sx);
+
+            // Handle flips
+            if (sx < 0) this.scaleX *= -1;
+            if (sy < 0) this.scaleY *= -1;
+        } else {
+            this.scaleX *= sx;
+            this.scaleY *= sy;
+        }
 
         this.x = center.x + (this.x - center.x) * sx;
         this.y = center.y + (this.y - center.y) * sy;

@@ -58,6 +58,11 @@ export class TextTool extends BaseTool {
         // Create hidden textarea
         this.textarea = document.createElement('textarea');
         this.textarea.style.position = 'absolute';
+        this.textarea.style.top = '0';
+        this.textarea.style.left = '0';
+        this.textarea.style.width = '1px';
+        this.textarea.style.height = '1px';
+        this.textarea.style.overflow = 'hidden';
         this.textarea.style.opacity = '0'; // Hidden but focused
         this.textarea.style.pointerEvents = 'none';
         this.textarea.style.zIndex = '-1';
