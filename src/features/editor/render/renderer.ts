@@ -233,10 +233,20 @@ export class CanvasRenderer {
 
     drawNodes(shape: any, config: RendererConfig, selectedNodeIndex: number | null): void {
         // 1. Draw Anchors (Squares) first
+        // 1. Draw Anchors
         shape.nodes.forEach((n: any, i: number) => {
-            this.ctx.fillStyle = i === selectedNodeIndex ? config.colorSelection : config.colorAnchor;
+            // Selected node is Red, others are anchor color
+            this.ctx.fillStyle = i === selectedNodeIndex ? '#FF0000' : config.colorAnchor;
             const size = config.anchorSize;
-            this.ctx.fillRect(n.x - size / 2, n.y - size / 2, size, size);
+
+            // Draw Circle for Smooth/Symmetric, Square for Corner
+            if (n.type === 'smooth' || n.type === 'symmetric') {
+                this.ctx.beginPath();
+                this.ctx.arc(n.x, n.y, size / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else {
+                this.ctx.fillRect(n.x - size / 2, n.y - size / 2, size, size);
+            }
         });
 
         // 2. Draw Handles (Lines + Circles) ONLY for selected node

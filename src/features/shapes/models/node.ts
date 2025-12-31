@@ -1,14 +1,18 @@
+export type NodeType = 'corner' | 'smooth' | 'symmetric';
+
 export class PathNode {
     x: number;
     y: number;
     cpIn: { x: number; y: number };
     cpOut: { x: number; y: number };
+    type: NodeType;
 
-    constructor(x: number, y: number, cpInX?: number, cpInY?: number, cpOutX?: number, cpOutY?: number) {
+    constructor(x: number, y: number, cpInX?: number, cpInY?: number, cpOutX?: number, cpOutY?: number, type: NodeType = 'corner') {
         this.x = x;
         this.y = y;
         this.cpIn = { x: cpInX ?? x, y: cpInY ?? y };
         this.cpOut = { x: cpOutX ?? x, y: cpOutY ?? y };
+        this.type = type;
     }
 
     translate(dx: number, dy: number): void {
@@ -18,10 +22,10 @@ export class PathNode {
     }
 
     clone(): PathNode {
-        return new PathNode(this.x, this.y, this.cpIn.x, this.cpIn.y, this.cpOut.x, this.cpOut.y);
+        return new PathNode(this.x, this.y, this.cpIn.x, this.cpIn.y, this.cpOut.x, this.cpOut.y, this.type);
     }
 
     static fromJSON(json: any): PathNode {
-        return new PathNode(json.x, json.y, json.cpIn.x, json.cpIn.y, json.cpOut.x, json.cpOut.y);
+        return new PathNode(json.x, json.y, json.cpIn.x, json.cpIn.y, json.cpOut.x, json.cpOut.y, json.type);
     }
 }

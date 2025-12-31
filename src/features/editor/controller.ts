@@ -96,6 +96,8 @@ export class CanvasController {
 
         // Subscribe to store changes to re-render
         this.unsubscribe = useStore.subscribe((state, prevState) => {
+            // Sync selection from store to local property
+            // This fixes the stale node insertion issue while keeping compatibility with tools that write to selectedShapes
             // Sync zoom if changed externally (e.g. from toolbar)
             if (state.zoom !== this.zoom) {
                 this.zoom = state.zoom;
