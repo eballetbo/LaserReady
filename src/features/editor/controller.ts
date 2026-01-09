@@ -99,9 +99,10 @@ export class CanvasController {
         this.unsubscribe = useStore.subscribe((state, prevState) => {
             // Sync selection from store to local property
             // This fixes the stale node insertion issue while keeping compatibility with tools that write to selectedShapes
-            // Sync zoom if changed externally (e.g. from toolbar)
-            if (state.zoom !== this.zoom) {
+            // Sync zoom and pan if changed externally (e.g. from toolbar or input)
+            if (state.zoom !== this.zoom || state.pan !== this.pan) {
                 this.zoom = state.zoom;
+                this.pan = state.pan;
                 this.inputManager.setTransform(this.zoom, this.pan);
             }
             this.render();
@@ -109,6 +110,9 @@ export class CanvasController {
 
         // Init input manager transform
         this.inputManager.setTransform(this.zoom, this.pan);
+
+        // Initial Fit to Screen
+        setTimeout(() => this.fitToScreen(), 0);
 
         this.render();
     }
@@ -269,7 +273,7 @@ export class CanvasController {
 
     render() {
         // Read state from Store
-        const { shapes, selectedShapes: selectedIds, tool, zoom, layers } = useStore.getState();
+        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
         this.renderer.drawScene(
@@ -282,9 +286,10 @@ export class CanvasController {
             this.previewPoint,
             this.selectionBox, // Pass selection box from SelectTool
             zoom,
-            this.pan,
+            pan, // Use pan directly from store state (destructured above)
             this.selectedNodeIndex,
-            this.previewOrigin
+            this.previewOrigin,
+            useStore.getState().material // Pass material bounds to renderer
         );
 
         this.onSelectionChange(selectedObjects);
@@ -460,16 +465,49 @@ export class CanvasController {
     }
 
     resetZoom() {
-        useStore.getState().setZoom(1);
-        this.pan = { x: 0, y: 0 };
-        this.inputManager.setTransform(1, this.pan);
-        this.render();
+        this.fitToScreen();
     }
 
     setZoom(value) {
         const newZoom = Math.max(0.1, Math.min(5, value));
         useStore.getState().setZoom(newZoom);
         // Note: unsubscribe listener will catch this update and update inputManager
+    }
+
+    // Note: unsubscribe listener will catch this update and update inputManager
+
+    fitToScreen(margin = 40) {
+
+        // Use canvas dimensions (which now track viewport)
+        const containerWidth = this.canvas.width;
+        const containerHeight = this.canvas.height;
+
+        if (!containerWidth || !containerHeight) return;
+
+        // Material dimensions (in pixels)
+        const { width: matW, height: matH } = useStore.getState().material;
+
+        // Calculate Scale
+        const scaleX = (containerWidth - margin * 2) / matW;
+        const scaleY = (containerHeight - margin * 2) / matH;
+        const newZoom = Math.min(scaleX, scaleY, 1); // Don't zoom in more than 100% by default? Or yes? User said "Fit". Let's use fit.
+        // Actually fit usually allows zooming out, but maybe max 1.
+        // Let's just use min(scaleX, scaleY) clamped for sanity.
+        const clampedZoom = Math.max(0.01, Math.min(50, Math.min(scaleX, scaleY)));
+
+        // Calculate Centering Pan
+        // We want the scaled material to be centered in container.
+        // ScaledDims = matW * zoom
+        // MarginLeft = (ContainerW - ScaledDims) / 2
+        // PanX should be that MarginLeft.
+        const panX = (containerWidth - matW * clampedZoom) / 2;
+        const panY = (containerHeight - matH * clampedZoom) / 2;
+
+        useStore.getState().setZoom(clampedZoom);
+        useStore.getState().setPan({ x: panX, y: panY });
+
+        // Immediate render update in case store update is async/batched 
+        // (though Zustand is usually sync, the subscription handles it)
     }
 
     /**

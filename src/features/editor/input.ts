@@ -1,3 +1,5 @@
+import { useStore } from '../../store/useStore';
+
 export class InputManager {
     canvas: HTMLCanvasElement;
     zoom: number = 1;
@@ -16,8 +18,14 @@ export class InputManager {
         mouseMove: (e: MouseEvent) => void;
         mouseUp: (e: MouseEvent) => void;
         contextMenu: (e: MouseEvent) => void;
+        wheel: (e: WheelEvent) => void;
         keyDown: (e: KeyboardEvent) => void;
+        keyUp: (e: KeyboardEvent) => void;
     };
+
+    private isPanning = false;
+    private isSpacePressed = false;
+    private lastMousePos = { x: 0, y: 0 };
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -27,7 +35,9 @@ export class InputManager {
             mouseMove: this.handleMouseMove.bind(this),
             mouseUp: this.handleMouseUp.bind(this),
             contextMenu: this.handleContextMenu.bind(this),
-            keyDown: this.handleKeyDown.bind(this)
+            wheel: this.handleWheel.bind(this),
+            keyDown: this.handleKeyDown.bind(this),
+            keyUp: this.handleKeyUp.bind(this)
         };
 
         this.init();
@@ -38,7 +48,9 @@ export class InputManager {
         this.canvas.addEventListener('mousemove', this.boundHandlers.mouseMove);
         window.addEventListener('mouseup', this.boundHandlers.mouseUp);
         this.canvas.addEventListener('contextmenu', this.boundHandlers.contextMenu);
+        this.canvas.addEventListener('wheel', this.boundHandlers.wheel, { passive: false });
         window.addEventListener('keydown', this.boundHandlers.keyDown);
+        window.addEventListener('keyup', this.boundHandlers.keyUp);
     }
 
     dispose() {
@@ -46,7 +58,9 @@ export class InputManager {
         this.canvas.removeEventListener('mousemove', this.boundHandlers.mouseMove);
         window.removeEventListener('mouseup', this.boundHandlers.mouseUp);
         this.canvas.removeEventListener('contextmenu', this.boundHandlers.contextMenu);
+        this.canvas.removeEventListener('wheel', this.boundHandlers.wheel);
         window.removeEventListener('keydown', this.boundHandlers.keyDown);
+        window.removeEventListener('keyup', this.boundHandlers.keyUp);
     }
 
     setTransform(zoom: number, pan: { x: number, y: number }) {
@@ -73,6 +87,15 @@ export class InputManager {
     }
 
     private handleMouseDown(e: MouseEvent) {
+        // Middle Mouse (1) or Spacebar held or Hand Tool
+        const isHandTool = useStore.getState().tool === 'hand';
+        if (e.button === 1 || this.isSpacePressed || isHandTool) {
+            this.isPanning = true;
+            this.lastMousePos = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
+            return;
+        }
+
         if (this.listeners.down) {
             const pos = this.getWorldPos(e);
             this.listeners.down(pos.x, pos.y, e);
@@ -80,6 +103,16 @@ export class InputManager {
     }
 
     private handleMouseMove(e: MouseEvent) {
+        if (this.isPanning) {
+            const dx = e.clientX - this.lastMousePos.x;
+            const dy = e.clientY - this.lastMousePos.y;
+            this.lastMousePos = { x: e.clientX, y: e.clientY };
+
+            const { pan, setPan } = useStore.getState();
+            setPan({ x: pan.x + dx, y: pan.y + dy });
+            return;
+        }
+
         if (this.listeners.move) {
             const pos = this.getWorldPos(e);
             this.listeners.move(pos.x, pos.y, e);
@@ -87,6 +120,11 @@ export class InputManager {
     }
 
     private handleMouseUp(e: MouseEvent) {
+        if (this.isPanning) {
+            this.isPanning = false;
+            return;
+        }
+
         if (this.listeners.up) {
             const pos = this.getWorldPos(e);
             this.listeners.up(pos.x, pos.y, e);
@@ -101,8 +139,25 @@ export class InputManager {
     }
 
     private handleKeyDown(e: KeyboardEvent) {
+        if (e.code === 'Space') {
+            this.isSpacePressed = true;
+            this.canvas.style.cursor = 'grab';
+        }
         if (this.listeners.keydown) {
             this.listeners.keydown(e);
         }
+    }
+
+    private handleKeyUp(e: KeyboardEvent) {
+        if (e.code === 'Space') {
+            this.isSpacePressed = false;
+            if (!this.isPanning) this.canvas.style.cursor = 'default';
+        }
+    }
+
+    private handleWheel(e: WheelEvent) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 1.1 : 0.9;
+        useStore.getState().zoomAtPoint(delta, e.clientX, e.clientY);
     }
 }

@@ -18,15 +18,11 @@ export default function Canvas({
     onInit,
     onSelectionChange
 }: CanvasProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const editorRef = useRef<CanvasController | null>(null); // Update ref type to CanvasController
+    const editorRef = useRef<CanvasController | null>(null);
 
-    useEffect(() => {
-        if (editorRef.current) {
-            editorRef.current.tool = tool;
-        }
-    }, [tool]);
-
+    // Initial Setup
     useEffect(() => {
         if (!canvasRef.current) return;
 
@@ -39,7 +35,7 @@ export default function Canvas({
 
         editorRef.current = editor;
         if (setEditorInstance) setEditorInstance(editor);
-        onInit(editor); // Call onInit here
+        onInit(editor);
 
         return () => {
             if (editor && typeof editor.dispose === 'function') {
@@ -48,13 +44,34 @@ export default function Canvas({
         };
     }, []);
 
-    // Handle Resize (Simple re-render trigger if needed, but canvas size is fixed by props for now)
+    // Tool Update
     useEffect(() => {
-        if (canvasRef.current) {
-            canvasRef.current.width = material.width;
-            canvasRef.current.height = material.height;
-            editorRef.current?.render();
+        if (editorRef.current) {
+            editorRef.current.tool = tool;
         }
+    }, [tool]);
+
+    // Handle Resize (Viewport Sizing)
+    useEffect(() => {
+        if (!containerRef.current || !canvasRef.current || !editorRef.current) return;
+
+        const resizeObserver = new ResizeObserver(() => {
+            if (containerRef.current && canvasRef.current && editorRef.current) {
+                const { clientWidth, clientHeight } = containerRef.current;
+                canvasRef.current.width = clientWidth;
+                canvasRef.current.height = clientHeight;
+                editorRef.current.render();
+            }
+        });
+
+        resizeObserver.observe(containerRef.current);
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    // Material Update: Just trigger render, don't resize canvas (canvas is viewport)
+    useEffect(() => {
+        editorRef.current?.render();
     }, [material]);
 
     const handleDragOver = (e: React.DragEvent<HTMLCanvasElement>) => {
@@ -66,21 +83,16 @@ export default function Canvas({
         e.preventDefault();
         const svgString = e.dataTransfer.getData('image/svg+xml');
         if (svgString && editorRef.current) {
-            // const rect = canvasRef.current!.getBoundingClientRect();
-            // Calculate drop position in canvas coordinates
-            // We need to account for zoom and pan, which getMousePos does
-            // But getMousePos expects a MouseEvent. React.DragEvent is compatible enough with required props usually.
             const pos = editorRef.current.getMousePos(e.nativeEvent);
             editorRef.current.importSVGString(svgString, pos);
         }
     };
 
     return (
-        <div className="shadow-2xl bg-white">
+        <div ref={containerRef} className="shadow-2xl bg-white w-full h-full">
             <canvas
                 ref={canvasRef}
-                width={material.width}
-                height={material.height}
+                className="w-full h-full block"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             />

@@ -46,13 +46,56 @@ export class CanvasRenderer {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawGrid(spacing: number = 40): void {
-        this.ctx.strokeStyle = DEFAULT_GRID_COLOR;
-        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
-        this.ctx.beginPath();
+    drawMaterialBounds(width: number, height: number): void {
+        this.ctx.save();
+
+        // Drop Shadow
+        this.ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        this.ctx.shadowBlur = 20;
+        this.ctx.shadowOffsetX = 0;
+        this.ctx.shadowOffsetY = 10;
+
+        // Page Background
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(0, 0, width, height);
+
+        // Border
+        this.ctx.strokeStyle = '#e5e5e5'; // Light border
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(0, 0, width, height);
+
+        this.ctx.restore();
+    }
+
+    drawGrid(spacing: number = 40, zoom: number, pan: { x: number; y: number }): void {
+        const { width, height } = this.canvas;
+
+        const minX = -pan.x / zoom;
+        const maxX = (width - pan.x) / zoom;
+        const minY = -pan.y / zoom;
+        const maxY = (height - pan.y) / zoom;
+
         const step = spacing;
-        for (let i = 0; i < this.canvas.width; i += step) { this.ctx.moveTo(i, 0); this.ctx.lineTo(i, this.canvas.height); }
-        for (let i = 0; i < this.canvas.height; i += step) { this.ctx.moveTo(0, i); this.ctx.lineTo(this.canvas.width, i); }
+
+        this.ctx.strokeStyle = DEFAULT_GRID_COLOR;
+        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom; // Keep grid lines thin visually
+
+        this.ctx.beginPath();
+
+        // Vertical lines
+        const startX = Math.floor(minX / step) * step;
+        for (let x = startX; x <= maxX; x += step) {
+            this.ctx.moveTo(x, minY);
+            this.ctx.lineTo(x, maxY);
+        }
+
+        // Horizontal lines
+        const startY = Math.floor(minY / step) * step;
+        for (let y = startY; y <= maxY; y += step) {
+            this.ctx.moveTo(minX, y);
+            this.ctx.lineTo(maxX, y);
+        }
+
         this.ctx.stroke();
     }
 
@@ -68,7 +111,8 @@ export class CanvasRenderer {
         zoom: number = 1,
         pan: { x: number; y: number } = { x: 0, y: 0 },
         selectedNodeIndex: number | null = null,
-        previewOrigin: { x: number; y: number } | null = null
+        previewOrigin: { x: number; y: number } | null = null,
+        material: { width: number; height: number } | null = null
     ): void {
         this.clear();
 
@@ -76,11 +120,17 @@ export class CanvasRenderer {
         this.ctx.translate(pan.x, pan.y);
         this.ctx.scale(zoom, zoom);
 
-        this.drawGrid(config.gridSpacing);
+        // 1. Draw Material Page (Canvas Area)
+        if (material) {
+            this.drawMaterialBounds(material.width, material.height);
+        }
+
+        // 2. Draw Infinite Grid
+        this.drawGrid(config.gridSpacing, zoom, pan);
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
-            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, selectedNodeIndex);
+            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, isSelected ? selectedNodeIndex : null);
         });
 
         if (selectedShapes.length > 0 && toolType === 'select') {

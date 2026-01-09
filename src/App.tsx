@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee, Languages } from 'lucide-react';
+import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee, Languages, Hand } from 'lucide-react';
 import { Toolbar, RightSidebar } from './features/ui';
 import { Canvas } from './features/editor';
 import { CanvasController } from './features/shapes';
@@ -237,6 +237,13 @@ function AppContent() {
                     </div>
 
                     <div className="flex items-center gap-1 mr-4">
+                        <button
+                            onClick={() => setTool(tool === 'hand' ? 'select' : 'hand')}
+                            className={`p-1.5 rounded ${theme.buttonHover} ${tool === 'hand' ? 'text-red-500 bg-gray-100 dark:bg-gray-800' : theme.textMuted}`}
+                            title={t('handTool')}
+                        >
+                            <Hand size={18} />
+                        </button>
                         <button onClick={() => editor && editor.setZoom(editor.zoom / 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomOut')}>
                             <ZoomOut size={18} />
                         </button>
@@ -283,7 +290,7 @@ function AppContent() {
                 <Toolbar tool={tool} setTool={setTool} theme={theme} />
 
                 {/* CANVAS AREA */}
-                <div className={`flex-1 relative overflow-auto ${theme.canvasWrapper} flex justify-center items-center p-12`}>
+                <div className={`flex-1 relative overflow-hidden ${theme.canvasWrapper}`}>
                     <Canvas
                         material={material}
                         setEditorInstance={(ed: CanvasController) => {
