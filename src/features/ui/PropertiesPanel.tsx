@@ -289,18 +289,30 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     {/* LASER MODES */}
                     <div>
                         <SectionHeader>{t('laserMode')}</SectionHeader>
-                        <div className="grid grid-cols-1 gap-2">
-                            <button onClick={() => applyLaserMode('CUT')} className={`p-3 rounded border ${theme.border} hover:bg-red-500/10 hover:border-red-500 flex items-center gap-3 text-left`}>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => applyLaserMode('CUT')}
+                                className={`p-2 rounded border ${theme.border} hover:bg-red-500/10 hover:border-red-500 flex flex-col items-center justify-center gap-1 h-16`}
+                                title={`${t('cut')} - Red Stroke`}
+                            >
                                 <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                                <div><div className="font-bold text-sm">{t('cut')}</div><div className="text-xs opacity-70">{t('cutDesc')}</div></div>
+                                <span className="text-xs font-bold">{t('cut')}</span>
                             </button>
-                            <button onClick={() => applyLaserMode('SCORE')} className={`p-3 rounded border ${theme.border} hover:bg-blue-500/10 hover:border-blue-500 flex items-center gap-3 text-left`}>
+                            <button
+                                onClick={() => applyLaserMode('SCORE')}
+                                className={`p-2 rounded border ${theme.border} hover:bg-blue-500/10 hover:border-blue-500 flex flex-col items-center justify-center gap-1 h-16`}
+                                title={`${t('score')} - Blue Stroke`}
+                            >
                                 <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                                <div><div className="font-bold text-sm">{t('score')}</div><div className="text-xs opacity-70">{t('scoreDesc')}</div></div>
+                                <span className="text-xs font-bold">{t('score')}</span>
                             </button>
-                            <button onClick={() => applyLaserMode('ENGRAVE')} className={`p-3 rounded border ${theme.border} hover:bg-gray-500/10 hover:border-gray-500 flex items-center gap-3 text-left`}>
+                            <button
+                                onClick={() => applyLaserMode('ENGRAVE')}
+                                className={`p-2 rounded border ${theme.border} hover:bg-gray-500/10 hover:border-gray-500 flex flex-col items-center justify-center gap-1 h-16`}
+                                title={`${t('engrave')} - Black Fill`}
+                            >
                                 <div className="w-4 h-4 bg-black rounded-full"></div>
-                                <div><div className="font-bold text-sm">{t('engrave')}</div><div className="text-xs opacity-70">{t('engraveDesc')}</div></div>
+                                <span className="text-xs font-bold">{t('engrave')}</span>
                             </button>
                         </div>
                         <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={t('delete')} theme={theme} className="mt-4" />
