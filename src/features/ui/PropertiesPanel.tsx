@@ -335,9 +335,9 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                             {(selection.length > 1 || (selectedObject && selectedObject.type === 'group')) && (
                                 <div className="grid grid-cols-2 gap-2">
                                     {selection.length > 1 && (
-                                        <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('group') || 'Group'} theme={theme} />
+                                        <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('Group') || 'Group'} theme={theme} />
                                     )}
-                                    <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
+                                    <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('Ungroup') || 'Ungroup'} theme={theme} />
                                 </div>
                             )}
 
