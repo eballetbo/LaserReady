@@ -5,6 +5,7 @@ import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 import { PIXELS_PER_MM } from '../../config/constants';
+import { Geometry } from '../../core/math/geometry';
 
 interface Theme {
     iconColor: string;
@@ -35,11 +36,23 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     const [innerRadius, setInnerRadius] = useState(0.382);
 
     const selectedObject = selection.length === 1 ? selection[0] : null;
+    const hasSelection = selection.length > 0;
 
     useEffect(() => {
-        if (selectedObject) {
+        if (hasSelection) {
             const updateDims = () => {
-                const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
+                let bounds;
+                if (selection.length > 1) {
+                    bounds = Geometry.getCombinedBounds(selection);
+                } else {
+                    const obj = selection[0];
+                    bounds = obj.getBounds ? obj.getBounds() : null;
+                }
+
+                if (!bounds) {
+                    bounds = { minX: 0, minY: 0, width: 0, height: 0 };
+                }
+
                 setDimensions({
                     x: (bounds.minX / PIXELS_PER_MM).toFixed(2),
                     y: (bounds.minY / PIXELS_PER_MM).toFixed(2),
@@ -48,30 +61,41 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                 });
             };
             updateDims();
-            if (selectedObject.params?.sides) {
-                setSides(selectedObject.params.sides);
-            }
-            if (selectedObject.params?.points) {
-                setPoints(selectedObject.params.points);
-            }
-            if (selectedObject.params?.innerRadius) {
-                setInnerRadius(selectedObject.params.innerRadius);
+
+            if (selectedObject) {
+                if (selectedObject.params?.sides) {
+                    setSides(selectedObject.params.sides);
+                }
+                if (selectedObject.params?.points) {
+                    setPoints(selectedObject.params.points);
+                }
+                if (selectedObject.params?.innerRadius) {
+                    setInnerRadius(selectedObject.params.innerRadius);
+                }
             }
         }
-    }, [selectedObject, selection]);
+    }, [selectedObject, selection, hasSelection]);
 
     const updateDimension = (key: string, value: string) => {
         setDimensions(prev => ({ ...prev, [key]: value }));
     };
 
     const commitDimension = (key: string) => {
-        if (!selectedObject || !editor) return;
+        if (!hasSelection || !editor) return;
 
         const value = dimensions[key as keyof typeof dimensions];
         const val = parseFloat(value as string);
         if (isNaN(val)) return;
 
-        const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
+        let bounds;
+        if (selection.length > 1) {
+            bounds = Geometry.getCombinedBounds(selection);
+        } else {
+            const obj = selection[0];
+            bounds = obj.getBounds ? obj.getBounds() : null;
+        }
+
+        if (!bounds) bounds = { minX: 0, minY: 0, width: 0, height: 0 };
 
         editor.startAction();
 
@@ -80,19 +104,19 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
         if (key === 'x') {
             const dx = valPx - bounds.minX;
-            selectedObject.move(dx, 0);
+            selection.forEach(obj => obj.move(dx, 0));
         } else if (key === 'y') {
             const dy = valPx - bounds.minY;
-            selectedObject.move(0, dy);
+            selection.forEach(obj => obj.move(0, dy));
         } else if (key === 'w') {
             if (bounds.width === 0) return;
             // scale factor is ratio of new pixels / old pixels
             const sx = valPx / bounds.width;
-            selectedObject.scale(sx, 1, { x: bounds.minX, y: bounds.minY });
+            selection.forEach(obj => obj.scale(sx, 1, { x: bounds!.minX, y: bounds!.minY }));
         } else if (key === 'h') {
             if (bounds.height === 0) return;
             const sy = valPx / bounds.height;
-            selectedObject.scale(1, sy, { x: bounds.minX, y: bounds.minY });
+            selection.forEach(obj => obj.scale(1, sy, { x: bounds!.minX, y: bounds!.minY }));
         }
 
         editor.render();
@@ -126,24 +150,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
     return (
         <div className={`flex flex-col shrink-0 z-20 p-4 ${isEmbedded ? 'w-full' : `w-72 ${theme.panel} border-l ${theme.border}`}`}>
-            {selection.length > 1 ? (
-                <div className="space-y-6">
-                    <div>
-                        <SectionHeader>{t('booleanOperations')}</SectionHeader>
-                        <div className="grid grid-cols-2 gap-2 mb-6">
-                            <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('group') || 'Group'} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
-                            <Button variant="iconText" onClick={() => editor?.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
-                        </div>
-                    </div>
-                    <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={`${t('delete')} (${selection.length})`} theme={theme} className="mt-4" />
-                </div>
-            ) : selectedObject ? (
+            {hasSelection ? (
                 <div className="space-y-6">
                     {/* DIMENSIONS */}
                     <div>
@@ -184,7 +191,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     </div>
 
-                    {selectedObject.type === 'group' && (
+                    {/* PARAMETRIC SETTINGS (Single Only) */}
+                    {selectedObject && selectedObject.type === 'group' && (
                         <div>
                             <SectionHeader>{t('grouping') || 'Grouping'}</SectionHeader>
                             <div className="grid grid-cols-2 gap-2">
@@ -193,15 +201,14 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     )}
 
-                    {/* PARAMETRIC SETTINGS */}
-                    {selectedObject.type === 'polygon' && (
+                    {selectedObject && selectedObject.type === 'polygon' && (
                         <div>
                             <SectionHeader>{t('shapeProperties')}</SectionHeader>
                             <NumberInput label={t('sides')} value={sides} onChange={(v) => updateParam('sides', v)} min={3} max={12} theme={theme} />
                         </div>
                     )}
 
-                    {selectedObject.type === 'text' && (
+                    {selectedObject && selectedObject.type === 'text' && (
                         <div>
                             <SectionHeader>{t('textProperties')}</SectionHeader>
                             <div className="space-y-2">
@@ -276,7 +283,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     )}
 
-                    {selectedObject.type === 'star' && (
+                    {selectedObject && selectedObject.type === 'star' && (
                         <div>
                             <SectionHeader>{t('shapeProperties')}</SectionHeader>
                             <div className="grid grid-cols-2 gap-2">
@@ -286,7 +293,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     )}
 
-                    {/* LASER MODES */}
+                    {/* LASER MODES (Always visible for any selection) */}
                     <div>
                         <SectionHeader>{t('laserMode')}</SectionHeader>
                         <div className="grid grid-cols-3 gap-2">
@@ -315,7 +322,32 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <span className="text-xs font-bold">{t('engrave')}</span>
                             </button>
                         </div>
-                        <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={t('delete')} theme={theme} className="mt-4" />
+                    </div>
+
+                    {/* OPERATIONS (Combined) */}
+                    <div>
+                        <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>
+                        <div className="space-y-4">
+                            {/* Boolean Ops (Only if multiple) */}
+                            {selection.length > 1 && (
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
+                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
+                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
+                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
+                                </div>
+                            )}
+
+                            {/* Grouping (Only if multiple) */}
+                            {selection.length > 1 && (
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('group') || 'Group'} theme={theme} />
+                                    <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
+                                </div>
+                            )}
+
+                            <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={`${t('delete')} (${selection.length})`} theme={theme} />
+                        </div>
                     </div>
                 </div>
             ) : (
