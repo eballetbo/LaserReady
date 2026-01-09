@@ -341,7 +341,16 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 </div>
                             )}
 
-                            <Button variant="primary" onClick={deleteSelected} icon={Trash2} label={`${t('delete')} (${selection.length})`} theme={theme} />
+                            <div className="pt-2">
+                                <Button
+                                    variant="iconText"
+                                    onClick={deleteSelected}
+                                    icon={Trash2}
+                                    label={`${t('delete')} (${selection.length})`}
+                                    theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
+                                    className="w-full justify-center text-red-500 border-red-200 dark:border-red-900/30"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
