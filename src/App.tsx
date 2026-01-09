@@ -3,7 +3,9 @@ import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, G
 import { Toolbar, RightSidebar } from './features/ui';
 import { Canvas } from './features/editor';
 import { CanvasController } from './features/shapes';
+import { PathShape } from './features/shapes/models/path';
 import { LASER_MODES, exportToSVG, downloadSVG } from './utils';
+import { PIXELS_PER_MM } from './config/constants';
 import { LanguageProvider, useLanguage } from './contexts/language';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -135,7 +137,7 @@ function AppContent() {
     // --- FILE I/O ---
     const handleExport = () => {
         if (!editor) return;
-        const svgString = exportToSVG(editor.shapes, material.width, material.height);
+        const svgString = exportToSVG(editor.shapes as PathShape[], material.width, material.height);
         downloadSVG(svgString, 'laser-design.svg');
     };
 
@@ -211,18 +213,18 @@ function AppContent() {
                         <span className={`text-[10px] font-bold ${theme.textMuted} uppercase mr-3 tracking-wider`}>{t('area')}:</span>
                         <input
                             type="number"
-                            value={material.width}
-                            onChange={(e) => setMaterial({ ...material, width: Number(e.target.value) })}
+                            value={(material.width / PIXELS_PER_MM).toFixed(0)}
+                            onChange={(e) => setMaterial({ ...material, width: Number(e.target.value) * PIXELS_PER_MM })}
                             className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium`}
                         />
                         <span className={`text-xs ${theme.textMuted} mx-1`}>x</span>
                         <input
                             type="number"
-                            value={material.height}
-                            onChange={(e) => setMaterial({ ...material, height: Number(e.target.value) })}
+                            value={(material.height / PIXELS_PER_MM).toFixed(0)}
+                            onChange={(e) => setMaterial({ ...material, height: Number(e.target.value) * PIXELS_PER_MM })}
                             className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium`}
                         />
-                        <span className={`text-[10px] ${theme.textMuted} ml-2`}>px</span>
+                        <span className={`text-[10px] ${theme.textMuted} ml-2`}>mm</span>
                     </div>
 
                     <div className="flex items-center gap-1 mr-2">

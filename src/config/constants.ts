@@ -6,9 +6,6 @@
 // ========================================
 // GRID & CANVAS
 // ========================================
-// ========================================
-// GRID & CANVAS
-// ========================================
 export const PIXELS_PER_MM = 3.779527559; // 96 DPI
 export const DEFAULT_GRID_SPACING = 10 * PIXELS_PER_MM; // 10mm (1cm) grids
 export const DEFAULT_GRID_COLOR = '#f0f0f0';

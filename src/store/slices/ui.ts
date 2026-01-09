@@ -1,4 +1,5 @@
 import { StateCreator } from 'zustand';
+import { PIXELS_PER_MM } from '../../config/constants';
 
 export interface UiSlice {
     tool: string;
@@ -15,7 +16,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set) => ({
     tool: 'select',
     zoom: 1,
     isDarkMode: true,
-    material: { width: 1000, height: 800 },
+    material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
     setTool: (tool) => set({ tool }),
     setZoom: (zoom) => set({ zoom }),
     setDarkMode: (isDarkMode) => set({ isDarkMode }),

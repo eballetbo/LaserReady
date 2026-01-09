@@ -11,6 +11,8 @@ interface NumberInputProps {
     label: string;
     value: number | string;
     onChange: (value: string) => void;
+    onBlur?: () => void;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
     min?: number;
     max?: number;
     theme: Theme;
@@ -22,6 +24,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     label,
     value,
     onChange,
+    onBlur,
+    onKeyDown,
     min,
     max,
     theme,
@@ -35,6 +39,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
                 type="number"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                onBlur={onBlur}
+                onKeyDown={onKeyDown}
                 min={min}
                 max={max}
                 step={step}

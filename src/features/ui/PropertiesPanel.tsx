@@ -4,6 +4,7 @@ import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
+import { PIXELS_PER_MM } from '../../config/constants';
 
 interface Theme {
     iconColor: string;
@@ -28,7 +29,7 @@ interface PropertiesPanelProps {
 
 export default function PropertiesPanel({ theme, selection, editor, applyLaserMode, deleteSelected, isEmbedded }: PropertiesPanelProps) {
     const { t } = useLanguage();
-    const [dimensions, setDimensions] = useState({ x: 0, y: 0, w: 0, h: 0 });
+    const [dimensions, setDimensions] = useState<{ x: number | string, y: number | string, w: number | string, h: number | string }>({ x: 0, y: 0, w: 0, h: 0 });
     const [sides, setSides] = useState(6);
     const [points, setPoints] = useState(5);
     const [innerRadius, setInnerRadius] = useState(0.382);
@@ -40,10 +41,10 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             const updateDims = () => {
                 const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
                 setDimensions({
-                    x: Math.round(bounds.minX),
-                    y: Math.round(bounds.minY),
-                    w: Math.round(bounds.width),
-                    h: Math.round(bounds.height)
+                    x: (bounds.minX / PIXELS_PER_MM).toFixed(2),
+                    y: (bounds.minY / PIXELS_PER_MM).toFixed(2),
+                    w: (bounds.width / PIXELS_PER_MM).toFixed(2),
+                    h: (bounds.height / PIXELS_PER_MM).toFixed(2)
                 });
             };
             updateDims();
@@ -60,35 +61,49 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     }, [selectedObject, selection]);
 
     const updateDimension = (key: string, value: string) => {
+        setDimensions(prev => ({ ...prev, [key]: value }));
+    };
+
+    const commitDimension = (key: string) => {
         if (!selectedObject || !editor) return;
 
-        setDimensions(prev => ({ ...prev, [key]: value }));
-
-        const val = parseFloat(value);
+        const value = dimensions[key as keyof typeof dimensions];
+        const val = parseFloat(value as string);
         if (isNaN(val)) return;
 
         const bounds = selectedObject.getBounds ? selectedObject.getBounds() : { minX: 0, minY: 0, width: 0, height: 0 };
 
         editor.startAction();
 
+        // Convert Input Millimeters -> Internal Pixels
+        const valPx = val * PIXELS_PER_MM;
+
         if (key === 'x') {
-            const dx = val - bounds.minX;
+            const dx = valPx - bounds.minX;
             selectedObject.move(dx, 0);
         } else if (key === 'y') {
-            const dy = val - bounds.minY;
+            const dy = valPx - bounds.minY;
             selectedObject.move(0, dy);
         } else if (key === 'w') {
             if (bounds.width === 0) return;
-            const sx = val / bounds.width;
+            // scale factor is ratio of new pixels / old pixels
+            const sx = valPx / bounds.width;
             selectedObject.scale(sx, 1, { x: bounds.minX, y: bounds.minY });
         } else if (key === 'h') {
             if (bounds.height === 0) return;
-            const sy = val / bounds.height;
+            const sy = valPx / bounds.height;
             selectedObject.scale(1, sy, { x: bounds.minX, y: bounds.minY });
         }
 
         editor.render();
         editor.endAction();
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent, key: string) => {
+        if (e.key === 'Enter') {
+            commitDimension(key);
+            (e.target as HTMLInputElement).blur();
+        }
     };
 
     const updateParam = (key: string, value: string) => {
@@ -132,12 +147,40 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                 <div className="space-y-6">
                     {/* DIMENSIONS */}
                     <div>
-                        <SectionHeader>{t('dimensions')}</SectionHeader>
+                        <SectionHeader>{t('dimensions (mm)')}</SectionHeader>
                         <div className="grid grid-cols-2 gap-2">
-                            <NumberInput label="X" value={dimensions.x} onChange={(v) => updateDimension('x', v)} theme={theme} />
-                            <NumberInput label="Y" value={dimensions.y} onChange={(v) => updateDimension('y', v)} theme={theme} />
-                            <NumberInput label={t('width')} value={dimensions.w} onChange={(v) => updateDimension('w', v)} theme={theme} />
-                            <NumberInput label={t('height')} value={dimensions.h} onChange={(v) => updateDimension('h', v)} theme={theme} />
+                            <NumberInput
+                                label="X"
+                                value={dimensions.x}
+                                onChange={(v) => updateDimension('x', v)}
+                                onBlur={() => commitDimension('x')}
+                                onKeyDown={(e) => handleKeyDown(e, 'x')}
+                                theme={theme}
+                            />
+                            <NumberInput
+                                label="Y"
+                                value={dimensions.y}
+                                onChange={(v) => updateDimension('y', v)}
+                                onBlur={() => commitDimension('y')}
+                                onKeyDown={(e) => handleKeyDown(e, 'y')}
+                                theme={theme}
+                            />
+                            <NumberInput
+                                label={`${t('width')}`}
+                                value={dimensions.w}
+                                onChange={(v) => updateDimension('w', v)}
+                                onBlur={() => commitDimension('w')}
+                                onKeyDown={(e) => handleKeyDown(e, 'w')}
+                                theme={theme}
+                            />
+                            <NumberInput
+                                label={`${t('height')}`}
+                                value={dimensions.h}
+                                onChange={(v) => updateDimension('h', v)}
+                                onBlur={() => commitDimension('h')}
+                                onKeyDown={(e) => handleKeyDown(e, 'h')}
+                                theme={theme}
+                            />
                         </div>
                     </div>
 
