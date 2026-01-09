@@ -1,5 +1,6 @@
 import paper from 'paper';
 import { BooleanOperations } from '../core/math/boolean';
+import { PIXELS_PER_MM } from '../config/constants';
 import { PathShape } from '../features/shapes/models/path';
 
 // Initialize a headless PaperScope for SVG exporting
@@ -33,11 +34,20 @@ export const exportToSVG = (shapes: PathShape[], width: number, height: number):
         }
     });
 
+    // Calculate physical dimensions in Millimeters
+    const widthMM = (width / PIXELS_PER_MM).toFixed(2);
+    const heightMM = (height / PIXELS_PER_MM).toFixed(2);
+
     // Export SVG
-    const svgString = scope.project.exportSVG({
+    let svgString = scope.project.exportSVG({
         asString: true,
-        bounds: 'content' // or 'view'
+        bounds: 'view' // preserve the canvas structure (0,0 to width,height)
     }) as string;
+
+    // Modify the SVG tag to use physical units (mm) for width/height
+    // but keep the viewBox in pixels so the internal coordinates remain valid.
+    svgString = svgString.replace(/width="[\d.]+"/, `width="${widthMM}mm"`);
+    svgString = svgString.replace(/height="[\d.]+"/, `height="${heightMM}mm"`);
 
     return svgString;
 };

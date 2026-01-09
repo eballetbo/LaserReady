@@ -1,5 +1,6 @@
 // @ts-nocheck - Progressive TypeScript migration, refine types incrementally
 import { Geometry } from '../../core/math/geometry';
+import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { InputManager } from './input';
 import { PathNode } from '../shapes/models/node';
@@ -61,7 +62,7 @@ export class CanvasController {
             colorStroke: '#333',
             colorFill: 'rgba(0, 123, 255, 0.05)',
             colorSelection: 'rgba(0, 123, 255, 0.1)',
-            gridSpacing: 40,
+            gridSpacing: DEFAULT_GRID_SPACING,
             ...options
         };
 
