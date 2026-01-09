@@ -192,14 +192,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     </div>
 
                     {/* PARAMETRIC SETTINGS (Single Only) */}
-                    {selectedObject && selectedObject.type === 'group' && (
-                        <div>
-                            <SectionHeader>{t('grouping') || 'Grouping'}</SectionHeader>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
-                            </div>
-                        </div>
-                    )}
+
 
                     {selectedObject && selectedObject.type === 'polygon' && (
                         <div>
@@ -338,10 +331,12 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 </div>
                             )}
 
-                            {/* Grouping (Only if multiple) */}
-                            {selection.length > 1 && (
+                            {/* Grouping (Single or Multiple) */}
+                            {(selection.length > 1 || (selectedObject && selectedObject.type === 'group')) && (
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('group') || 'Group'} theme={theme} />
+                                    {selection.length > 1 && (
+                                        <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('group') || 'Group'} theme={theme} />
+                                    )}
                                     <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('ungroup') || 'Ungroup'} theme={theme} />
                                 </div>
                             )}
