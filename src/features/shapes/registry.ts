@@ -159,7 +159,7 @@ export class CircleTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e: MouseEvent): void {
+    onMouseUp(_: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
         if (this.editor.selectedShape) {
@@ -230,7 +230,7 @@ export class PolygonTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e: MouseEvent): void {
+    onMouseUp(_: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
         if (this.editor.selectedShape) {
@@ -313,7 +313,7 @@ export class StarTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e: MouseEvent): void {
+    onMouseUp(_: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
         if (this.editor.selectedShape) {

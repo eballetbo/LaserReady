@@ -196,29 +196,15 @@ export class PenTool extends BaseTool {
         // Finish current path
         if (this.editor.activePath) {
 
+            // Remove preview shape from store before committing command
+            const currentShapes = this.editor.shapes;
+            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.activePath.id);
+
             if (this.editor.activePath.nodes.length < 2) {
-                // Remove if too short (single point) check? 
-                // Or just keep logic:
-                // Commit path
-                const path = this.editor.activePath;
-                // Ideally create shape command
-
-                // If the path has only 1 node, it might not be visible or useful.
-                if (path.nodes.length === 1) {
-                    // abort
-                    this.editor.activePath = null;
-                    this.editor.previewPoint = null;
-                    this.editor.render();
-                    return;
-                }
-
-                // If last node is temporary (preview point might be added as node?), 
-                // PenTool logic usually handles preview separately.
-
-                // Just push command
-                const cmd = new CreateShapeCommand(path);
+                // If single node, maybe just remove it? 
+                // But original logic kept it. We'll stick to Commit.
+                const cmd = new CreateShapeCommand(this.editor.activePath);
                 this.editor.history.execute(cmd);
-
             } else {
                 // Regular commit
                 const cmd = new CreateShapeCommand(this.editor.activePath);
