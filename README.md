@@ -1,6 +1,6 @@
 # LaserReady
 
-LaserReady is a browser-based vector editor designed specifically for laser cutting and engraving workflows. It allows users to create, import, and edit vector designs, setting specific parameters for cutting, scoring, and engraving.
+LaserReady is a versatile vector editor designed for laser cutting and engraving workflows, available as both a web and desktop application. It allows users to create, import, and edit vector designs, setting specific parameters for cutting, scoring, and engraving.
 
 A live preview of the tool can be found [here](https://editor.klaab.cat).
 
@@ -43,6 +43,16 @@ npm run dev
 
 The application will be available at `http://localhost:5173`.
 
+### Desktop Development (Electron)
+
+Start the application in Electron mode:
+
+```bash
+npm run electron:dev
+```
+
+This launches the standalone desktop window with hot-reloading enabled.
+
 ### Building for Production
 
 Build the application for production:
@@ -57,6 +67,7 @@ npm run build
 -   **Vite**: Build tool
 -   **Tailwind CSS**: Styling
 -   **Lucide React**: Icons
+-   **Electron**: Desktop Wrapper
 -   **Paper.js** (Internal usage for boolean operations)
 
 ## License
