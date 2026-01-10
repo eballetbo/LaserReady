@@ -61,6 +61,14 @@ Build the application for production:
 npm run build
 ```
 
+### Building for Flatpak (Linux)
+
+To create a Flatpak package (requires `flatpak` and `flatpak-builder` installed):
+
+```bash
+npm run build:linux
+```
+
 ## Tech Stack
 
 -   **React**: UI Framework
