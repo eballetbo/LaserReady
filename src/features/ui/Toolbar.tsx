@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLanguage } from '../../contexts/language';
 import {
     MousePointer2,
