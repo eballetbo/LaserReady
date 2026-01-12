@@ -145,7 +145,7 @@ export const Geometry = {
         // Let's try to be smart.
     },
 
-    isPointInBezierPath(ctx: CanvasRenderingContext2D, shape: IShape, x: number, y: number): boolean {
+    isPointInBezierPath(ctx: CanvasRenderingContext2D, shape: IShape, x: number, y: number, tolerance: number = 5): boolean {
         ctx.save();
         ctx.beginPath();
         if (shape.nodes && shape.nodes.length > 0) {
@@ -167,6 +167,7 @@ export const Geometry = {
             if (shape.closed) ctx.closePath();
         }
 
+        ctx.lineWidth = tolerance;
         const hit = ctx.isPointInPath(x, y) || ctx.isPointInStroke(x, y);
         ctx.restore();
         return hit;

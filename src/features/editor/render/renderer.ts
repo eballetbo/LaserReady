@@ -196,7 +196,7 @@ export class CanvasRenderer {
         } else if (shape.type === 'text') {
             this.drawText(shape, isSelected, config, layerColor, layerMode);
         } else {
-            this.drawPath(shape, isSelected, config, layerColor, layerMode);
+            this.drawPath(shape, isSelected, config, layerColor, layerMode, zoom);
             // drawNodes logic moved to drawNodeOverlay
         }
     }
@@ -240,7 +240,7 @@ export class CanvasRenderer {
         }
     }
 
-    drawPath(shape: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode): void {
+    drawPath(shape: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
         if (!shape.nodes || shape.nodes.length < 2) return;
 
         this.ctx.beginPath();
@@ -290,7 +290,7 @@ export class CanvasRenderer {
         const strokeColor = isSelected ? config.colorSelection : (shape.strokeColor || layerColor);
 
         this.ctx.strokeStyle = strokeColor;
-        this.ctx.lineWidth = strokeWidth;
+        this.ctx.lineWidth = Math.max(strokeWidth, 1 / zoom);
         this.ctx.stroke();
 
         // Selection overlay (always draw if selected, to show selection even if shape is invisible)

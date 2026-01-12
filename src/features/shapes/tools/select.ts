@@ -640,7 +640,9 @@ export class SelectTool extends BaseTool {
             return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
         } else {
             // Default path hit test
-            return Geometry.isPointInBezierPath(this.editor.ctx, shape, x, y);
+            // Tolerance ensuring constant screen hit area (e.g. 5px radius -> 10px width)
+            const tolerance = 10 / this.editor.zoom;
+            return Geometry.isPointInBezierPath(this.editor.ctx, shape, x, y, tolerance);
         }
     }
 }
