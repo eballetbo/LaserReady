@@ -261,7 +261,9 @@ export class ChangeNodeTypeCommand implements Command {
         if (shapeIndex === -1) return;
 
         const newShapes = [...shapes];
-        const newShape = { ...newShapes[shapeIndex] };
+        if (!newShapes[shapeIndex].clone) return;
+        const newShape = newShapes[shapeIndex].clone();
+        newShape.id = newShapes[shapeIndex].id;
 
         if (newShape.nodes) {
             const newNodes = [...newShape.nodes];
@@ -278,7 +280,9 @@ export class ChangeNodeTypeCommand implements Command {
         if (shapeIndex === -1) return;
 
         const newShapes = [...shapes];
-        const newShape = { ...newShapes[shapeIndex] };
+        if (!newShapes[shapeIndex].clone) return;
+        const newShape = newShapes[shapeIndex].clone();
+        newShape.id = newShapes[shapeIndex].id;
 
         if (newShape.nodes) {
             const newNodes = [...newShape.nodes];
@@ -317,7 +321,9 @@ export class DeleteNodeCommand implements Command {
         if (shapeIndex === -1) return;
 
         const newShapes = [...shapes];
-        const newShape = { ...newShapes[shapeIndex] };
+        if (!newShapes[shapeIndex].clone) return;
+        const newShape = newShapes[shapeIndex].clone();
+        newShape.id = newShapes[shapeIndex].id;
 
         if (this.newNodes.length < 2) {
             // Option: delete shape if < 2 nodes? Or just keep it.
@@ -334,7 +340,9 @@ export class DeleteNodeCommand implements Command {
         if (shapeIndex === -1) return;
 
         const newShapes = [...shapes];
-        const newShape = { ...newShapes[shapeIndex] };
+        if (!newShapes[shapeIndex].clone) return;
+        const newShape = newShapes[shapeIndex].clone();
+        newShape.id = newShapes[shapeIndex].id;
         newShape.nodes = this.oldNodes;
         newShapes[shapeIndex] = newShape;
         useStore.getState().setShapes(newShapes);
