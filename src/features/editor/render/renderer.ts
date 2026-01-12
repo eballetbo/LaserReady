@@ -130,13 +130,13 @@ export class CanvasRenderer {
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
-            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, isSelected ? selectedNodeIndex : null);
+            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, isSelected ? selectedNodeIndex : null, zoom);
         });
 
         if (selectedShapes.length > 0 && toolType === 'select') {
             const combinedBounds = Geometry.getCombinedBounds(selectedShapes);
             if (combinedBounds) {
-                this.drawSelectionBounds(combinedBounds, config);
+                this.drawSelectionBounds(combinedBounds, config, zoom);
             }
         }
 
@@ -160,20 +160,21 @@ export class CanvasRenderer {
         layers: ILayer[],
         config: RendererConfig,
         toolType: string,
-        selectedNodeIndex: number | null
+        selectedNodeIndex: number | null,
+        zoom: number
     ): void {
         const layer = layers ? layers.find(l => l.id === shape.layerId) : null;
         const layerColor = layer ? layer.color : DEFAULT_LAYER_COLOR;
         const layerMode = layer ? layer.mode : 'CUT';
 
         if (shape.type === 'group') {
-            this.drawGroup(shape, isSelected, selectedShapes, layers, config, toolType, selectedNodeIndex);
+            this.drawGroup(shape, isSelected, selectedShapes, layers, config, toolType, selectedNodeIndex, zoom);
         } else if (shape.type === 'text') {
             this.drawText(shape, isSelected, config, layerColor, layerMode);
         } else {
             this.drawPath(shape, isSelected, config, layerColor, layerMode);
             if (isSelected && toolType === 'node-edit') {
-                this.drawNodes(shape, config, selectedNodeIndex);
+                this.drawNodes(shape, config, selectedNodeIndex, zoom);
             }
         }
     }
@@ -185,7 +186,8 @@ export class CanvasRenderer {
         layers: ILayer[],
         config: RendererConfig,
         toolType: string,
-        selectedNodeIndex: number | null
+        selectedNodeIndex: number | null,
+        zoom: number
     ) {
         if (!group.children) return;
 
@@ -194,7 +196,7 @@ export class CanvasRenderer {
         group.children.forEach((child: any) => {
             // Pass isSelected (inheriting from group) so children render with selection color (blue)
             // This ensures visual feedback that the group contents are selected
-            this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, null);
+            this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, null, zoom);
         });
 
         // Only draw group bounds if it is explicitly selected AND is the only thing selected.
@@ -212,7 +214,7 @@ export class CanvasRenderer {
             }
 
             if (bounds) {
-                this.drawSelectionBounds(bounds, config);
+                this.drawSelectionBounds(bounds, config, zoom);
             }
         }
     }
@@ -281,21 +283,24 @@ export class CanvasRenderer {
         }
     }
 
-    drawNodes(shape: any, config: RendererConfig, selectedNodeIndex: number | null): void {
+    drawNodes(shape: any, config: RendererConfig, selectedNodeIndex: number | null, zoom: number): void {
+        const anchorSize = config.anchorSize / zoom;
+        const handleRadius = config.handleRadius / zoom;
+        const lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
+
         // 1. Draw Anchors (Squares) first
         // 1. Draw Anchors
         shape.nodes.forEach((n: any, i: number) => {
             // Selected node is Red, others are anchor color
             this.ctx.fillStyle = i === selectedNodeIndex ? '#FF0000' : config.colorAnchor;
-            const size = config.anchorSize;
 
             // Draw Circle for Smooth/Symmetric, Square for Corner
             if (n.type === 'smooth' || n.type === 'symmetric') {
                 this.ctx.beginPath();
-                this.ctx.arc(n.x, n.y, size / 2, 0, Math.PI * 2);
+                this.ctx.arc(n.x, n.y, anchorSize / 2, 0, Math.PI * 2);
                 this.ctx.fill();
             } else {
-                this.ctx.fillRect(n.x - size / 2, n.y - size / 2, size, size);
+                this.ctx.fillRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
             }
         });
 
@@ -307,7 +312,7 @@ export class CanvasRenderer {
             const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
 
             this.ctx.strokeStyle = config.colorHandleLine;
-            this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
+            this.ctx.lineWidth = lineWidth;
             this.ctx.beginPath();
 
             // Draw In Handle if not at anchor
@@ -325,35 +330,39 @@ export class CanvasRenderer {
 
             // Draw Handle Circles
             if (!isAtAnchor(n.cpIn)) {
-                this.drawCircle(n.cpIn.x, n.cpIn.y, config.handleRadius, config.colorHandle);
+                this.drawCircle(n.cpIn.x, n.cpIn.y, handleRadius, config.colorHandle);
             }
             if (!isAtAnchor(n.cpOut)) {
-                this.drawCircle(n.cpOut.x, n.cpOut.y, config.handleRadius, config.colorHandle);
+                this.drawCircle(n.cpOut.x, n.cpOut.y, handleRadius, config.colorHandle);
             }
         }
     }
 
-    drawSelectionBounds(bounds: any, config: RendererConfig): void {
+    drawSelectionBounds(bounds: any, config: RendererConfig, zoom: number): void {
+        const anchorSize = config.anchorSize / zoom;
+        const handleRadius = config.handleRadius / zoom;
+        const lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
+        const rotationHandleOffset = ROTATION_HANDLE_OFFSET / zoom;
 
         // Draw rotation handle
         const handleX = bounds.cx;
-        const handleY = bounds.minY - ROTATION_HANDLE_OFFSET;
+        const handleY = bounds.minY - rotationHandleOffset;
 
         this.ctx.beginPath();
         this.ctx.moveTo(bounds.cx, bounds.minY);
         this.ctx.lineTo(handleX, handleY);
         this.ctx.strokeStyle = config.colorSelection;
+        this.ctx.lineWidth = lineWidth;
         this.ctx.stroke();
 
-        this.drawCircle(handleX, handleY, config.handleRadius, config.colorSelection);
+        this.drawCircle(handleX, handleY, handleRadius, config.colorSelection);
 
         // Draw bounding box
         this.ctx.strokeStyle = config.colorSelection;
-        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
+        this.ctx.lineWidth = lineWidth;
         this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
 
         // Draw 8 resize handles
-        const size = config.anchorSize;
         this.ctx.fillStyle = config.colorAnchor;
 
         const handles = [
@@ -368,7 +377,7 @@ export class CanvasRenderer {
         ];
 
         handles.forEach(h => {
-            this.ctx.fillRect(h.x - size / 2, h.y - size / 2, size, size);
+            this.ctx.fillRect(h.x - anchorSize / 2, h.y - anchorSize / 2, anchorSize, anchorSize);
         });
     }
 

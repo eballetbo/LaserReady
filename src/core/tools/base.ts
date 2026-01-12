@@ -18,6 +18,8 @@ export interface IEditorContext {
     previewOrigin: { x: number; y: number } | null; // Custom start point for preview line (optional)
     history: any; // HistoryManager
     selectedShape?: any; // Temporary selection for creation tools
+    zoom: number;
+    pan: { x: number; y: number };
 }
 
 export class BaseTool {

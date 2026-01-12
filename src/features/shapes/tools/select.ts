@@ -414,7 +414,7 @@ export class SelectTool extends BaseTool {
         if (this.isDragSelecting && this.dragStart) {
             const { x, y } = this.editor.getMousePos(e);
             const width = x - this.dragStart.x;
-            const height = y - this.dragStart.y;
+            // const height = y - this.dragStart.y; // Unused
 
             // Normalize rect for intersection checks
             const rect: Rect = {
@@ -479,15 +479,36 @@ export class SelectTool extends BaseTool {
 
     getClickedControl(x: number, y: number): ControlHit | null {
         const config = this.editor.config;
-        const tol2 = (config.handleRadius + 3) ** 2;
-        const anchorTol2 = (config.anchorSize / 2 + 2) ** 2;
+        const zoom = this.editor.zoom;
+
+        // Calculate tolerance in WORLD units that corresponds to the constant SCREEN size
+        // We want the hit area to be the same size on screen, so if we are zoomed in (zoom > 1),
+        // the world distance must be smaller. If zoomed out (zoom < 1), world distance must be larger.
+        const screenHandleRadius = config.handleRadius + 3; // +3px padding
+        const screenAnchorSize = config.anchorSize / 2 + 2; // +2px padding
+
+        const worldHandleHitRadius = screenHandleRadius / zoom;
+        const worldAnchorHitRadius = screenAnchorSize / zoom;
+
+        const tol2 = worldHandleHitRadius ** 2;
+        const anchorTol2 = worldAnchorHitRadius ** 2;
 
         const bounds = Geometry.getCombinedBounds(this.editor.selectedShapes);
         if (!bounds) return null;
 
         // Check rotation handle
+        // We must also adjust the offset location because renderer now draws it at constant screen offset
+        // Wait, the renderer draws rotation handle at 'bounds.minY - ROTATION_HANDLE_OFFSET / zoom'
+        // So we need to hit test that specific location.
+        // We don't have ROTATION_HANDLE_OFFSET imported here. Let's assume constant or import it.
+        // It's 30 in constants.ts. I should check if I imported it. I didn't. 
+        // Quick fix: Hardcode 30 matching constant for now or import it. 
+        // Actually renderer uses 30.
+        const ROTATION_HANDLE_OFFSET = 30;
+        const handleOffset = ROTATION_HANDLE_OFFSET / zoom;
+
         const handleX = bounds.cx!;
-        const handleY = bounds.minY - 20;
+        const handleY = bounds.minY - handleOffset;
         if (Geometry.getDistance({ x, y }, { x: handleX, y: handleY }) <= tol2) {
             return { type: 'rotate' };
         }

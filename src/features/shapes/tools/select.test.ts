@@ -57,6 +57,8 @@ describe('SelectTool - Resize Bug', () => {
             tool: 'select',
             activePath: null,
             previewPoint: null,
+            zoom: 1,
+            pan: { x: 0, y: 0 },
             config: {
                 handleRadius: 5,
                 anchorSize: 8
@@ -213,6 +215,8 @@ describe('SelectTool - Click Selection with Modifiers', () => {
             activePath: null,
             previewPoint: null,
             selectionBox: null,
+            zoom: 1,
+            pan: { x: 0, y: 0 },
             config: {
                 handleRadius: 5,
                 anchorSize: 8
