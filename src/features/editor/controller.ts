@@ -38,7 +38,6 @@ export class CanvasController {
     activeTool: any;
     activePath: PathShape | null;
     previewPoint: { x: number; y: number } | null;
-    selectedNodeIndex: number | null;
     selectionBox: any | null;
     previewOrigin: { x: number; y: number } | null;
     zoom: number;
@@ -86,7 +85,6 @@ export class CanvasController {
 
         this.activePath = null; // For pen tool
         this.previewPoint = null;
-        this.selectedNodeIndex = null; // For node edit tool
         this.selectionBox = null; // For drag selection preview
         this.previewOrigin = null; // For custom preview start point
 
@@ -161,6 +159,14 @@ export class CanvasController {
 
     get activeLayerId() {
         return useStore.getState().activeLayerId;
+    }
+
+    get selectedNodeIndex() {
+        return useStore.getState().selectedNodeIndex;
+    }
+
+    set selectedNodeIndex(value: number | null) {
+        useStore.getState().setSelectedNodeIndex(value);
     }
 
     initEvents() {
@@ -273,7 +279,7 @@ export class CanvasController {
 
     render() {
         // Read state from Store
-        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers } = useStore.getState();
+        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndex } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
         this.renderer.drawScene(
@@ -287,7 +293,7 @@ export class CanvasController {
             this.selectionBox, // Pass selection box from SelectTool
             zoom,
             pan, // Use pan directly from store state (destructured above)
-            this.selectedNodeIndex,
+            selectedNodeIndex,
             this.previewOrigin,
             useStore.getState().material // Pass material bounds to renderer
         );

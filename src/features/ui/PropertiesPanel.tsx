@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { useLanguage } from '../../contexts/language';
-import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 'lucide-react';
+import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink, Spline, Square } from 'lucide-react';
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
+import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 
@@ -323,6 +324,64 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     )}
 
                     {/* OPERATIONS (Combined) */}
+                    {tool === 'node-edit' && (
+                        <div>
+                            <SectionHeader>{t('nodeOperations') || 'Node Operations'}</SectionHeader>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Button
+                                    variant="icon"
+                                    onClick={() => {
+                                        const idx = useStore.getState().selectedNodeIndex;
+                                        if (editor && selectedObject && idx !== null) {
+                                            const command = new ChangeNodeTypeCommand(selectedObject.id, idx, 'smooth');
+                                            editor.history.execute(command);
+                                            editor.render();
+                                        }
+                                    }}
+                                    icon={Spline}
+                                    label={t('Smooth') || 'Smooth'}
+                                    theme={theme}
+                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    title="Convert to Curve"
+                                />
+                                <Button
+                                    variant="icon"
+                                    onClick={() => {
+                                        const idx = useStore.getState().selectedNodeIndex;
+                                        if (editor && selectedObject && idx !== null) {
+                                            const command = new ChangeNodeTypeCommand(selectedObject.id, idx, 'corner');
+                                            editor.history.execute(command);
+                                            editor.render();
+                                        }
+                                    }}
+                                    icon={Square}
+                                    label={t('Corner') || 'Corner'}
+                                    theme={theme}
+                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    title="Convert to Corner"
+                                />
+                                <Button
+                                    variant="icon"
+                                    onClick={() => {
+                                        const idx = useStore.getState().selectedNodeIndex;
+                                        if (editor && selectedObject && idx !== null) {
+                                            const command = new DeleteNodeCommand(selectedObject.id, idx);
+                                            editor.history.execute(command);
+                                            useStore.getState().setSelectedNodeIndex(null); // Clear selection
+                                            editor.render();
+                                        }
+                                    }}
+                                    icon={Trash2}
+                                    label={t('Delete Node') || 'Delete'}
+                                    theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
+                                    className="text-red-500 border-red-200 dark:border-red-900/30"
+                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    title="Delete Node"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {tool !== 'node-edit' && (
                         <div>
                             <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>

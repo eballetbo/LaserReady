@@ -7,11 +7,13 @@ export interface UiSlice {
     pan: { x: number; y: number };
     isDarkMode: boolean;
     material: { width: number; height: number };
+    selectedNodeIndex: number | null;
     setTool: (tool: string) => void;
     setZoom: (zoom: number) => void;
     setPan: (pan: { x: number; y: number }) => void;
     setDarkMode: (isDarkMode: boolean) => void;
     setMaterial: (material: { width: number; height: number }) => void;
+    setSelectedNodeIndex: (index: number | null) => void;
     zoomAtPoint: (delta: number, x: number, y: number) => void;
 }
 
@@ -21,11 +23,13 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     pan: { x: 0, y: 0 },
     isDarkMode: true,
     material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
+    selectedNodeIndex: null,
     setTool: (tool) => set({ tool }),
     setZoom: (zoom) => set({ zoom }),
     setPan: (pan) => set({ pan }),
     setDarkMode: (isDarkMode) => set({ isDarkMode }),
     setMaterial: (material) => set({ material }),
+    setSelectedNodeIndex: (selectedNodeIndex) => set({ selectedNodeIndex }),
     zoomAtPoint: (delta, mouseX, mouseY) => {
         const { zoom, pan } = get();
         const newZoom = Math.min(Math.max(zoom * delta, 0.1), 50);

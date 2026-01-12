@@ -24,6 +24,7 @@ interface ButtonProps {
     title?: string;
     hasSubmenu?: boolean;
     submenuContent?: React.ReactNode;
+    disabled?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -37,7 +38,8 @@ export const Button: React.FC<ButtonProps> = ({
     className = '',
     title,
     hasSubmenu = false,
-    submenuContent
+    submenuContent,
+    disabled = false
 }) => {
     // Size classes
     const sizeClasses = {
@@ -52,11 +54,13 @@ export const Button: React.FC<ButtonProps> = ({
             <div className="relative group/btn">
                 <button
                     onClick={onClick}
+                    disabled={disabled}
                     title={title || label}
                     className={`${sizeClasses[size]} mb-2 rounded-lg transition-all flex justify-center items-center relative
-                        ${active
+                        ${disabled ? 'opacity-30 cursor-not-allowed' : ''}
+                        ${!disabled && active
                             ? 'bg-red-600 text-white shadow-lg shadow-red-500/30'
-                            : `${theme.iconColor} ${theme.buttonHover} hover:text-red-500`
+                            : !disabled ? `${theme.iconColor} ${theme.buttonHover} hover:text-red-500` : ''
                         } ${className}`}
                 >
                     {Icon && <Icon size={size === 'sm' ? 16 : size === 'md' ? 24 : 32} />}
