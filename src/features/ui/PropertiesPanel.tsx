@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useStore } from '../../store/useStore';
 import { useLanguage } from '../../contexts/language';
 import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 'lucide-react';
 import { CanvasController } from '../editor/controller';
@@ -34,6 +35,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     const [sides, setSides] = useState(6);
     const [points, setPoints] = useState(5);
     const [innerRadius, setInnerRadius] = useState(0.382);
+    const tool = useStore(state => state.tool);
 
     const selectedObject = selection.length === 1 ? selection[0] : null;
     const hasSelection = selection.length > 0;
@@ -153,43 +155,45 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             {hasSelection ? (
                 <div className="space-y-6">
                     {/* DIMENSIONS */}
-                    <div>
-                        <SectionHeader>{t('dimensions (mm)')}</SectionHeader>
-                        <div className="grid grid-cols-2 gap-2">
-                            <NumberInput
-                                label="X"
-                                value={dimensions.x}
-                                onChange={(v) => updateDimension('x', v)}
-                                onBlur={() => commitDimension('x')}
-                                onKeyDown={(e) => handleKeyDown(e, 'x')}
-                                theme={theme}
-                            />
-                            <NumberInput
-                                label="Y"
-                                value={dimensions.y}
-                                onChange={(v) => updateDimension('y', v)}
-                                onBlur={() => commitDimension('y')}
-                                onKeyDown={(e) => handleKeyDown(e, 'y')}
-                                theme={theme}
-                            />
-                            <NumberInput
-                                label={`${t('width')}`}
-                                value={dimensions.w}
-                                onChange={(v) => updateDimension('w', v)}
-                                onBlur={() => commitDimension('w')}
-                                onKeyDown={(e) => handleKeyDown(e, 'w')}
-                                theme={theme}
-                            />
-                            <NumberInput
-                                label={`${t('height')}`}
-                                value={dimensions.h}
-                                onChange={(v) => updateDimension('h', v)}
-                                onBlur={() => commitDimension('h')}
-                                onKeyDown={(e) => handleKeyDown(e, 'h')}
-                                theme={theme}
-                            />
+                    {tool !== 'node-edit' && (
+                        <div>
+                            <SectionHeader>{t('dimensions (mm)')}</SectionHeader>
+                            <div className="grid grid-cols-2 gap-2">
+                                <NumberInput
+                                    label="X"
+                                    value={dimensions.x}
+                                    onChange={(v) => updateDimension('x', v)}
+                                    onBlur={() => commitDimension('x')}
+                                    onKeyDown={(e) => handleKeyDown(e, 'x')}
+                                    theme={theme}
+                                />
+                                <NumberInput
+                                    label="Y"
+                                    value={dimensions.y}
+                                    onChange={(v) => updateDimension('y', v)}
+                                    onBlur={() => commitDimension('y')}
+                                    onKeyDown={(e) => handleKeyDown(e, 'y')}
+                                    theme={theme}
+                                />
+                                <NumberInput
+                                    label={`${t('width')}`}
+                                    value={dimensions.w}
+                                    onChange={(v) => updateDimension('w', v)}
+                                    onBlur={() => commitDimension('w')}
+                                    onKeyDown={(e) => handleKeyDown(e, 'w')}
+                                    theme={theme}
+                                />
+                                <NumberInput
+                                    label={`${t('height')}`}
+                                    value={dimensions.h}
+                                    onChange={(v) => updateDimension('h', v)}
+                                    onBlur={() => commitDimension('h')}
+                                    onKeyDown={(e) => handleKeyDown(e, 'h')}
+                                    theme={theme}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* PARAMETRIC SETTINGS (Single Only) */}
 
@@ -286,73 +290,76 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         </div>
                     )}
 
-                    {/* LASER MODES (Always visible for any selection) */}
-                    <div>
-                        <SectionHeader>{t('laserMode')}</SectionHeader>
-                        <div className="grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => applyLaserMode('CUT')}
-                                className={`p-2 rounded border ${theme.border} hover:bg-red-500/10 hover:border-red-500 flex flex-col items-center justify-center gap-1 h-16`}
-                                title={`${t('cut')} - Red Stroke`}
-                            >
-                                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                                <span className="text-xs font-bold">{t('cut')}</span>
-                            </button>
-                            <button
-                                onClick={() => applyLaserMode('SCORE')}
-                                className={`p-2 rounded border ${theme.border} hover:bg-blue-500/10 hover:border-blue-500 flex flex-col items-center justify-center gap-1 h-16`}
-                                title={`${t('score')} - Blue Stroke`}
-                            >
-                                <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                                <span className="text-xs font-bold">{t('score')}</span>
-                            </button>
-                            <button
-                                onClick={() => applyLaserMode('ENGRAVE')}
-                                className={`p-2 rounded border ${theme.border} hover:bg-gray-500/10 hover:border-gray-500 flex flex-col items-center justify-center gap-1 h-16`}
-                                title={`${t('engrave')} - Black Fill`}
-                            >
-                                <div className="w-4 h-4 bg-black rounded-full"></div>
-                                <span className="text-xs font-bold">{t('engrave')}</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* OPERATIONS (Combined) */}
-                    <div>
-                        <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>
-                        <div className="space-y-4">
-                            {/* Boolean Ops (Only if multiple) */}
-                            {selection.length > 1 && (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
-                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
-                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
-                                    <Button variant="iconText" onClick={() => editor?.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
-                                </div>
-                            )}
-
-                            {/* Grouping (Single or Multiple) */}
-                            {(selection.length > 1 || (selectedObject && selectedObject.type === 'group')) && (
-                                <div className="grid grid-cols-2 gap-2">
-                                    {selection.length > 1 && (
-                                        <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('Group') || 'Group'} theme={theme} />
-                                    )}
-                                    <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('Ungroup') || 'Ungroup'} theme={theme} />
-                                </div>
-                            )}
-
-                            <div className="pt-2">
-                                <Button
-                                    variant="iconText"
-                                    onClick={deleteSelected}
-                                    icon={Trash2}
-                                    label={`${t('delete')} (${selection.length})`}
-                                    theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
-                                    className="w-full justify-center text-red-500 border-red-200 dark:border-red-900/30"
-                                />
+                    {tool !== 'node-edit' && (
+                        <div>
+                            <SectionHeader>{t('laserMode')}</SectionHeader>
+                            <div className="grid grid-cols-3 gap-2">
+                                <button
+                                    onClick={() => applyLaserMode('CUT')}
+                                    className={`p-2 rounded border ${theme.border} hover:bg-red-500/10 hover:border-red-500 flex flex-col items-center justify-center gap-1 h-16`}
+                                    title={`${t('cut')} - Red Stroke`}
+                                >
+                                    <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                                    <span className="text-xs font-bold">{t('cut')}</span>
+                                </button>
+                                <button
+                                    onClick={() => applyLaserMode('SCORE')}
+                                    className={`p-2 rounded border ${theme.border} hover:bg-blue-500/10 hover:border-blue-500 flex flex-col items-center justify-center gap-1 h-16`}
+                                    title={`${t('score')} - Blue Stroke`}
+                                >
+                                    <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                                    <span className="text-xs font-bold">{t('score')}</span>
+                                </button>
+                                <button
+                                    onClick={() => applyLaserMode('ENGRAVE')}
+                                    className={`p-2 rounded border ${theme.border} hover:bg-gray-500/10 hover:border-gray-500 flex flex-col items-center justify-center gap-1 h-16`}
+                                    title={`${t('engrave')} - Black Fill`}
+                                >
+                                    <div className="w-4 h-4 bg-black rounded-full"></div>
+                                    <span className="text-xs font-bold">{t('engrave')}</span>
+                                </button>
                             </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* OPERATIONS (Combined) */}
+                    {tool !== 'node-edit' && (
+                        <div>
+                            <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>
+                            <div className="space-y-4">
+                                {/* Boolean Ops (Only if multiple) */}
+                                {selection.length > 1 && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
+                                        <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
+                                        <Button variant="iconText" onClick={() => editor?.performBooleanOperation('intersect')} icon={SquaresIntersect} label={t('intersect')} theme={theme} />
+                                        <Button variant="iconText" onClick={() => editor?.performBooleanOperation('exclude')} icon={XCircle} label={t('exclude')} theme={theme} />
+                                    </div>
+                                )}
+
+                                {/* Grouping (Single or Multiple) */}
+                                {(selection.length > 1 || (selectedObject && selectedObject.type === 'group')) && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {selection.length > 1 && (
+                                            <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('Group') || 'Group'} theme={theme} />
+                                        )}
+                                        <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('Ungroup') || 'Ungroup'} theme={theme} />
+                                    </div>
+                                )}
+
+                                <div className="pt-2">
+                                    <Button
+                                        variant="iconText"
+                                        onClick={deleteSelected}
+                                        icon={Trash2}
+                                        label={`${t('delete')} (${selection.length})`}
+                                        theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
+                                        className="w-full justify-center text-red-500 border-red-200 dark:border-red-900/30"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="text-center text-gray-500 mt-10 text-sm">
