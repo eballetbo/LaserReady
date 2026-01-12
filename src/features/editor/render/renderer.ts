@@ -13,7 +13,14 @@ import {
     DEFAULT_FONT_FAMILY,
     TEXT_LINE_HEIGHT_MULTIPLIER,
     TEXT_STROKE_WIDTH,
-    POINT_EQUALITY_THRESHOLD
+    POINT_EQUALITY_THRESHOLD,
+    NODE_SKELETON_COLOR,
+    NODE_CORNER_COLOR,
+    NODE_SMOOTH_COLOR,
+    NODE_START_COLOR,
+    NODE_HANDLE_LINE_COLOR,
+    NODE_SKELETON_WIDTH,
+    NODE_HANDLE_CIRCLE_RADIUS
 } from '../../../config/constants';
 
 export interface RendererConfig {
@@ -141,7 +148,7 @@ export class CanvasRenderer {
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
-            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, isSelected ? selectedNodeIndex : null, zoom);
+            this.renderShape(shape, isSelected, selectedShapes, layers, config, toolType, zoom);
         });
 
         if (selectedShapes.length > 0 && toolType === 'select') {
@@ -156,9 +163,16 @@ export class CanvasRenderer {
             this.drawPenPreview(activePath, previewPoint, previewOrigin);
         }
 
+
         // Draw selection box
         if (selectionBox) {
             this.drawSelectionBox(selectionBox);
+        }
+
+
+        // Draw Node Overlay (Last, on top)
+        if (toolType === 'node-edit') {
+            this.drawNodeOverlay(selectedShapes, selectedNodeIndex, zoom, config);
         }
 
         this.ctx.restore();
@@ -171,7 +185,6 @@ export class CanvasRenderer {
         layers: ILayer[],
         config: RendererConfig,
         toolType: string,
-        selectedNodeIndex: number | null,
         zoom: number
     ): void {
         const layer = layers ? layers.find(l => l.id === shape.layerId) : null;
@@ -184,9 +197,7 @@ export class CanvasRenderer {
             this.drawText(shape, isSelected, config, layerColor, layerMode);
         } else {
             this.drawPath(shape, isSelected, config, layerColor, layerMode);
-            if (isSelected && toolType === 'node-edit') {
-                this.drawNodes(shape, config, selectedNodeIndex, zoom);
-            }
+            // drawNodes logic moved to drawNodeOverlay
         }
     }
 
@@ -206,7 +217,7 @@ export class CanvasRenderer {
         group.children.forEach((child: any) => {
             // Pass isSelected (inheriting from group) so children render with selection color (blue)
             // This ensures visual feedback that the group contents are selected
-            this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, null, zoom);
+            this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, zoom);
         });
 
         // Only draw group bounds if it is explicitly selected AND is the only thing selected.
@@ -293,59 +304,104 @@ export class CanvasRenderer {
         }
     }
 
-    drawNodes(shape: any, config: RendererConfig, selectedNodeIndex: number | null, zoom: number): void {
+    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndex: number | null, zoom: number, config: RendererConfig): void {
         const anchorSize = config.anchorSize / zoom;
-        const handleRadius = config.handleRadius / zoom;
+        const skeletonWidth = NODE_SKELETON_WIDTH / zoom;
+        const handleCircleRadius = NODE_HANDLE_CIRCLE_RADIUS / zoom;
         const lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
 
-        // 1. Draw Anchors (Squares) first
-        // 1. Draw Anchors
-        shape.nodes.forEach((n: any, i: number) => {
-            // Selected node is Red, others are anchor color
-            this.ctx.fillStyle = i === selectedNodeIndex ? '#FF0000' : config.colorAnchor;
+        selectedShapes.forEach(shape => {
+            if (!shape.nodes || shape.nodes.length < 2) return;
 
-            // Draw Circle for Smooth/Symmetric, Square for Corner
-            if (n.type === 'smooth' || n.type === 'symmetric') {
-                this.ctx.beginPath();
-                this.ctx.arc(n.x, n.y, anchorSize / 2, 0, Math.PI * 2);
-                this.ctx.fill();
-            } else {
-                this.ctx.fillRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
-            }
-        });
-
-        // 2. Draw Handles (Lines + Circles) ONLY for selected node
-        if (selectedNodeIndex !== null && selectedNodeIndex >= 0 && selectedNodeIndex < shape.nodes.length) {
-            const n = shape.nodes[selectedNodeIndex];
-
-            // Helper to check if handle is at anchor
-            const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
-
-            this.ctx.strokeStyle = config.colorHandleLine;
-            this.ctx.lineWidth = lineWidth;
+            // 1. Draw Path Skeleton (Thin hairline)
             this.ctx.beginPath();
-
-            // Draw In Handle if not at anchor
-            if (!isAtAnchor(n.cpIn)) {
-                this.ctx.moveTo(n.x, n.y);
-                this.ctx.lineTo(n.cpIn.x, n.cpIn.y);
+            this.ctx.moveTo(shape.nodes[0].x, shape.nodes[0].y);
+            for (let i = 0; i < shape.nodes.length; i++) {
+                let nextNode;
+                if (i === shape.nodes.length - 1) {
+                    if (!shape.closed) break;
+                    nextNode = shape.nodes[0];
+                } else {
+                    nextNode = shape.nodes[i + 1];
+                }
+                this.ctx.bezierCurveTo(
+                    shape.nodes[i].cpOut.x, shape.nodes[i].cpOut.y,
+                    nextNode.cpIn.x, nextNode.cpIn.y,
+                    nextNode.x, nextNode.y
+                );
             }
+            if (shape.closed) this.ctx.closePath();
 
-            // Draw Out Handle if not at anchor
-            if (!isAtAnchor(n.cpOut)) {
-                this.ctx.moveTo(n.x, n.y);
-                this.ctx.lineTo(n.cpOut.x, n.cpOut.y);
-            }
+            this.ctx.strokeStyle = NODE_SKELETON_COLOR;
+            this.ctx.lineWidth = skeletonWidth;
             this.ctx.stroke();
 
-            // Draw Handle Circles
-            if (!isAtAnchor(n.cpIn)) {
-                this.drawCircle(n.cpIn.x, n.cpIn.y, handleRadius, config.colorHandle);
+            // 2. Draw Nodes
+            shape.nodes.forEach((n: any, i: number) => {
+                // Determine Color
+                let color;
+                if (i === selectedNodeIndex) {
+                    color = '#FF0000'; // Selected is red
+                } else if (i === 0) {
+                    color = NODE_START_COLOR; // Start node
+                } else if (n.type === 'smooth' || n.type === 'symmetric') {
+                    color = NODE_SMOOTH_COLOR;
+                } else {
+                    color = NODE_CORNER_COLOR;
+                }
+                this.ctx.fillStyle = color;
+
+                // Draw Shape
+                // Start Node could be distinctive (e.g. larger or arrow? For now just color and maybe size?)
+                // LightBurn uses a green square for start, but let's follow plan: Start Point distinctive.
+
+                if (n.type === 'smooth' || n.type === 'symmetric') {
+                    // Circle
+                    this.ctx.beginPath();
+                    this.ctx.arc(n.x, n.y, anchorSize / 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                } else {
+                    // Square (Corner)
+                    this.ctx.fillRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
+                }
+            });
+
+            // 3. Draw Handles (Only for selected node)
+            if (selectedNodeIndex !== null && selectedNodeIndex >= 0 && selectedNodeIndex < shape.nodes.length) {
+                const n = shape.nodes[selectedNodeIndex];
+
+                // Only draw handles if they are not at anchor pos (collapsed)
+                // Though user might want to see them to drag them out? 
+                // LightBurn shows them if selected. But if they are exactly at anchor, line length is 0.
+                // We'll draw if dist > threshold OR if we want to show they exist.
+                // Previous logic checked equality.
+
+                const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
+
+                this.ctx.strokeStyle = NODE_HANDLE_LINE_COLOR;
+                this.ctx.lineWidth = lineWidth;
+
+                // Draw In Handle
+                if (!isAtAnchor(n.cpIn)) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(n.x, n.y);
+                    this.ctx.lineTo(n.cpIn.x, n.cpIn.y);
+                    this.ctx.stroke();
+
+                    this.drawCircle(n.cpIn.x, n.cpIn.y, handleCircleRadius, config.colorHandle);
+                }
+
+                // Draw Out Handle
+                if (!isAtAnchor(n.cpOut)) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(n.x, n.y);
+                    this.ctx.lineTo(n.cpOut.x, n.cpOut.y);
+                    this.ctx.stroke();
+
+                    this.drawCircle(n.cpOut.x, n.cpOut.y, handleCircleRadius, config.colorHandle);
+                }
             }
-            if (!isAtAnchor(n.cpOut)) {
-                this.drawCircle(n.cpOut.x, n.cpOut.y, handleRadius, config.colorHandle);
-            }
-        }
+        });
     }
 
     drawSelectionBounds(bounds: any, config: RendererConfig, zoom: number): void {

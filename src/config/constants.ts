@@ -23,11 +23,22 @@ export const DEFAULT_FILL_COLOR = 'rgba(0, 123, 255, 0.05)';
 export const DEFAULT_LAYER_COLOR = '#000000';
 export const PEN_PREVIEW_COLOR = '#999';
 
+export const NODE_SKELETON_COLOR = '#888888';
+export const NODE_CORNER_COLOR = '#0000FF'; // Blue
+export const NODE_SMOOTH_COLOR = '#008000'; // Green
+export const NODE_OnPATH_COLOR = '#DD00DD'; // Purple for nodes on path (if needed) or just start
+export const NODE_START_COLOR = '#00AA00'; // Slightly different green for start? Or maybe an arrow. Let's stick to Green circle for now, maybe use a larger size or ring.
+export const NODE_HANDLE_LINE_COLOR = '#555555'; // Dark gray/black for contrast
+export const NODE_HANDLE_LINE_DASH = [2, 2] as const;
+
+
 // ========================================
 // SIZES & DIMENSIONS
 // ========================================
 export const ANCHOR_SIZE = 8;
 export const HANDLE_RADIUS = 5;
+export const NODE_SKELETON_WIDTH = 0.5;
+export const NODE_HANDLE_CIRCLE_RADIUS = 3;
 export const DEFAULT_STROKE_WIDTH = 1;
 export const SELECTION_LINE_WIDTH = 2;
 export const PEN_DASH_PATTERN = [5, 5] as const;
