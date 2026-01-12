@@ -70,7 +70,7 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
     };
 
     return (
-        <div className={`flex flex-col gap-2 p-2 ${theme.panel} border-r ${theme.border} h-full w-16 items-center shadow-sm z-10`}>
+        <div className={`flex flex-col gap-2 p-2 ${theme.panel} border-r ${theme.border} h-full w-16 items-center shadow-sm z-20`}>
             <Button
                 variant="icon"
                 active={tool === 'select'}

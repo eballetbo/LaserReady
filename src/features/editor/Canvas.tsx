@@ -1,7 +1,7 @@
-
 import React, { useEffect, useRef } from 'react';
 import { CanvasController } from './controller';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
+import { Ruler } from '../ui/Ruler';
 
 interface CanvasProps {
     material: { width: number; height: number };
@@ -57,10 +57,15 @@ export default function Canvas({
 
         const resizeObserver = new ResizeObserver(() => {
             if (containerRef.current && canvasRef.current && editorRef.current) {
+                // The containerRef is now the viewport area for the canvas
                 const { clientWidth, clientHeight } = containerRef.current;
-                canvasRef.current.width = clientWidth;
-                canvasRef.current.height = clientHeight;
-                editorRef.current.render();
+
+                // Only resize if dimensions actually changed (avoid loops)
+                if (canvasRef.current.width !== clientWidth || canvasRef.current.height !== clientHeight) {
+                    canvasRef.current.width = clientWidth;
+                    canvasRef.current.height = clientHeight;
+                    editorRef.current.render();
+                }
             }
         });
 
@@ -69,7 +74,7 @@ export default function Canvas({
         return () => resizeObserver.disconnect();
     }, []);
 
-    // Material Update: Just trigger render, don't resize canvas (canvas is viewport)
+    // Material Update
     useEffect(() => {
         editorRef.current?.render();
     }, [material]);
@@ -89,13 +94,34 @@ export default function Canvas({
     };
 
     return (
-        <div ref={containerRef} className="shadow-2xl bg-white w-full h-full">
-            <canvas
-                ref={canvasRef}
-                className="w-full h-full block"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-            />
+        <div className="w-full h-full grid bg-gray-100 overflow-hidden"
+            style={{
+                gridTemplateColumns: '20px 1fr',
+                gridTemplateRows: '20px 1fr'
+            }}>
+
+            {/* Top-Left Corner */}
+            <div className="bg-gray-50 border-r border-b border-gray-300 z-10" />
+
+            {/* Top Ruler */}
+            <div className="relative border-b border-gray-300 z-10 bg-gray-50 overflow-hidden">
+                <Ruler orientation="horizontal" />
+            </div>
+
+            {/* Left Ruler */}
+            <div className="relative border-r border-gray-300 z-10 bg-gray-50 overflow-hidden">
+                <Ruler orientation="vertical" />
+            </div>
+
+            {/* Main Canvas Viewport */}
+            <div ref={containerRef} className="relative bg-white overflow-hidden shadow-inner">
+                <canvas
+                    ref={canvasRef}
+                    className="block touch-none select-none outline-none w-full h-full"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                />
+            </div>
         </div>
     );
 }

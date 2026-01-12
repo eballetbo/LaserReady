@@ -326,7 +326,7 @@ export class CanvasController {
         this.endAction();
     }
 
-    importSVGString(svgString, position = null) {
+    importSVGString(svgString: string, position: { x: number; y: number } | null = null) {
         try {
             const shapes = SVGImporter.importSVG(svgString);
             if (shapes && shapes.length > 0) {
