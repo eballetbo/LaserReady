@@ -67,33 +67,44 @@ export class CanvasRenderer {
         this.ctx.restore();
     }
 
-    drawGrid(spacing: number = 40, zoom: number, pan: { x: number; y: number }): void {
+    drawGrid(spacing: number = 40, zoom: number, pan: { x: number; y: number }, materialWidth?: number, materialHeight?: number): void {
         const { width, height } = this.canvas;
 
-        const minX = -pan.x / zoom;
-        const maxX = (width - pan.x) / zoom;
-        const minY = -pan.y / zoom;
-        const maxY = (height - pan.y) / zoom;
+        // If material bounds are provided, use them. Otherwise default to viewport (infinite-like)
+
+
+        // Use infinite bounds if no material, or restricted bounds if material
+        const effectiveMinX = materialWidth !== undefined ? 0 : -pan.x / zoom;
+        const effectiveMaxX = materialWidth !== undefined ? materialWidth : (width - pan.x) / zoom;
+        const effectiveMinY = materialHeight !== undefined ? 0 : -pan.y / zoom;
+        const effectiveMaxY = materialHeight !== undefined ? materialHeight : (height - pan.y) / zoom;
 
         const step = spacing;
 
         this.ctx.strokeStyle = DEFAULT_GRID_COLOR;
-        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom; // Keep grid lines thin visually
+        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
 
         this.ctx.beginPath();
 
         // Vertical lines
-        const startX = Math.floor(minX / step) * step;
-        for (let x = startX; x <= maxX; x += step) {
-            this.ctx.moveTo(x, minY);
-            this.ctx.lineTo(x, maxY);
+        // Align to step
+        const firstVerticalLine = Math.floor(effectiveMinX / step) * step;
+        const loopStartX = firstVerticalLine < effectiveMinX ? firstVerticalLine + step : firstVerticalLine;
+
+        for (let x = loopStartX; x <= effectiveMaxX; x += step) {
+            // For material bound, y lines go from 0 to materialHeight
+            // For infinite, they go from minY to maxY
+            this.ctx.moveTo(x, effectiveMinY);
+            this.ctx.lineTo(x, effectiveMaxY);
         }
 
         // Horizontal lines
-        const startY = Math.floor(minY / step) * step;
-        for (let y = startY; y <= maxY; y += step) {
-            this.ctx.moveTo(minX, y);
-            this.ctx.lineTo(maxX, y);
+        const firstHorizontalLine = Math.floor(effectiveMinY / step) * step;
+        const loopStartY = firstHorizontalLine < effectiveMinY ? firstHorizontalLine + step : firstHorizontalLine;
+
+        for (let y = loopStartY; y <= effectiveMaxY; y += step) {
+            this.ctx.moveTo(effectiveMinX, y);
+            this.ctx.lineTo(effectiveMaxX, y);
         }
 
         this.ctx.stroke();
@@ -105,7 +116,7 @@ export class CanvasRenderer {
         layers: ILayer[],
         config: RendererConfig,
         toolType: string,
-        activePath: IShape | null, // PathShape
+        activePath: IShape | null,
         previewPoint: { x: number; y: number } | null,
         selectionBox: any | null,
         zoom: number = 1,
@@ -125,8 +136,8 @@ export class CanvasRenderer {
             this.drawMaterialBounds(material.width, material.height);
         }
 
-        // 2. Draw Infinite Grid
-        this.drawGrid(config.gridSpacing, zoom, pan);
+        // 2. Draw Grid (Restricted to Material if available)
+        this.drawGrid(config.gridSpacing, zoom, pan, material ? material.width : undefined, material ? material.height : undefined);
 
         shapes.forEach(shape => {
             const isSelected = selectedShapes.includes(shape);
