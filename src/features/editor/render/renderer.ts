@@ -179,7 +179,7 @@ export class CanvasRenderer {
         const layerMode = layer ? layer.mode : 'CUT';
 
         if (shape.type === 'group') {
-            this.drawGroup(shape, isSelected, selectedShapes, layers, config, toolType, selectedNodeIndex, zoom);
+            this.drawGroup(shape, isSelected, selectedShapes, layers, config, toolType, zoom);
         } else if (shape.type === 'text') {
             this.drawText(shape, isSelected, config, layerColor, layerMode);
         } else {
@@ -197,7 +197,6 @@ export class CanvasRenderer {
         layers: ILayer[],
         config: RendererConfig,
         toolType: string,
-        selectedNodeIndex: number | null,
         zoom: number
     ) {
         if (!group.children) return;
