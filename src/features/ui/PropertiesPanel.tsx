@@ -456,8 +456,6 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     </div>
                                 )}
 
-
-
                                 <div className="pt-2">
                                     <Button
                                         variant="iconText"
