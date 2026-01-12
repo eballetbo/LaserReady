@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { useLanguage } from '../../contexts/language';
-import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink, Spline, Square } from 'lucide-react';
+import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink, Spline, Square, Radius } from 'lucide-react';
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
+import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 
@@ -327,7 +328,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     {tool === 'node-edit' && (
                         <div>
                             <SectionHeader>{t('nodeOperations') || 'Node Operations'}</SectionHeader>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-4 gap-2">
                                 <Button
                                     variant="icon"
                                     onClick={() => {
@@ -342,7 +343,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     label={t('Smooth') || 'Smooth'}
                                     theme={theme}
                                     disabled={useStore.getState().selectedNodeIndex === null}
-                                    title="Convert to Curve"
+                                    title="Smooth Node"
                                 />
                                 <Button
                                     variant="icon"
@@ -358,7 +359,39 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     label={t('Corner') || 'Corner'}
                                     theme={theme}
                                     disabled={useStore.getState().selectedNodeIndex === null}
-                                    title="Convert to Corner"
+                                    title="Corner Node"
+                                />
+                                <Button
+                                    variant="icon"
+                                    onClick={() => {
+                                        const idx = useStore.getState().selectedNodeIndex;
+                                        if (editor && selectedObject && idx !== null) {
+                                            const command = new ConvertSegmentToLineCommand(selectedObject.id, idx);
+                                            editor.history.execute(command);
+                                            editor.render();
+                                        }
+                                    }}
+                                    icon={Minus}
+                                    label={t('toLine') || 'Line'}
+                                    theme={theme}
+                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    title="Segment to Line (L)"
+                                />
+                                <Button
+                                    variant="icon"
+                                    onClick={() => {
+                                        const idx = useStore.getState().selectedNodeIndex;
+                                        if (editor && selectedObject && idx !== null) {
+                                            const command = new ConvertSegmentToCurveCommand(selectedObject.id, idx);
+                                            editor.history.execute(command);
+                                            editor.render();
+                                        }
+                                    }}
+                                    icon={Radius}
+                                    label={t('toCurve') || 'Curve'}
+                                    theme={theme}
+                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    title="Segment to Curve (B)"
                                 />
                                 <Button
                                     variant="icon"
@@ -374,7 +407,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     icon={Trash2}
                                     label={t('Delete Node') || 'Delete'}
                                     theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
-                                    className="text-red-500 border-red-200 dark:border-red-900/30"
+                                    className="text-red-500 border-red-200 dark:border-red-900/30 col-span-4 mt-2"
                                     disabled={useStore.getState().selectedNodeIndex === null}
                                     title="Delete Node"
                                 />

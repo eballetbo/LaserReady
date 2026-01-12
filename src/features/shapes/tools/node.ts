@@ -2,6 +2,7 @@ import { BaseTool } from '../../../core/tools/base';
 import { CanvasController } from '../../editor/controller';
 import { Geometry } from '../../../core/math/geometry';
 import { MoveNodeCommand, ChangeNodeTypeCommand, InsertNodeCommand, DeleteNodeCommand } from '../commands/node';
+import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../commands/segment';
 import { PathNode } from '../models/node';
 
 type DragTargetType = 'ANCHOR' | 'HANDLE_IN' | 'HANDLE_OUT';
@@ -18,6 +19,7 @@ export class NodeEditTool extends BaseTool {
     declare editor: CanvasController;
     lastClickTime: number = 0;
     readonly DOUBLE_CLICK_THRESHOLD = 300; // ms
+    lastMousePos: { x: number; y: number } | null = null;
 
     constructor(editor: CanvasController) {
         super(editor);
@@ -125,6 +127,8 @@ export class NodeEditTool extends BaseTool {
 
     onMouseMove(e: MouseEvent) {
         const { x, y } = this.editor.getMousePos(e);
+        this.lastMousePos = { x, y };
+
 
         // Handling Drag
         if (this.dragState && this.editor.selectedShapes.length === 1) {
@@ -185,7 +189,7 @@ export class NodeEditTool extends BaseTool {
         this.updateCursor(x, y);
     }
 
-    onMouseUp(e: MouseEvent) {
+    onMouseUp() {
         if (this.dragState && this.editor.selectedShapes.length === 1) {
             const shape = this.editor.selectedShapes[0];
             if (!shape.nodes) return;
@@ -213,15 +217,29 @@ export class NodeEditTool extends BaseTool {
     }
 
     onKeyDown(e: KeyboardEvent) {
-        if (!this.editor.selectedShapes.length || this.editor.selectedNodeIndex === null) return;
+        if (!this.editor.selectedShapes.length) return;
 
         const shape = this.editor.selectedShapes[0];
         if (!shape.nodes) return;
 
         const index = this.editor.selectedNodeIndex;
 
+        // Helper to get target node for segment operation
+        const getTargetNodeIndex = (): number | null => {
+            // 1. If a node is selected, that node starts the segment
+            if (index !== null) return index;
+
+            // 2. If no node selected, check for hovered segment
+            if (this.lastMousePos) {
+                const hit = this.getHitSegment(this.lastMousePos.x, this.lastMousePos.y, shape);
+                if (hit) return hit.index;
+            }
+            return null;
+        };
+
         // Delete selected node
         if (e.key === 'Delete' || e.key === 'Backspace' || e.key.toLowerCase() === 'd') {
+            if (index === null) return;
             const command = new DeleteNodeCommand(shape.id, index);
             this.editor.history.execute(command);
             this.editor.selectedNodeIndex = null;
@@ -231,14 +249,40 @@ export class NodeEditTool extends BaseTool {
 
         // Change Node Type
         if (e.key.toLowerCase() === 's') {
+            if (index === null) return;
             const command = new ChangeNodeTypeCommand(shape.id, index, 'smooth');
             this.editor.history.execute(command);
             this.editor.render();
+            return;
         }
         else if (e.key.toLowerCase() === 'c') {
+            if (index === null) return;
             const command = new ChangeNodeTypeCommand(shape.id, index, 'corner');
             this.editor.history.execute(command);
             this.editor.render();
+            return;
+        }
+
+        // Convert Segment to Line (L)
+        if (e.key.toLowerCase() === 'l') {
+            const targetIndex = getTargetNodeIndex();
+            if (targetIndex !== null) {
+                const command = new ConvertSegmentToLineCommand(shape.id, targetIndex);
+                this.editor.history.execute(command);
+                this.editor.render();
+            }
+            return;
+        }
+
+        // Convert Segment to Curve (B)
+        if (e.key.toLowerCase() === 'b') {
+            const targetIndex = getTargetNodeIndex();
+            if (targetIndex !== null) {
+                const command = new ConvertSegmentToCurveCommand(shape.id, targetIndex);
+                this.editor.history.execute(command);
+                this.editor.render();
+            }
+            return;
         }
     }
 
