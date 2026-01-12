@@ -8,7 +8,7 @@ import { Geometry } from '../../../core/math/geometry';
 // Mock Geometry.isPointInBezierPath to avoid canvas API limitations in jsdom
 vi.spyOn(Geometry, 'isPointInBezierPath').mockImplementation((ctx, shape, x, y) => {
     // Simple bounding box hit test for testing
-    const bounds = Geometry.calculateBoundingBox(shape.nodes);
+    const bounds = Geometry.calculateBoundingBox(shape.nodes || []);
     return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
 });
 
@@ -268,7 +268,7 @@ describe('SelectTool - Click Selection with Modifiers', () => {
 
             const selected = mockEditor.selectedShapes;
             expect(selected.length).toBe(2);
-            expect(selected.map(s => s.id).sort()).toEqual(['shape-a', 'shape-b']);
+            expect(selected.map((s: PathShape) => s.id).sort()).toEqual(['shape-a', 'shape-b']);
         });
 
         it('should not duplicate if shape already selected', () => {
@@ -324,7 +324,7 @@ describe('SelectTool - Click Selection with Modifiers', () => {
 
             const selected = mockEditor.selectedShapes;
             expect(selected.length).toBe(2);
-            expect(selected.map(s => s.id).sort()).toEqual(['shape-a', 'shape-b']);
+            expect(selected.map((s: PathShape) => s.id).sort()).toEqual(['shape-a', 'shape-b']);
         });
 
         it('should add shape if not selected (Cmd)', () => {
@@ -375,17 +375,15 @@ describe('SelectTool - Click Selection with Modifiers', () => {
                 ctrlKey: true
             }));
             expect(mockEditor.selectedShapes.length).toBe(2);
-            expect(mockEditor.selectedShapes.map(s => s.id).sort()).toEqual(['shape-a', 'shape-c']);
+            expect(mockEditor.selectedShapes.map((s: PathShape) => s.id).sort()).toEqual(['shape-a', 'shape-c']);
         });
     });
 
     describe('State Triggering (Zustand)', () => {
         it('should trigger state update on selection change', () => {
-            const setState = vi.spyOn(useStore, 'setState');
-
             tool.onMouseDown(new MouseEvent('mousedown', { clientX: 25, clientY: 25 }));
 
-            // Verify setState was called (via setSelectedShapes)
+            // Verify state update (via setSelectedShapes)
             expect(useStore.getState().selectedShapes).toEqual(['shape-a']);
         });
 
@@ -402,5 +400,94 @@ describe('SelectTool - Click Selection with Modifiers', () => {
             // Reference should be different (new array)
             expect(newSelection).not.toBe(initialSelection);
         });
+    });
+});
+
+describe('SelectTool - Multi-Select Move', () => {
+    let mockEditor: any;
+    let tool: SelectTool;
+    let shape1: PathShape;
+    let shape2: PathShape;
+
+    beforeEach(() => {
+        // Reset store
+        useStore.setState({
+            shapes: [],
+            selectedShapes: [],
+            tool: 'select'
+        });
+
+        // Create two shapes
+        shape1 = new PathShape([
+            new PathNode(0, 0),
+            new PathNode(100, 0),
+            new PathNode(100, 100),
+            new PathNode(0, 100)
+        ], true);
+        shape1.id = 's1';
+
+        shape2 = new PathShape([
+            new PathNode(200, 0),
+            new PathNode(300, 0),
+            new PathNode(300, 100),
+            new PathNode(200, 100)
+        ], true);
+        shape2.id = 's2';
+
+        useStore.setState({
+            shapes: [shape1, shape2]
+        });
+
+        mockEditor = {
+            canvas: document.createElement('canvas'),
+            ctx: document.createElement('canvas').getContext('2d'),
+            get shapes() { return useStore.getState().shapes; },
+            get selectedShapes() {
+                const { shapes, selectedShapes } = useStore.getState();
+                return shapes.filter(s => selectedShapes.includes(s.id));
+            },
+            set selectedShapes(value: any[]) {
+                useStore.getState().setSelectedShapes(value.map(s => s.id));
+            },
+            tool: 'select',
+            zoom: 1,
+            pan: { x: 0, y: 0 },
+            config: { handleRadius: 6, anchorSize: 8 },
+            getMousePos: vi.fn((e: MouseEvent) => ({ x: e.clientX, y: e.clientY })),
+            render: vi.fn(),
+            history: { execute: vi.fn() }
+        };
+
+        tool = new SelectTool(mockEditor);
+
+        // Mock hitTestShape
+        (tool as any).hitTestShape = (shape: any, x: number, y: number) => {
+            if (shape.id === 's1' && x < 100) return true;
+            return false;
+        };
+    });
+
+    it('should maintain multi-selection when clicking on an already selected shape', () => {
+        // 1. Select both shapes
+        mockEditor.selectedShapes = [shape1, shape2];
+
+        // 2. Click on shape1 (x=10, y=10)
+        // Without the fix, this would deselect shape2
+        tool.onMouseDown({ clientX: 10, clientY: 10, ctrlKey: false, shiftKey: false, metaKey: false } as MouseEvent);
+
+        // EXPECTATION: Both shapes should still be selected
+        expect(mockEditor.selectedShapes.length).toBe(2);
+        expect(mockEditor.selectedShapes.map((s: any) => s.id)).toContain('s1');
+        expect(mockEditor.selectedShapes.map((s: any) => s.id)).toContain('s2');
+
+        // 3. Simulate Drag
+        tool.onMouseMove({ clientX: 60, clientY: 60 } as MouseEvent);
+
+        // 4. Mouse Up
+        tool.onMouseUp({ clientX: 60, clientY: 60 } as MouseEvent);
+
+        // Verify move
+        // Since we are mocking everything, we mainly care that selection was preserved
+        expect(tool.isDraggingShape).toBe(false);
     });
 });

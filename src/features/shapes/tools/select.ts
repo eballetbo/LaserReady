@@ -93,8 +93,14 @@ export class SelectTool extends BaseTool {
                     this.editor.selectedShapes = [...currentSelection, clickedShape];
                 }
             } else {
-                // Single Click: Deselect all, select clicked
-                this.editor.selectedShapes = [clickedShape];
+                // Single Click:
+                const isAlreadySelected = this.editor.selectedShapes.some(s => s.id === clickedShape!.id);
+                if (!isAlreadySelected) {
+                    // Only deselect others if we clicked something NEW
+                    this.editor.selectedShapes = [clickedShape];
+                }
+                // If already selected, do nothing to selection (keep multi-select)
+                // The drag operation will start below
             }
             this.isDraggingShape = true;
             this.dragStart = { x, y };
