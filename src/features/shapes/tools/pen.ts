@@ -21,6 +21,9 @@ export class PenTool extends BaseTool {
     }
 
     onMouseDown(e: MouseEvent) {
+        // Only allow left click (button 0) to add nodes
+        if (e.button !== 0) return;
+
         let { x, y } = this.editor.getMousePos(e);
 
         // SHIFT CONSTRAINING: Apply to node placement
