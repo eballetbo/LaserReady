@@ -56,26 +56,7 @@ export class NodeEditTool extends BaseTool {
             return;
         }
 
-        // 1. Hit Test Handles (High Priority)
-        if (this.editor.selectedNodeIndex !== null) {
-            const index = this.editor.selectedNodeIndex;
-            if (index >= 0 && index < shape.nodes.length) {
-                const node = shape.nodes[index];
-                const handleParam = this.getHitHandle(x, y, node);
-                if (handleParam) {
-                    this.dragState = {
-                        type: handleParam,
-                        nodeIndex: index,
-                        initialNode: node.clone(),
-                        initialOppositeHandle: handleParam === 'HANDLE_IN' ? { ...node.cpOut } : { ...node.cpIn }
-                    };
-                    this.editor.render();
-                    return;
-                }
-            }
-        }
-
-        // 2. Hit Test Anchors
+        // 1. Hit Test Anchors (High Priority - ensures moving node is preferred over dragging collapsed handles)
         const anchorIndex = this.getHitAnchor(x, y, shape);
         if (anchorIndex !== -1) {
             // Handle Double Click on Anchor -> Delete Node
@@ -104,6 +85,25 @@ export class NodeEditTool extends BaseTool {
             };
             this.editor.render();
             return;
+        }
+
+        // 2. Hit Test Handles
+        if (this.editor.selectedNodeIndex !== null) {
+            const index = this.editor.selectedNodeIndex;
+            if (index >= 0 && index < shape.nodes.length) {
+                const node = shape.nodes[index];
+                const handleParam = this.getHitHandle(x, y, node);
+                if (handleParam) {
+                    this.dragState = {
+                        type: handleParam,
+                        nodeIndex: index,
+                        initialNode: node.clone(),
+                        initialOppositeHandle: handleParam === 'HANDLE_IN' ? { ...node.cpOut } : { ...node.cpIn }
+                    };
+                    this.editor.render();
+                    return;
+                }
+            }
         }
 
         // 3. Double Click on Segment -> Insert Node
@@ -267,14 +267,14 @@ export class NodeEditTool extends BaseTool {
     }
 
     private getHitHandle(x: number, y: number, node: PathNode): DragTargetType | null {
-        const r = this.editor.config.handleRadius + 2; // Tolerance
+        const r = (this.editor.config.handleRadius + 2) / this.editor.zoom; // Tolerance scaled by zoom
         if (Geometry.getDistance({ x, y }, node.cpIn) <= r * r) return 'HANDLE_IN'; // optimize distance check
         if (Geometry.getDistance({ x, y }, node.cpOut) <= r * r) return 'HANDLE_OUT';
         return null;
     }
 
     private getHitAnchor(x: number, y: number, shape: any): number {
-        const r = this.editor.config.anchorSize / 2 + 3; // Tolerance
+        const r = (this.editor.config.anchorSize / 2 + 3) / this.editor.zoom; // Tolerance scaled by zoom
         for (let i = 0; i < shape.nodes.length; i++) {
             const node = shape.nodes[i];
             // Geometry.getDistance returns squared distance
