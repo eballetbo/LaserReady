@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { useLanguage } from '../../contexts/language';
-import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink, Spline, Square, Radius } from 'lucide-react';
+import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink, Spline, Square, Radius, Scissors } from 'lucide-react';
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
+import { BreakPathCommand } from '../shapes/commands/break-path';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 
@@ -411,6 +412,22 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     disabled={useStore.getState().selectedNodeIndex === null}
                                     title="Delete Node"
                                 />
+                                <Button
+                                    variant="icon"
+                                    onClick={() => {
+                                        const idx = useStore.getState().selectedNodeIndex;
+                                        if (editor && selectedObject && idx !== null) {
+                                            const command = new BreakPathCommand(selectedObject.id, idx);
+                                            editor.history.execute(command);
+                                            editor.render();
+                                        }
+                                    }}
+                                    icon={Scissors}
+                                    label={t('Break') || 'Break'}
+                                    theme={theme}
+                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    title="Break at Node"
+                                />
                             </div>
                         </div>
                     )}
@@ -438,6 +455,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('Ungroup') || 'Ungroup'} theme={theme} />
                                     </div>
                                 )}
+
+
 
                                 <div className="pt-2">
                                     <Button
