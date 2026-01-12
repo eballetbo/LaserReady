@@ -5,15 +5,15 @@ import { Geometry } from '../../../core/math/geometry';
 
 export class MoveNodeCommand implements Command {
     private shapeId: string;
-    private nodeIndex: number;
-    private oldNode: PathNode;
-    private newNode: PathNode;
+    private changes: { index: number; oldNode: PathNode; newNode: PathNode }[];
 
-    constructor(shapeId: string, nodeIndex: number, oldNode: PathNode, newNode: PathNode) {
+    constructor(shapeId: string, changes: { index: number; oldNode: PathNode; newNode: PathNode }[] | Map<number, { oldNode: PathNode, newNode: PathNode }>) {
         this.shapeId = shapeId;
-        this.nodeIndex = nodeIndex;
-        this.oldNode = oldNode;
-        this.newNode = newNode;
+        if (changes instanceof Map) {
+            this.changes = Array.from(changes.entries()).map(([index, { oldNode, newNode }]) => ({ index, oldNode, newNode }));
+        } else {
+            this.changes = changes;
+        }
     }
 
     execute(): void {
@@ -30,14 +30,19 @@ export class MoveNodeCommand implements Command {
 
         if (!newShape.nodes) return;
 
-        // Update the node in the clone
-        const targetNode = newShape.nodes[this.nodeIndex];
-        targetNode.x = this.newNode.x;
-        targetNode.y = this.newNode.y;
-        targetNode.cpIn.x = this.newNode.cpIn.x;
-        targetNode.cpIn.y = this.newNode.cpIn.y;
-        targetNode.cpOut.x = this.newNode.cpOut.x;
-        targetNode.cpOut.y = this.newNode.cpOut.y;
+        const nodes = newShape.nodes;
+        // Update the nodes in the clone
+        this.changes.forEach(({ index, newNode }) => {
+            if (index >= 0 && index < nodes.length) {
+                const targetNode = nodes[index];
+                targetNode.x = newNode.x;
+                targetNode.y = newNode.y;
+                targetNode.cpIn.x = newNode.cpIn.x;
+                targetNode.cpIn.y = newNode.cpIn.y;
+                targetNode.cpOut.x = newNode.cpOut.x;
+                targetNode.cpOut.y = newNode.cpOut.y;
+            }
+        });
 
         const newShapes = [...shapes];
         newShapes[shapeIndex] = newShape;
@@ -57,13 +62,18 @@ export class MoveNodeCommand implements Command {
 
         if (!newShape.nodes) return;
 
-        const targetNode = newShape.nodes[this.nodeIndex];
-        targetNode.x = this.oldNode.x;
-        targetNode.y = this.oldNode.y;
-        targetNode.cpIn.x = this.oldNode.cpIn.x;
-        targetNode.cpIn.y = this.oldNode.cpIn.y;
-        targetNode.cpOut.x = this.oldNode.cpOut.x;
-        targetNode.cpOut.y = this.oldNode.cpOut.y;
+        const nodes = newShape.nodes;
+        this.changes.forEach(({ index, oldNode }) => {
+            if (index >= 0 && index < nodes.length) {
+                const targetNode = nodes[index];
+                targetNode.x = oldNode.x;
+                targetNode.y = oldNode.y;
+                targetNode.cpIn.x = oldNode.cpIn.x;
+                targetNode.cpIn.y = oldNode.cpIn.y;
+                targetNode.cpOut.x = oldNode.cpOut.x;
+                targetNode.cpOut.y = oldNode.cpOut.y;
+            }
+        });
 
         const newShapes = [...shapes];
         newShapes[shapeIndex] = newShape;
@@ -297,14 +307,14 @@ export class ChangeNodeTypeCommand implements Command {
 export class DeleteNodeCommand implements Command {
     id: string;
     shapeId: string;
-    nodeIndex: number;
+    indices: number[];
     oldNodes: PathNode[];
     newNodes: PathNode[];
 
-    constructor(shapeId: string, nodeIndex: number) {
+    constructor(shapeId: string, indices: number | number[]) {
         this.id = crypto.randomUUID();
         this.shapeId = shapeId;
-        this.nodeIndex = nodeIndex;
+        this.indices = Array.isArray(indices) ? indices : [indices];
 
         const shape = useStore.getState().shapes.find((s: any) => s.id === shapeId);
         if (!shape || !shape.nodes) {
@@ -312,7 +322,10 @@ export class DeleteNodeCommand implements Command {
         }
 
         this.oldNodes = shape.nodes.map((n: any) => n.clone());
-        this.newNodes = shape.nodes.filter((_: any, i: number) => i !== nodeIndex);
+        // Remove nodes at specified indices
+        // Important: When deleting multiple, indices shift? 
+        // No, we filter based on inclusion in indices list.
+        this.newNodes = shape.nodes.filter((_: any, i: number) => !this.indices.includes(i));
     }
 
     execute() {
@@ -325,8 +338,8 @@ export class DeleteNodeCommand implements Command {
         const newShape = newShapes[shapeIndex].clone();
         newShape.id = newShapes[shapeIndex].id;
 
-        if (this.newNodes.length < 2) {
-            // Option: delete shape if < 2 nodes? Or just keep it.
+        if (this.newNodes.length < 2 && !newShape.closed) { // Assuming path needs at least 2 nodes
+            // Handle too few nodes case if needed
         }
 
         newShape.nodes = this.newNodes;

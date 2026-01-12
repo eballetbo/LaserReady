@@ -9,8 +9,8 @@ type DragTargetType = 'ANCHOR' | 'HANDLE_IN' | 'HANDLE_OUT';
 
 interface DragState {
     type: DragTargetType;
-    nodeIndex: number;
-    initialNode: PathNode;
+    nodeIndex: number; // The primary node being dragged
+    initialNodes: Map<number, PathNode>; // Initial state of all selected nodes (or just the dragged one)
     initialOppositeHandle?: { x: number; y: number }; // For symmetric/smooth editing
 }
 
@@ -20,6 +20,7 @@ export class NodeEditTool extends BaseTool {
     lastClickTime: number = 0;
     readonly DOUBLE_CLICK_THRESHOLD = 300; // ms
     lastMousePos: { x: number; y: number } | null = null;
+    rubberBandStart: { x: number; y: number } | null = null;
 
     constructor(editor: CanvasController) {
         super(editor);
@@ -33,13 +34,15 @@ export class NodeEditTool extends BaseTool {
 
     onDeactivate() {
         this.editor.canvas.style.cursor = 'default';
-        this.editor.selectedNodeIndex = null;
+        this.editor.selectedNodeIndices = [];
+        this.editor.selectionBox = null;
         this.editor.render();
     }
 
     onMouseDown(e: MouseEvent) {
-        const { x, y } = this.editor.getMousePos(e);
+        const { x, y } = this.editor.getMousePos(e); // World coordinates
         this.dragState = null;
+        this.rubberBandStart = null;
         const now = Date.now();
         const isDoubleClick = (now - this.lastClickTime) < this.DOUBLE_CLICK_THRESHOLD;
         this.lastClickTime = now;
@@ -52,60 +55,96 @@ export class NodeEditTool extends BaseTool {
         }
 
         const shape = selection[0];
-        // Ensure it's a path shape or compatible
         if (!shape.nodes) {
             this.handleSelectionClick(x, y);
             return;
         }
 
-        // 1. Hit Test Anchors (High Priority - ensures moving node is preferred over dragging collapsed handles)
+        const isShift = e.shiftKey;
+
+        // 1. Hit Test Anchors (High Priority)
         const anchorIndex = this.getHitAnchor(x, y, shape);
         if (anchorIndex !== -1) {
-            // Handle Double Click on Anchor -> Delete Node
+            // Double Click Anchor -> Delete Node
             if (isDoubleClick) {
                 const command = new DeleteNodeCommand(shape.id, anchorIndex);
-                // We use editor logic to execute? The base tool doesn't have execute helper usually.
-                // But editor.history has execute.
                 this.editor.history.execute(command);
-                this.editor.selectedNodeIndex = null; // Deselect after delete
+                // Update selection if needed (indices shift, but simpler to clear or revalidate)
+                // For simplicity, deselect or select nearest
+                this.editor.selectedNodeIndices = [];
                 this.editor.render();
                 return;
             }
 
-            this.editor.selectedNodeIndex = anchorIndex;
-            const node = shape.nodes[anchorIndex];
+            // Selection Logic
+            if (isShift) {
+                // Toggle selection
+                const currentIndices = new Set(this.editor.selectedNodeIndices);
+                if (currentIndices.has(anchorIndex)) {
+                    currentIndices.delete(anchorIndex);
+                } else {
+                    currentIndices.add(anchorIndex);
+                }
+                this.editor.selectedNodeIndices = Array.from(currentIndices);
+            } else {
+                // If clicked node is not already selected, select only it
+                // If it IS selected, keep selection (to allow dragging multiple nodes)
+                if (!this.editor.selectedNodeIndices.includes(anchorIndex)) {
+                    this.editor.selectedNodeIndices = [anchorIndex];
+                }
+            }
 
-            // Check for Alt key to reset handles or smooth
-            if (e.altKey) {
-                // Future: Smooth logic
+            // Initialize Drag State for ALL selected nodes
+            const initialNodes = new Map<number, PathNode>();
+            if (shape.nodes) {
+                const nodes = shape.nodes;
+                this.editor.selectedNodeIndices.forEach(idx => {
+                    if (nodes[idx]) {
+                        initialNodes.set(idx, nodes[idx].clone());
+                    }
+                });
             }
 
             this.dragState = {
                 type: 'ANCHOR',
-                nodeIndex: anchorIndex,
-                initialNode: node.clone()
+                nodeIndex: anchorIndex, // The leader node
+                initialNodes: initialNodes
             };
             this.editor.render();
             return;
         }
 
         // 2. Hit Test Handles
-        if (this.editor.selectedNodeIndex !== null) {
-            const index = this.editor.selectedNodeIndex;
+        // Check handles for ALL selected nodes or just the primary?
+        // Usually we check handles for any node that has handles visible.
+        // Handles are visible for selected nodes.
+        let hitHandleFound = false;
+
+        // Iterate over selected nodes to find a hit handle
+        for (const index of this.editor.selectedNodeIndices) {
             if (index >= 0 && index < shape.nodes.length) {
                 const node = shape.nodes[index];
                 const handleParam = this.getHitHandle(x, y, node);
                 if (handleParam) {
+                    // Start dragging this handle
+                    // Note: Handle drag usually affects only ONE node's handle
+                    const initialNodes = new Map<number, PathNode>();
+                    initialNodes.set(index, node.clone());
+
                     this.dragState = {
                         type: handleParam,
                         nodeIndex: index,
-                        initialNode: node.clone(),
+                        initialNodes: initialNodes,
                         initialOppositeHandle: handleParam === 'HANDLE_IN' ? { ...node.cpOut } : { ...node.cpIn }
                     };
-                    this.editor.render();
-                    return;
+                    hitHandleFound = true;
+                    break;
                 }
             }
+        }
+        if (hitHandleFound) {
+            this.editor.render();
+            return;
         }
 
         // 3. Double Click on Segment -> Insert Node
@@ -115,34 +154,63 @@ export class NodeEditTool extends BaseTool {
                 const command = new InsertNodeCommand(shape.id, hit.index, hit.t);
                 this.editor.history.execute(command);
                 // Select the new node (it is inserted at index + 1)
-                this.editor.selectedNodeIndex = hit.index + 1;
+                this.editor.selectedNodeIndices = [hit.index + 1];
                 this.editor.render();
                 return;
             }
         }
 
-        // 4. Clicked empty space or valid shape body
-        this.handleSelectionClick(x, y);
+        // 4. Multi-Select (Rubberband) or Deselect
+        if (!isShift) {
+            // If not clicking anything, clear selection (unless starting rubberband?)
+            // Inkscape: Click on empty space clears selection. Drag starts rubberband.
+            this.editor.selectedNodeIndices = [];
+        }
+
+        // Start rubberband
+        this.rubberBandStart = { x, y };
+        this.editor.render();
     }
 
     onMouseMove(e: MouseEvent) {
         const { x, y } = this.editor.getMousePos(e);
         this.lastMousePos = { x, y };
 
-
         // Handling Drag
         if (this.dragState && this.editor.selectedShapes.length === 1) {
             const shape = this.editor.selectedShapes[0];
             if (!shape.nodes) return;
-            const node = shape.nodes[this.dragState.nodeIndex];
-            const type = node.type || 'corner';
+
+            const leaderIndex = this.dragState.nodeIndex;
+            const leaderInitial = this.dragState.initialNodes.get(leaderIndex);
+
+            if (!leaderInitial) return;
 
             if (this.dragState.type === 'ANCHOR') {
-                const dx = x - node.x;
-                const dy = y - node.y;
-                node.translate(dx, dy);
+                // Move all selected nodes by delta
+                const dx = x - leaderInitial.x;
+                const dy = y - leaderInitial.y;
+
+                this.dragState.initialNodes.forEach((initialNode, index) => {
+                    const node = shape.nodes[index];
+                    if (node) {
+                        node.translate(x - node.x + (initialNode.x - node.x) /* correction? No. */, 0);
+                        // Simpler: node.x = initial.x + dx
+                        node.x = initialNode.x + dx;
+                        node.y = initialNode.y + dy;
+                        node.cpIn.x = initialNode.cpIn.x + dx;
+                        node.cpIn.y = initialNode.cpIn.y + dy;
+                        node.cpOut.x = initialNode.cpOut.x + dx;
+                        node.cpOut.y = initialNode.cpOut.y + dy;
+                    }
+                });
+
             } else {
-                // Handle Movement
+                // Handle Movement (Single Node Control Point)
+                const node = shape.nodes[leaderIndex];
+                const type = node.type || 'corner';
+                const initialNode = leaderInitial;
+
                 const isIn = this.dragState.type === 'HANDLE_IN';
                 const targetHandle = isIn ? node.cpIn : node.cpOut;
                 const oppositeHandle = isIn ? node.cpOut : node.cpIn;
@@ -156,30 +224,51 @@ export class NodeEditTool extends BaseTool {
                     // Vector from Node to New Handle Position
                     const vx = x - node.x;
                     const vy = y - node.y;
-
-                    // Normalize angle
                     const angle = Math.atan2(vy, vx);
-
-                    // Opposite handle should be at angle + PI
                     const oppositeAngle = angle + Math.PI;
 
-                    // Calculate length for opposite handle
                     let len = 0;
                     if (type === 'symmetric') {
-                        // Same length as dragged handle
                         len = Math.sqrt(vx * vx + vy * vy);
                     } else { // smooth
                         // Keep existing length of opposite handle
-                        const odx = oppositeHandle.x - node.x;
-                        const ody = oppositeHandle.y - node.y;
+                        const initialOpposite = this.dragState.initialOppositeHandle || oppositeHandle;
+                        const odx = initialOpposite.x - initialNode.x; // Use initial vector length
+                        const ody = initialOpposite.y - initialNode.y;
                         len = Math.sqrt(odx * odx + ody * ody);
                     }
 
-                    // Set new position
                     oppositeHandle.x = node.x + Math.cos(oppositeAngle) * len;
                     oppositeHandle.y = node.y + Math.sin(oppositeAngle) * len;
                 }
             }
+
+            this.editor.render();
+            return;
+        }
+
+        // Handling RubberBand
+        if (this.rubberBandStart) {
+            const minX = Math.min(this.rubberBandStart.x, x);
+            const minY = Math.min(this.rubberBandStart.y, y);
+            const width = Math.abs(x - this.rubberBandStart.x);
+            const height = Math.abs(y - this.rubberBandStart.y);
+
+            this.editor.selectionBox = {
+                x: minX,
+                y: minY,
+                width,
+                height,
+                style: { stroke: '#0066ff', fill: 'rgba(0, 102, 255, 0.1)' }
+            };
+
+            // Select nodes inside box
+            // Use temporary selection? 
+            // Inkscape selects on release, but showing live is nicer.
+            // Let's select on release to avoid constant state updates/flickering if expensive.
+            // But live feedback is better.
+            // Let's do live feedback if not too many nodes.
+            this.selectNodesInBox(minX, minY, width, height, e.shiftKey);
 
             this.editor.render();
             return;
@@ -192,28 +281,44 @@ export class NodeEditTool extends BaseTool {
     onMouseUp() {
         if (this.dragState && this.editor.selectedShapes.length === 1) {
             const shape = this.editor.selectedShapes[0];
-            if (!shape.nodes) return;
-            const node = shape.nodes[this.dragState.nodeIndex];
-            const initial = this.dragState.initialNode;
+            if (shape.nodes) {
+                // Check if changed
+                let anyChanged = false;
+                const changes: { index: number, oldNode: PathNode, newNode: PathNode }[] = [];
 
-            // Check if changed
-            const hasChanged =
-                node.x !== initial.x || node.y !== initial.y ||
-                node.cpIn.x !== initial.cpIn.x || node.cpIn.y !== initial.cpIn.y ||
-                node.cpOut.x !== initial.cpOut.x || node.cpOut.y !== initial.cpOut.y;
+                const nodes = shape.nodes;
+                this.dragState.initialNodes.forEach((initialNode, index) => {
+                    const node = nodes[index];
+                    if (node) {
+                        const hasChanged =
+                            node.x !== initialNode.x || node.y !== initialNode.y ||
+                            node.cpIn.x !== initialNode.cpIn.x || node.cpIn.y !== initialNode.cpIn.y ||
+                            node.cpOut.x !== initialNode.cpOut.x || node.cpOut.y !== initialNode.cpOut.y;
 
-            if (hasChanged) {
-                // Execute command
-                const command = new MoveNodeCommand(
-                    shape.id,
-                    this.dragState.nodeIndex,
-                    initial,
-                    node.clone()
-                );
-                this.editor.history.execute(command);
+                        if (hasChanged) {
+                            anyChanged = true;
+                            changes.push({
+                                index,
+                                oldNode: initialNode,
+                                newNode: node.clone()
+                            });
+                        }
+                    }
+                });
+
+                if (anyChanged) {
+                    const command = new MoveNodeCommand(shape.id, changes);
+                    this.editor.history.execute(command);
+                }
             }
         }
+
         this.dragState = null;
+        this.rubberBandStart = null;
+        if (this.editor.selectionBox) {
+            this.editor.selectionBox = null;
+            this.editor.render();
+        }
     }
 
     onKeyDown(e: KeyboardEvent) {
@@ -222,14 +327,14 @@ export class NodeEditTool extends BaseTool {
         const shape = this.editor.selectedShapes[0];
         if (!shape.nodes) return;
 
-        const index = this.editor.selectedNodeIndex;
+        // Use selectedNodeIndices properly
+        const indices = this.editor.selectedNodeIndices;
 
         // Helper to get target node for segment operation
+        // If multiple nodes selected, ambiguous. Use first?
+        // Or check hovered segment.
         const getTargetNodeIndex = (): number | null => {
-            // 1. If a node is selected, that node starts the segment
-            if (index !== null) return index;
-
-            // 2. If no node selected, check for hovered segment
+            if (indices.length === 1) return indices[0];
             if (this.lastMousePos) {
                 const hit = this.getHitSegment(this.lastMousePos.x, this.lastMousePos.y, shape);
                 if (hit) return hit.index;
@@ -237,28 +342,39 @@ export class NodeEditTool extends BaseTool {
             return null;
         };
 
-        // Delete selected node
+        // Delete selected nodes
         if (e.key === 'Delete' || e.key === 'Backspace' || e.key.toLowerCase() === 'd') {
-            if (index === null) return;
-            const command = new DeleteNodeCommand(shape.id, index);
+            if (indices.length === 0) return;
+            const command = new DeleteNodeCommand(shape.id, indices);
             this.editor.history.execute(command);
-            this.editor.selectedNodeIndex = null;
+            this.editor.selectedNodeIndices = [];
             this.editor.render();
             return;
         }
 
-        // Change Node Type
+        // Change Node Type (affects all selected)
         if (e.key.toLowerCase() === 's') {
-            if (index === null) return;
-            const command = new ChangeNodeTypeCommand(shape.id, index, 'smooth');
-            this.editor.history.execute(command);
+            if (indices.length === 0) return;
+            // Batch commands or update ChangeNodeTypeCommand to handle multiple?
+            // ChangeNodeTypeCommand currently handles one. Let's execute one for each.
+            // But this creates multiple history steps. Ideally ChangeNodeTypeCommand should handle multiple.
+            // For now, I'll loop. Providing a composite command is better but out of scope?
+            // "onMouseDrag... move ALL selected nodes" is the only one explicitly requiring simultaneous update.
+            // But type change logically should apply to all.
+            // I'll stick to single for now or minimal changes. 
+            // Better: loop and execute but ideally wrapped in transaction if available.
+            // Since history doesn't have transactions, it will be multiple undos. Acceptable for Phase 1.
+            indices.forEach(idx => {
+                this.editor.history.execute(new ChangeNodeTypeCommand(shape.id, idx, 'smooth'));
+            });
             this.editor.render();
             return;
         }
         else if (e.key.toLowerCase() === 'c') {
-            if (index === null) return;
-            const command = new ChangeNodeTypeCommand(shape.id, index, 'corner');
-            this.editor.history.execute(command);
+            if (indices.length === 0) return;
+            indices.forEach(idx => {
+                this.editor.history.execute(new ChangeNodeTypeCommand(shape.id, idx, 'corner'));
+            });
             this.editor.render();
             return;
         }
@@ -288,15 +404,35 @@ export class NodeEditTool extends BaseTool {
 
     // --- Helpers ---
 
+    private selectNodesInBox(x: number, y: number, w: number, h: number, append: boolean) {
+        if (this.editor.selectedShapes.length !== 1) return;
+        const shape = this.editor.selectedShapes[0];
+        if (!shape.nodes) return;
+
+        const indices: number[] = append ? [...this.editor.selectedNodeIndices] : [];
+        const currentSet = new Set(indices);
+
+        shape.nodes.forEach((node: PathNode, index: number) => {
+            if (node.x >= x && node.x <= x + w && node.y >= y && node.y <= y + h) {
+                if (!currentSet.has(index)) {
+                    currentSet.add(index);
+                }
+            } else if (!append) {
+                // If not appending and outside, ensure removed (already done by starting empty)
+            }
+        });
+
+        this.editor.selectedNodeIndices = Array.from(currentSet);
+    }
+
     private handleSelectionClick(x: number, y: number) {
-        // Try to select a shape under cursor
         const clickedShape = this.findShapeAt(x, y);
         if (clickedShape) {
             this.editor.selectedShapes = [clickedShape];
-            this.editor.selectedNodeIndex = null;
+            this.editor.selectedNodeIndices = [];
         } else {
             this.editor.selectedShapes = [];
-            this.editor.selectedNodeIndex = null;
+            this.editor.selectedNodeIndices = [];
         }
         this.editor.render();
     }
@@ -311,17 +447,16 @@ export class NodeEditTool extends BaseTool {
     }
 
     private getHitHandle(x: number, y: number, node: PathNode): DragTargetType | null {
-        const r = (this.editor.config.handleRadius + 2) / this.editor.zoom; // Tolerance scaled by zoom
-        if (Geometry.getDistance({ x, y }, node.cpIn) <= r * r) return 'HANDLE_IN'; // optimize distance check
+        const r = (this.editor.config.handleRadius + 2) / this.editor.zoom;
+        if (Geometry.getDistance({ x, y }, node.cpIn) <= r * r) return 'HANDLE_IN';
         if (Geometry.getDistance({ x, y }, node.cpOut) <= r * r) return 'HANDLE_OUT';
         return null;
     }
 
     private getHitAnchor(x: number, y: number, shape: any): number {
-        const r = (this.editor.config.anchorSize / 2 + 3) / this.editor.zoom; // Tolerance scaled by zoom
+        const r = (this.editor.config.anchorSize / 2 + 3) / this.editor.zoom;
         for (let i = 0; i < shape.nodes.length; i++) {
             const node = shape.nodes[i];
-            // Geometry.getDistance returns squared distance
             if (Geometry.getDistance({ x, y }, { x: node.x, y: node.y }) <= r * r) {
                 return i;
             }
@@ -330,27 +465,22 @@ export class NodeEditTool extends BaseTool {
     }
 
     private getHitSegment(x: number, y: number, shape: any): { index: number, t: number } | null {
-        // Approximate closest point on stroke
-        const threshold = 10; // pixels
+        const threshold = 10;
         const toleranceSq = threshold * threshold;
 
         let bestDistSq = Infinity;
         let bestHit = null;
 
         for (let i = 0; i < shape.nodes.length; i++) {
-            // Segment i connects i to i+1
             if (i === shape.nodes.length - 1 && !shape.closed) break;
 
             const nextIndex = (i + 1) % shape.nodes.length;
             const p0 = shape.nodes[i];
             const p3 = shape.nodes[nextIndex];
 
-            // Sample 50 points for better precision
             const STEPS = 50;
             for (let s = 1; s < STEPS; s++) {
                 const t = s / STEPS;
-                // Calculate bezier point manually
-                // B(t) = (1-t)^3 P0 + 3(1-t)^2 t P1 + 3(1-t) t^2 P2 + t^3 P3
                 const mt = 1 - t;
                 const mt2 = mt * mt;
                 const mt3 = mt2 * mt;
@@ -382,18 +512,15 @@ export class NodeEditTool extends BaseTool {
         const shape = this.editor.selectedShapes[0];
         if (!shape.nodes) return;
 
-        // Check Handles
-        if (this.editor.selectedNodeIndex !== null) {
-            const index = this.editor.selectedNodeIndex;
-            if (index < shape.nodes.length) {
-                if (this.getHitHandle(x, y, shape.nodes[index])) {
-                    this.editor.canvas.style.cursor = 'grab';
-                    return;
-                }
+        // Check Handles (all selected)
+        for (const index of this.editor.selectedNodeIndices) {
+            if (shape.nodes[index] && this.getHitHandle(x, y, shape.nodes[index])) {
+                this.editor.canvas.style.cursor = 'grab';
+                return;
             }
         }
 
-        // Check Anchors
+        // Check Anchors (any)
         if (this.getHitAnchor(x, y, shape) !== -1) {
             this.editor.canvas.style.cursor = 'crosshair';
             return;

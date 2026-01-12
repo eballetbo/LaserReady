@@ -161,12 +161,12 @@ export class CanvasController {
         return useStore.getState().activeLayerId;
     }
 
-    get selectedNodeIndex() {
-        return useStore.getState().selectedNodeIndex;
+    get selectedNodeIndices() {
+        return useStore.getState().selectedNodeIndices;
     }
 
-    set selectedNodeIndex(value: number | null) {
-        useStore.getState().setSelectedNodeIndex(value);
+    set selectedNodeIndices(value: number[]) {
+        useStore.getState().setSelectedNodeIndices(value);
     }
 
     initEvents() {
@@ -279,7 +279,7 @@ export class CanvasController {
 
     render() {
         // Read state from Store
-        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndex } = useStore.getState();
+        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndices } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
         this.renderer.drawScene(
@@ -293,7 +293,7 @@ export class CanvasController {
             this.selectionBox, // Pass selection box from SelectTool
             zoom,
             pan, // Use pan directly from store state (destructured above)
-            selectedNodeIndex,
+            selectedNodeIndices,
             this.previewOrigin,
             useStore.getState().material // Pass material bounds to renderer
         );

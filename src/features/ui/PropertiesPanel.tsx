@@ -333,75 +333,85 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <Button
                                     variant="icon"
                                     onClick={() => {
-                                        const idx = useStore.getState().selectedNodeIndex;
-                                        if (editor && selectedObject && idx !== null) {
-                                            const command = new ChangeNodeTypeCommand(selectedObject.id, idx, 'smooth');
-                                            editor.history.execute(command);
+                                        const indices = useStore.getState().selectedNodeIndices;
+                                        if (editor && selectedObject && indices.length > 0) {
+                                            indices.forEach(idx => {
+                                                const command = new ChangeNodeTypeCommand(selectedObject.id, idx, 'smooth');
+                                                editor.history.execute(command);
+                                            });
                                             editor.render();
                                         }
                                     }}
                                     icon={Spline}
                                     label={t('Smooth') || 'Smooth'}
                                     theme={theme}
-                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Smooth Node"
                                 />
                                 <Button
                                     variant="icon"
                                     onClick={() => {
-                                        const idx = useStore.getState().selectedNodeIndex;
-                                        if (editor && selectedObject && idx !== null) {
-                                            const command = new ChangeNodeTypeCommand(selectedObject.id, idx, 'corner');
-                                            editor.history.execute(command);
+                                        const indices = useStore.getState().selectedNodeIndices;
+                                        if (editor && selectedObject && indices.length > 0) {
+                                            indices.forEach(idx => {
+                                                const command = new ChangeNodeTypeCommand(selectedObject.id, idx, 'corner');
+                                                editor.history.execute(command);
+                                            });
                                             editor.render();
                                         }
                                     }}
                                     icon={Square}
                                     label={t('Corner') || 'Corner'}
                                     theme={theme}
-                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Corner Node"
                                 />
                                 <Button
                                     variant="icon"
                                     onClick={() => {
-                                        const idx = useStore.getState().selectedNodeIndex;
-                                        if (editor && selectedObject && idx !== null) {
-                                            const command = new ConvertSegmentToLineCommand(selectedObject.id, idx);
-                                            editor.history.execute(command);
+                                        const indices = useStore.getState().selectedNodeIndices;
+                                        if (editor && selectedObject && indices.length > 0) {
+                                            // Ambiguous if multiple: use first? or loop?
+                                            // Segment follows node.
+                                            indices.forEach(idx => {
+                                                const command = new ConvertSegmentToLineCommand(selectedObject.id, idx);
+                                                editor.history.execute(command);
+                                            });
                                             editor.render();
                                         }
                                     }}
                                     icon={Minus}
                                     label={t('toLine') || 'Line'}
                                     theme={theme}
-                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Segment to Line (L)"
                                 />
                                 <Button
                                     variant="icon"
                                     onClick={() => {
-                                        const idx = useStore.getState().selectedNodeIndex;
-                                        if (editor && selectedObject && idx !== null) {
-                                            const command = new ConvertSegmentToCurveCommand(selectedObject.id, idx);
-                                            editor.history.execute(command);
+                                        const indices = useStore.getState().selectedNodeIndices;
+                                        if (editor && selectedObject && indices.length > 0) {
+                                            indices.forEach(idx => {
+                                                const command = new ConvertSegmentToCurveCommand(selectedObject.id, idx);
+                                                editor.history.execute(command);
+                                            });
                                             editor.render();
                                         }
                                     }}
                                     icon={Radius}
                                     label={t('toCurve') || 'Curve'}
                                     theme={theme}
-                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Segment to Curve (B)"
                                 />
                                 <Button
                                     variant="icon"
                                     onClick={() => {
-                                        const idx = useStore.getState().selectedNodeIndex;
-                                        if (editor && selectedObject && idx !== null) {
-                                            const command = new DeleteNodeCommand(selectedObject.id, idx);
+                                        const indices = useStore.getState().selectedNodeIndices;
+                                        if (editor && selectedObject && indices.length > 0) {
+                                            const command = new DeleteNodeCommand(selectedObject.id, indices);
                                             editor.history.execute(command);
-                                            useStore.getState().setSelectedNodeIndex(null); // Clear selection
+                                            useStore.getState().setSelectedNodeIndices([]); // Clear selection
                                             editor.render();
                                         }
                                     }}
@@ -409,23 +419,27 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     label={t('Delete Node') || 'Delete'}
                                     theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
                                     className="text-red-500 border-red-200 dark:border-red-900/30 col-span-4 mt-2"
-                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Delete Node"
                                 />
                                 <Button
                                     variant="icon"
                                     onClick={() => {
-                                        const idx = useStore.getState().selectedNodeIndex;
-                                        if (editor && selectedObject && idx !== null) {
-                                            const command = new BreakPathCommand(selectedObject.id, idx);
-                                            editor.history.execute(command);
+                                        const indices = useStore.getState().selectedNodeIndices;
+                                        // Break path usually breaks at one point. What if multiple?
+                                        // Break at all selected points.
+                                        if (editor && selectedObject && indices.length > 0) {
+                                            indices.forEach(idx => {
+                                                const command = new BreakPathCommand(selectedObject.id, idx);
+                                                editor.history.execute(command);
+                                            });
                                             editor.render();
                                         }
                                     }}
                                     icon={Scissors}
                                     label={t('Break') || 'Break'}
                                     theme={theme}
-                                    disabled={useStore.getState().selectedNodeIndex === null}
+                                    disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Break at Node"
                                 />
                             </div>

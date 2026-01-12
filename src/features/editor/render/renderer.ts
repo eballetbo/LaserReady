@@ -128,7 +128,7 @@ export class CanvasRenderer {
         selectionBox: any | null,
         zoom: number = 1,
         pan: { x: number; y: number } = { x: 0, y: 0 },
-        selectedNodeIndex: number | null = null,
+        selectedNodeIndices: number[] = [],
         previewOrigin: { x: number; y: number } | null = null,
         material: { width: number; height: number } | null = null
     ): void {
@@ -172,7 +172,7 @@ export class CanvasRenderer {
 
         // Draw Node Overlay (Last, on top)
         if (toolType === 'node-edit') {
-            this.drawNodeOverlay(selectedShapes, selectedNodeIndex, zoom, config);
+            this.drawNodeOverlay(selectedShapes, selectedNodeIndices, zoom, config);
         }
 
         this.ctx.restore();
@@ -197,7 +197,6 @@ export class CanvasRenderer {
             this.drawText(shape, isSelected, config, layerColor, layerMode);
         } else {
             this.drawPath(shape, isSelected, config, layerColor, layerMode, zoom);
-            // drawNodes logic moved to drawNodeOverlay
         }
     }
 
@@ -264,8 +263,6 @@ export class CanvasRenderer {
 
         if (shape.closed) this.ctx.closePath();
 
-        if (shape.closed) this.ctx.closePath();
-
         // Style resolution: Shape Override -> Layer Default -> Fallback
 
         // 1. Fill Override
@@ -304,7 +301,7 @@ export class CanvasRenderer {
         }
     }
 
-    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndex: number | null, zoom: number, config: RendererConfig): void {
+    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndices: number[], zoom: number, config: RendererConfig): void {
         const anchorSize = config.anchorSize / zoom;
         const skeletonWidth = NODE_SKELETON_WIDTH / zoom;
         const handleCircleRadius = NODE_HANDLE_CIRCLE_RADIUS / zoom;
@@ -336,71 +333,87 @@ export class CanvasRenderer {
             this.ctx.lineWidth = skeletonWidth;
             this.ctx.stroke();
 
-            // 2. Draw Nodes
+            // 2. Draw Handles first (behind nodes)
+            // Draw for all selected nodes
+            const indicesSet = new Set(selectedNodeIndices);
+
             shape.nodes.forEach((n: any, i: number) => {
-                // Determine Color
-                let color;
-                if (i === selectedNodeIndex) {
-                    color = '#FF0000'; // Selected is red
-                } else if (i === 0) {
-                    color = NODE_START_COLOR; // Start node
-                } else if (n.type === 'smooth' || n.type === 'symmetric') {
-                    color = NODE_SMOOTH_COLOR;
-                } else {
-                    color = NODE_CORNER_COLOR;
-                }
-                this.ctx.fillStyle = color;
+                if (indicesSet.has(i)) {
+                    // Only draw handles if they are not at anchor pos (collapsed)
+                    const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
 
-                // Draw Shape
-                // Start Node could be distinctive (e.g. larger or arrow? For now just color and maybe size?)
-                // LightBurn uses a green square for start, but let's follow plan: Start Point distinctive.
+                    this.ctx.strokeStyle = NODE_HANDLE_LINE_COLOR;
+                    this.ctx.lineWidth = lineWidth;
 
-                if (n.type === 'smooth' || n.type === 'symmetric') {
-                    // Circle
-                    this.ctx.beginPath();
-                    this.ctx.arc(n.x, n.y, anchorSize / 2, 0, Math.PI * 2);
-                    this.ctx.fill();
-                } else {
-                    // Square (Corner)
-                    this.ctx.fillRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
+                    // Draw In Handle
+                    if (!isAtAnchor(n.cpIn)) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(n.x, n.y);
+                        this.ctx.lineTo(n.cpIn.x, n.cpIn.y);
+                        this.ctx.stroke();
+                        this.drawCircle(n.cpIn.x, n.cpIn.y, handleCircleRadius, config.colorHandle);
+                    }
+
+                    // Draw Out Handle
+                    if (!isAtAnchor(n.cpOut)) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(n.x, n.y);
+                        this.ctx.lineTo(n.cpOut.x, n.cpOut.y);
+                        this.ctx.stroke();
+                        this.drawCircle(n.cpOut.x, n.cpOut.y, handleCircleRadius, config.colorHandle);
+                    }
                 }
             });
 
-            // 3. Draw Handles (Only for selected node)
-            if (selectedNodeIndex !== null && selectedNodeIndex >= 0 && selectedNodeIndex < shape.nodes.length) {
-                const n = shape.nodes[selectedNodeIndex];
+            // 3. Draw Nodes
+            shape.nodes.forEach((n: any, i: number) => {
+                const isSelected = indicesSet.has(i);
 
-                // Only draw handles if they are not at anchor pos (collapsed)
-                // Though user might want to see them to drag them out? 
-                // LightBurn shows them if selected. But if they are exactly at anchor, line length is 0.
-                // We'll draw if dist > threshold OR if we want to show they exist.
-                // Previous logic checked equality.
+                // Color Logic
+                let fillColor = '#FFFFFF';
+                let strokeColor = '#000000';
 
-                const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
+                if (isSelected) {
+                    fillColor = '#FF0000'; // Red for selected
+                    strokeColor = '#AA0000';
+                } else {
+                    fillColor = '#FFFFFF'; // White for unselected
+                    strokeColor = '#666666';
+                }
 
-                this.ctx.strokeStyle = NODE_HANDLE_LINE_COLOR;
+                // Override for type if needed? 
+                // LightBurn uses: Green Square = Start, Smooth = Circle, Corner = Square
+                // Inkscape uses: Diamond = Corner, Square = Smooth/Symmetric
+
+                // Let's implement Inkscape style as requested
+                const type = n.type || 'corner';
+
+                this.ctx.fillStyle = fillColor;
+                this.ctx.strokeStyle = strokeColor;
                 this.ctx.lineWidth = lineWidth;
 
-                // Draw In Handle
-                if (!isAtAnchor(n.cpIn)) {
+                if (type === 'corner') {
+                    // Diamond
+                    // Draw rotated square
                     this.ctx.beginPath();
-                    this.ctx.moveTo(n.x, n.y);
-                    this.ctx.lineTo(n.cpIn.x, n.cpIn.y);
+                    this.ctx.moveTo(n.x, n.y - anchorSize / 2);
+                    this.ctx.lineTo(n.x + anchorSize / 2, n.y);
+                    this.ctx.lineTo(n.x, n.y + anchorSize / 2);
+                    this.ctx.lineTo(n.x - anchorSize / 2, n.y);
+                    this.ctx.closePath();
+                    this.ctx.fill();
                     this.ctx.stroke();
-
-                    this.drawCircle(n.cpIn.x, n.cpIn.y, handleCircleRadius, config.colorHandle);
+                } else {
+                    // Smooth/Symmetric -> Square
+                    this.ctx.fillRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
+                    this.ctx.strokeRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
                 }
 
-                // Draw Out Handle
-                if (!isAtAnchor(n.cpOut)) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(n.x, n.y);
-                    this.ctx.lineTo(n.cpOut.x, n.cpOut.y);
-                    this.ctx.stroke();
-
-                    this.drawCircle(n.cpOut.x, n.cpOut.y, handleCircleRadius, config.colorHandle);
+                // Special Highlight for Start Node?
+                if (i === 0) {
+                    // Maybe a slightly larger border?
                 }
-            }
+            });
         });
     }
 
