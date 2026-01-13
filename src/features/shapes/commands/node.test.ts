@@ -48,7 +48,7 @@ describe('Node Commands', () => {
         });
 
         it('should move the node on execute', () => {
-            const command = new MoveNodeCommand(shapeId, 1, initialNode, targetNode);
+            const command = new MoveNodeCommand(shapeId, [{ index: 1, oldNode: initialNode, newNode: targetNode }]);
             command.execute();
 
             const setShapesArgs = (useStore.getState().setShapes as any).mock.calls[0][0];
