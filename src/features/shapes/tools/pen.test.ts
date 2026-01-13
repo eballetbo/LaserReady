@@ -28,6 +28,11 @@ describe('PenTool', () => {
             render: vi.fn(),
             history: {
                 execute: vi.fn((cmd) => cmd.execute()),
+            },
+            snapManager: {
+                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                clear: vi.fn(),
+                activeSnap: null
             }
         };
 

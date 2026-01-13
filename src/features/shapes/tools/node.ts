@@ -192,13 +192,22 @@ export class NodeEditTool extends BaseTool {
     }
 
     onMouseMove(e: MouseEvent) {
-        const { x, y } = this.editor.getMousePos(e);
+        let { x, y } = this.editor.getMousePos(e);
         this.lastMousePos = { x, y };
 
         // Handling Drag
         if (this.dragState && this.editor.selectedShapes.length === 1) {
             const shape = this.editor.selectedShapes[0];
             if (!shape.nodes) return;
+
+            // SNAP LOGIC
+            // Exclude current shape to avoid snapping to self (and the moving node)
+            const snapResult = this.editor.snapManager.snapPoint({ x, y }, [shape.id]);
+            if (snapResult.type !== 'none') {
+                x = snapResult.point.x;
+                y = snapResult.point.y;
+            }
+
             const nodes = shape.nodes;
 
             const leaderIndex = this.dragState.nodeIndex;

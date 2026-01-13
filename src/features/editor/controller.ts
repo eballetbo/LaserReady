@@ -106,6 +106,11 @@ export class CanvasController {
                 this.pan = state.pan;
                 this.inputManager.setTransform(this.zoom, this.pan);
             }
+
+            // Sync Snap Settings
+            if (state.isSnappingEnabled !== this.snapManager.settings.enabled) {
+                this.snapManager.settings.enabled = state.isSnappingEnabled;
+            }
             this.render();
         });
 
@@ -302,7 +307,7 @@ export class CanvasController {
         );
 
         if (this.snapManager && this.snapManager.activeSnap) {
-            this.renderer.drawSnapMarker(this.snapManager.activeSnap, zoom);
+            this.renderer.drawSnapMarker(this.snapManager.activeSnap, zoom, pan);
         }
 
         this.onSelectionChange(selectedObjects);

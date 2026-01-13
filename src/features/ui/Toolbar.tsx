@@ -9,9 +9,11 @@ import {
     PenLine,
     SplinePointer,
     Star,
-    Type
+    Type,
+    Magnet
 } from 'lucide-react';
 import { Button } from '../../shared/ui';
+import { useStore } from '../../store/useStore';
 
 interface Theme {
     iconColor: string;
@@ -116,6 +118,18 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
                 icon={Type}
                 label={t('textTool')}
                 onClick={() => setTool('text')}
+                theme={theme}
+            />
+
+            <div className="h-px w-6 bg-gray-200 my-1" />
+
+            {/* Snapping Toggle */}
+            <Button
+                variant="icon"
+                active={useStore(s => s.isSnappingEnabled)}
+                icon={Magnet}
+                label={t('snap')} // Ensure translation key exists or fallback
+                onClick={() => useStore.getState().setSnappingEnabled(!useStore.getState().isSnappingEnabled)}
                 theme={theme}
             />
         </div>

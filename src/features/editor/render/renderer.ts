@@ -16,9 +16,8 @@ import {
     TEXT_STROKE_WIDTH,
     POINT_EQUALITY_THRESHOLD,
     NODE_SKELETON_COLOR,
-    NODE_CORNER_COLOR,
-    NODE_SMOOTH_COLOR,
-    NODE_START_COLOR,
+    POINT_EQUALITY_THRESHOLD,
+    NODE_SKELETON_COLOR,
     NODE_HANDLE_LINE_COLOR,
     NODE_SKELETON_WIDTH,
     NODE_HANDLE_CIRCLE_RADIUS
@@ -543,12 +542,15 @@ export class CanvasRenderer {
         }
     }
 
-    drawSnapMarker(snap: SnapResult, zoom: number): void {
+    drawSnapMarker(snap: SnapResult, zoom: number, pan: { x: number; y: number }): void {
         const MARKER_SIZE = 10 / zoom; // 10px screen size
         const LINE_WIDTH = 2 / zoom;
         const COLOR = '#FF00FF'; // Magenta for high contrast
 
         this.ctx.save();
+        this.ctx.translate(pan.x, pan.y);
+        this.ctx.scale(zoom, zoom);
+
         this.ctx.strokeStyle = COLOR;
         this.ctx.lineWidth = LINE_WIDTH;
         this.ctx.fillStyle = 'rgba(255, 0, 255, 0.2)'; // Transparent fill

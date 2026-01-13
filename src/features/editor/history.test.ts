@@ -55,7 +55,13 @@ describe('Undo/Redo Integration Tests', () => {
             set selectedShapes(v: any[]) { useStore.getState().setSelectedShapes(v.map(s => s.id)); },
 
             // Temporary property used by Creation Tools
-            selectedShape: null
+            selectedShape: null,
+
+            snapManager: {
+                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                clear: vi.fn(),
+                activeSnap: null
+            }
         };
     });
 

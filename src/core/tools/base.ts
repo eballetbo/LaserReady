@@ -20,6 +20,7 @@ export interface IEditorContext {
     selectedShape?: any; // Temporary selection for creation tools
     zoom: number;
     pan: { x: number; y: number };
+    snapManager: any;
 }
 
 export class BaseTool {

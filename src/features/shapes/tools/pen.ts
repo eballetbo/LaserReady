@@ -26,6 +26,13 @@ export class PenTool extends BaseTool {
 
         let { x, y } = this.editor.getMousePos(e);
 
+        // SNAP LOGIC
+        const snapResult = this.editor.snapManager.snapPoint({ x, y });
+        if (snapResult.type !== 'none') {
+            x = snapResult.point.x;
+            y = snapResult.point.y;
+        }
+
         // SHIFT CONSTRAINING: Apply to node placement
         if (e.shiftKey && this.editor.activePath && this.editor.activePath.nodes.length > 0) {
             const lastNode = this.editor.activePath.nodes[this.editor.activePath.nodes.length - 1];
@@ -139,6 +146,19 @@ export class PenTool extends BaseTool {
 
     onMouseMove(e: MouseEvent) {
         let { x, y } = this.editor.getMousePos(e);
+
+        // SNAP LOGIC
+        // Exclude current active path from snapping targets (don't snap to self while processing)
+        // Actually, snapping to self (e.g. closing loop) is handled by PenTool logic below onMouseUp/Down.
+        // But for "snap marker", we can let it snap to first node.
+        const exclude: string[] = [];
+        // If we are just moving, we might snap.
+
+        const snapResult = this.editor.snapManager.snapPoint({ x, y }, exclude);
+        if (snapResult.type !== 'none') {
+            x = snapResult.point.x;
+            y = snapResult.point.y;
+        }
 
         // Only show preview and crosshair when actively drawing
         if (this.editor.activePath) {

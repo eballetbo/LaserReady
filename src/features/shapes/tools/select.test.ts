@@ -73,6 +73,11 @@ describe('SelectTool - Resize Bug', () => {
             },
             renderer: {
                 drawScene: vi.fn()
+            },
+            snapManager: {
+                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                clear: vi.fn(),
+                activeSnap: null
             }
         };
 
@@ -222,7 +227,12 @@ describe('SelectTool - Click Selection with Modifiers', () => {
                 anchorSize: 8
             },
             getMousePos: vi.fn((e: MouseEvent) => ({ x: e.clientX, y: e.clientY })),
-            render: vi.fn()
+            render: vi.fn(),
+            snapManager: {
+                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                clear: vi.fn(),
+                activeSnap: null
+            }
         };
 
         tool = new SelectTool(mockEditor);
@@ -455,7 +465,12 @@ describe('SelectTool - Multi-Select Move', () => {
             config: { handleRadius: 6, anchorSize: 8 },
             getMousePos: vi.fn((e: MouseEvent) => ({ x: e.clientX, y: e.clientY })),
             render: vi.fn(),
-            history: { execute: vi.fn() }
+            history: { execute: vi.fn() },
+            snapManager: {
+                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                clear: vi.fn(),
+                activeSnap: null
+            }
         };
 
         tool = new SelectTool(mockEditor);
