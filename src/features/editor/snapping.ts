@@ -25,8 +25,14 @@ export class SnapManager {
         threshold: 10
     };
 
+    activeSnap: SnapResult | null = null;
+
     constructor(controller: CanvasController) {
         this.controller = controller;
+    }
+
+    clear() {
+        this.activeSnap = null;
     }
 
     /**
@@ -36,10 +42,14 @@ export class SnapManager {
      */
     snapPoint(candidate: Point, excludeShapeIds: string[] = []): SnapResult {
         if (!this.settings.enabled) {
+            this.activeSnap = null;
             return { point: candidate, type: 'none' };
         }
 
-        const bestSnap: SnapResult = { point: candidate, type: 'none' };
+        let bestSnap: SnapResult = {
+            type: 'none',
+            point: { ...candidate }
+        };
         // We will minimize squared distance
         let minDistSq = Infinity;
 
@@ -154,6 +164,11 @@ export class SnapManager {
             });
         }
 
+        if (minDistSq === Infinity) {
+            bestSnap.type = 'none';
+        }
+
+        this.activeSnap = bestSnap.type !== 'none' ? bestSnap : null;
         return bestSnap;
     }
 }

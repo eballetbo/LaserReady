@@ -14,6 +14,7 @@ import { NodeEditTool } from '../shapes/tools/node';
 import { BooleanOperations } from '../../core/math/boolean';
 import { SVGImporter } from '../../utils/svg-import';
 import { HistoryManager } from './history';
+import { SnapManager } from './snapping';
 import { useStore } from '../../store/useStore';
 import { DeleteShapeCommand } from '../shapes/commands/delete';
 import { MoveShapeCommand } from '../shapes/commands/move';
@@ -31,6 +32,7 @@ export class CanvasController {
     renderer: CanvasRenderer;
     inputManager: InputManager;
     history: HistoryManager;
+    snapManager: SnapManager;
     config: any;
     onSelectionChange: (selection: any[]) => void;
     tools: Record<string, any>;
@@ -51,6 +53,7 @@ export class CanvasController {
         this.renderer = new CanvasRenderer(this.canvas);
         this.inputManager = new InputManager(this.canvas);
         this.history = new HistoryManager();
+        this.snapManager = new SnapManager(this);
 
         this.config = {
             anchorSize: 8,
@@ -297,6 +300,10 @@ export class CanvasController {
             this.previewOrigin,
             useStore.getState().material // Pass material bounds to renderer
         );
+
+        if (this.snapManager && this.snapManager.activeSnap) {
+            this.renderer.drawSnapMarker(this.snapManager.activeSnap, zoom);
+        }
 
         this.onSelectionChange(selectedObjects);
     }

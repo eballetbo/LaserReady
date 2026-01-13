@@ -1,5 +1,6 @@
 import { Geometry } from '../../../core/math/geometry';
 import { IShape, ILayer, OperationMode } from '../../../types/core';
+import { SnapResult } from '../snapping';
 import {
     DEFAULT_GRID_COLOR,
     DEFAULT_GRID_LINE_WIDTH,
@@ -540,5 +541,54 @@ export class CanvasRenderer {
             this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
         }
+    }
+
+    drawSnapMarker(snap: SnapResult, zoom: number): void {
+        const MARKER_SIZE = 10 / zoom; // 10px screen size
+        const LINE_WIDTH = 2 / zoom;
+        const COLOR = '#FF00FF'; // Magenta for high contrast
+
+        this.ctx.save();
+        this.ctx.strokeStyle = COLOR;
+        this.ctx.lineWidth = LINE_WIDTH;
+        this.ctx.fillStyle = 'rgba(255, 0, 255, 0.2)'; // Transparent fill
+
+        const { x, y } = snap.point;
+
+        this.ctx.beginPath();
+
+        switch (snap.type) {
+            case 'endpoint':
+                // Square
+                this.ctx.strokeRect(x - MARKER_SIZE / 2, y - MARKER_SIZE / 2, MARKER_SIZE, MARKER_SIZE);
+                break;
+
+            case 'midpoint':
+                // Triangle
+                this.ctx.moveTo(x, y - MARKER_SIZE / 2);
+                this.ctx.lineTo(x + MARKER_SIZE / 2, y + MARKER_SIZE / 2);
+                this.ctx.lineTo(x - MARKER_SIZE / 2, y + MARKER_SIZE / 2);
+                this.ctx.closePath();
+                this.ctx.stroke();
+                break;
+
+            case 'center':
+                // Circle
+                this.ctx.arc(x, y, MARKER_SIZE / 2, 0, Math.PI * 2);
+                this.ctx.stroke();
+                break;
+
+            case 'grid':
+                // Crosshair / Plus
+                const size = MARKER_SIZE / 2;
+                this.ctx.moveTo(x - size, y);
+                this.ctx.lineTo(x + size, y);
+                this.ctx.moveTo(x, y - size);
+                this.ctx.lineTo(x, y + size);
+                this.ctx.stroke();
+                break;
+        }
+
+        this.ctx.restore();
     }
 }
