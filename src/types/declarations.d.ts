@@ -1,1 +1,10 @@
-// Empty - all modules now migrated to TypeScript
+declare module '*.svg' {
+    const content: string;
+    export default content;
+}
+
+declare module '*.svg?raw' {
+    const content: string;
+    export default content;
+}
+

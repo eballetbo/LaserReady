@@ -15,7 +15,7 @@ interface Theme {
 interface ButtonProps {
     variant?: 'icon' | 'iconText' | 'primary';
     active?: boolean;
-    icon?: LucideIcon;
+    icon?: React.ComponentType<any>;
     label: string;
     onClick: (e?: React.MouseEvent) => void;
     theme: Theme;
