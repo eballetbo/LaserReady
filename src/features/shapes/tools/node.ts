@@ -5,13 +5,14 @@ import { MoveNodeCommand, ChangeNodeTypeCommand, InsertNodeCommand, DeleteNodeCo
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../commands/segment';
 import { PathNode } from '../models/node';
 
-type DragTargetType = 'ANCHOR' | 'HANDLE_IN' | 'HANDLE_OUT';
+type DragTargetType = 'ANCHOR' | 'HANDLE_IN' | 'HANDLE_OUT' | 'SEGMENT';
 
 interface DragState {
     type: DragTargetType;
     nodeIndex: number; // The primary node being dragged
     initialNodes: Map<number, PathNode>; // Initial state of all selected nodes (or just the dragged one)
     initialOppositeHandle?: { x: number; y: number }; // For symmetric/smooth editing
+    dragStartMouse?: { x: number; y: number }; // Capture mouse position at drag start
 }
 
 export class NodeEditTool extends BaseTool {
@@ -147,14 +148,32 @@ export class NodeEditTool extends BaseTool {
             return;
         }
 
-        // 3. Double Click on Segment -> Insert Node
-        if (isDoubleClick) {
-            const hit = this.getHitSegment(x, y, shape);
-            if (hit) {
-                const command = new InsertNodeCommand(shape.id, hit.index, hit.t);
+        // 3. Check Segment Logic (Double Click -> Insert, Drag -> Move Segment)
+        const hitSegment = this.getHitSegment(x, y, shape);
+        if (hitSegment) {
+            if (isDoubleClick) {
+                const command = new InsertNodeCommand(shape.id, hitSegment.index, hitSegment.t);
                 this.editor.history.execute(command);
                 // Select the new node (it is inserted at index + 1)
-                this.editor.selectedNodeIndices = [hit.index + 1];
+                this.editor.selectedNodeIndices = [hitSegment.index + 1];
+                this.editor.render();
+                return;
+            } else {
+                // Prepare for Segment Dragging
+                const i1 = hitSegment.index;
+                const i2 = (i1 + 1) % shape.nodes.length;
+                const initialNodes = new Map<number, PathNode>();
+
+                // Store state for both endpoints of the segment
+                if (shape.nodes[i1]) initialNodes.set(i1, shape.nodes[i1].clone());
+                if (shape.nodes[i2]) initialNodes.set(i2, shape.nodes[i2].clone());
+
+                this.dragState = {
+                    type: 'SEGMENT',
+                    nodeIndex: i1,
+                    initialNodes: initialNodes,
+                    dragStartMouse: { x, y }
+                };
                 this.editor.render();
                 return;
             }
@@ -180,6 +199,7 @@ export class NodeEditTool extends BaseTool {
         if (this.dragState && this.editor.selectedShapes.length === 1) {
             const shape = this.editor.selectedShapes[0];
             if (!shape.nodes) return;
+            const nodes = shape.nodes;
 
             const leaderIndex = this.dragState.nodeIndex;
             const leaderInitial = this.dragState.initialNodes.get(leaderIndex);
@@ -192,7 +212,7 @@ export class NodeEditTool extends BaseTool {
                 const dy = y - leaderInitial.y;
 
                 this.dragState.initialNodes.forEach((initialNode, index) => {
-                    const node = shape.nodes[index];
+                    const node = nodes[index];
                     if (node) {
                         node.translate(x - node.x + (initialNode.x - node.x) /* correction? No. */, 0);
                         // Simpler: node.x = initial.x + dx
@@ -205,9 +225,9 @@ export class NodeEditTool extends BaseTool {
                     }
                 });
 
-            } else {
+            } else if (this.dragState.type === 'HANDLE_IN' || this.dragState.type === 'HANDLE_OUT') {
                 // Handle Movement (Single Node Control Point)
-                const node = shape.nodes[leaderIndex];
+                const node = nodes[leaderIndex];
                 const type = node.type || 'corner';
                 const initialNode = leaderInitial;
 
@@ -240,6 +260,35 @@ export class NodeEditTool extends BaseTool {
 
                     oppositeHandle.x = node.x + Math.cos(oppositeAngle) * len;
                     oppositeHandle.y = node.y + Math.sin(oppositeAngle) * len;
+                }
+            } else if (this.dragState.type === 'SEGMENT') {
+                // Segment Dragging logic
+                // Method: Translate adjacent handles (prev.cpOut and next.cpIn) by delta
+
+                const startMouse = this.dragState.dragStartMouse!;
+                const dx = x - startMouse.x;
+                const dy = y - startMouse.y;
+
+                const i1 = this.dragState.nodeIndex;
+                const i2 = (i1 + 1) % shape.nodes.length;
+
+                const initialNode1 = this.dragState.initialNodes.get(i1);
+                const initialNode2 = this.dragState.initialNodes.get(i2);
+
+                if (initialNode1 && initialNode2) {
+                    const node1 = nodes[i1];
+                    const node2 = nodes[i2];
+
+                    // Move p1.cpOut
+                    node1.cpOut.x = initialNode1.cpOut.x + dx;
+                    node1.cpOut.y = initialNode1.cpOut.y + dy;
+
+                    // Move p2.cpIn
+                    node2.cpIn.x = initialNode2.cpIn.x + dx;
+                    node2.cpIn.y = initialNode2.cpIn.y + dy;
+
+                    // If handles were previously zero-length (on top of anchor), this effectively deploys them.
+                    // This creates a natural behavior where dragging a line curves it.
                 }
             }
 
@@ -523,6 +572,12 @@ export class NodeEditTool extends BaseTool {
         // Check Anchors (any)
         if (this.getHitAnchor(x, y, shape) !== -1) {
             this.editor.canvas.style.cursor = 'crosshair';
+            return;
+        }
+
+        // Check Segment
+        if (this.getHitSegment(x, y, shape)) {
+            this.editor.canvas.style.cursor = 'pointer'; // Or 'move' or generic hand
             return;
         }
 
