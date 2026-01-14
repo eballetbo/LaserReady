@@ -19,7 +19,11 @@ export interface IShape {
     move?(dx: number, dy: number): void;
     getBounds?(): any; // Rect?
     toJSON?(): any;
+
     clone?(): IShape;
     rotate?(angle: number, center: { x: number; y: number }): void;
     scale?(sx: number, sy: number, center: { x: number; y: number }): void;
 }
+
+export type AlignType = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
+export type AlignReference = 'selection' | 'page';
