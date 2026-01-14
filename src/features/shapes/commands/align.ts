@@ -86,7 +86,7 @@ export class AlignCommand implements Command {
                 case 'left':
                     dx = refBounds!.minX - shapeBounds.minX;
                     break;
-                case 'center-h':
+                case 'center-v':
                     dx = refBounds!.cx! - shapeBounds.cx!;
                     break;
                 case 'right':
@@ -95,7 +95,7 @@ export class AlignCommand implements Command {
                 case 'top':
                     dy = refBounds!.minY - shapeBounds.minY;
                     break;
-                case 'center-v':
+                case 'center-h':
                     dy = refBounds!.cy! - shapeBounds.cy!;
                     break;
                 case 'bottom':

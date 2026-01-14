@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { useLanguage } from '../../contexts/language';
-import { Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink } from 'lucide-react';
+import {
+    Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink,
+    AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
+    AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
+
+} from 'lucide-react';
 import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, IconSegmentCurve, IconNodeBreak, IconDeleteNode, IconNodeAdd, IconNodeJoin, IconJoinSegment, IconDeleteSegment } from './icons';
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
@@ -9,6 +14,8 @@ import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
 import { BreakPathCommand } from '../shapes/commands/break-path';
+import { AlignCommand } from '../shapes/commands/align';
+import { DistributeCommand } from '../shapes/commands/distribute';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 
@@ -39,6 +46,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     const [sides, setSides] = useState(6);
     const [points, setPoints] = useState(5);
     const [innerRadius, setInnerRadius] = useState(0.382);
+    const [alignToPage, setAlignToPage] = useState(false);
     const tool = useStore(state => state.tool);
 
     const selectedObject = selection.length === 1 ? selection[0] : null;
@@ -510,6 +518,142 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     disabled={useStore.getState().selectedNodeIndices.length === 0}
                                     title="Make selected segments curves (B)"
                                 />
+                            </div>
+                        </div>
+                    )}
+
+                    {tool !== 'node-edit' && (
+                        <div>
+                            <SectionHeader>{t('align') || 'Align and Distribute'}</SectionHeader>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-4 gap-2">
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignStartVertical}
+                                        onClick={() => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new AlignCommand(ids, 'left', alignToPage ? 'page' : 'selection'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        title="Align Left"
+                                        label=""
+                                    />
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignCenterVertical}
+                                        onClick={() => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new AlignCommand(ids, 'center-v', alignToPage ? 'page' : 'selection'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        title="Align Center Vertically"
+                                        label=""
+                                    />
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignEndVertical}
+                                        onClick={() => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new AlignCommand(ids, 'right', alignToPage ? 'page' : 'selection'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        title="Align Right"
+                                        label=""
+                                    />
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignHorizontalDistributeCenter}
+                                        onClick={() => {
+                                            if (editor && selection.length > 2) {
+                                                const ids = selection.map(s => s.id);
+                                                /* To distribute horizontal we need to use vertical axis */
+                                                editor.history.execute(new DistributeCommand(ids, 'vertical'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        disabled={selection.length < 3}
+                                        title="Distribute Horizontally"
+                                        label=""
+                                    />
+
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignStartHorizontal}
+                                        onClick={() => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new AlignCommand(ids, 'top', alignToPage ? 'page' : 'selection'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        title="Align Top"
+                                        label=""
+                                    />
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignCenterHorizontal}
+                                        onClick={() => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new AlignCommand(ids, 'center-h', alignToPage ? 'page' : 'selection'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        title="Align Center Horizontal"
+                                        label=""
+                                    />
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignEndHorizontal}
+                                        onClick={() => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new AlignCommand(ids, 'bottom', alignToPage ? 'page' : 'selection'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        title="Align Bottom"
+                                        label=""
+                                    />
+                                    <Button
+                                        variant="icon"
+                                        icon={AlignVerticalDistributeCenter}
+                                        onClick={() => {
+                                            if (editor && selection.length > 2) {
+                                                const ids = selection.map(s => s.id);
+                                                /* To distribute vertically we need to use vertical axis */
+                                                editor.history.execute(new DistributeCommand(ids, 'vertical'));
+                                                editor.render();
+                                            }
+                                        }}
+                                        theme={theme}
+                                        disabled={selection.length < 3}
+                                        title="Distribute Vertically"
+                                        label=""
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                    <input
+                                        type="checkbox"
+                                        checked={alignToPage}
+                                        onChange={(e) => setAlignToPage(e.target.checked)}
+                                        className="rounded border-gray-300"
+                                    />
+                                    <span>{t('alignToPage') || 'Align to Page'}</span>
+                                </div>
                             </div>
                         </div>
                     )}
