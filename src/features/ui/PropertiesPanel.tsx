@@ -4,11 +4,13 @@ import { useLanguage } from '../../contexts/language';
 import {
     Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink,
     AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-    AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
+    AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter, Scaling,
 } from 'lucide-react';
 import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, IconSegmentCurve, IconNodeBreak, IconDeleteNode, IconNodeAdd, IconNodeJoin, IconJoinSegment, IconDeleteSegment } from './icons';
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from '../../shared/ui';
+import { OffsetPanel } from './OffsetPanel';
+import { OffsetCommand } from '../shapes/commands/offset';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
@@ -46,6 +48,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     const [points, setPoints] = useState(5);
     const [innerRadius, setInnerRadius] = useState(0.382);
     const [alignToPage, setAlignToPage] = useState(false);
+    const [showOffsetPanel, setShowOffsetPanel] = useState(false);
     const tool = useStore(state => state.tool);
     const filletRadius = useStore(state => state.filletRadius || 5);
 
@@ -676,10 +679,36 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     )}
 
 
+
                     {tool !== 'node-edit' && (
                         <div>
                             <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>
                             <div className="space-y-4">
+
+                                {/* Offset Panel Integration */}
+                                {showOffsetPanel ? (
+                                    <OffsetPanel
+                                        theme={theme}
+                                        onApply={(_dist, opts) => {
+                                            if (editor && selection.length > 0) {
+                                                const ids = selection.map(s => s.id);
+                                                editor.history.execute(new OffsetCommand(ids, opts));
+                                                editor.render();
+                                                setShowOffsetPanel(false);
+                                            }
+                                        }}
+                                        onCancel={() => setShowOffsetPanel(false)}
+                                    />
+                                ) : (
+                                    <Button
+                                        variant="iconText"
+                                        onClick={() => setShowOffsetPanel(true)}
+                                        icon={Scaling}
+                                        label={t('offsetPath') || 'Offset Path'}
+                                        theme={theme}
+                                    />
+                                )}
+
                                 {/* Boolean Ops (Only if multiple) */}
                                 {selection.length > 1 && (
                                     <div className="grid grid-cols-2 gap-2">
