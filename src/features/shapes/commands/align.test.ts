@@ -89,7 +89,7 @@ describe('AlignCommand', () => {
         // s1 (cx 35) -> moves +70 to 105. New x = 105 - 25 = 80.
         // s2 (cx 150) -> moves -45 to 105. New x = 105 - 50 = 55.
 
-        const cmd = new AlignCommand(['s1', 's2'], 'center-h', 'selection');
+        const cmd = new AlignCommand(['s1', 's2'], 'center-v', 'selection');
         cmd.execute();
 
         expect(s1.x).toBe(80);
@@ -112,7 +112,7 @@ describe('AlignCommand', () => {
         // Page cy = 500
         // s1 (cy 35) -> moves +465 to 500. New y = 500 - 25 = 475.
 
-        const cmd = new AlignCommand(['s1'], 'center-v', 'page');
+        const cmd = new AlignCommand(['s1'], 'center-h', 'page');
         cmd.execute();
 
         expect(s1.y).toBe(475);
