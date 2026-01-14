@@ -10,7 +10,8 @@ import {
     SplinePointer,
     Star,
     Type,
-    Magnet
+    Magnet,
+    CornerDownRight
 } from 'lucide-react';
 import { Button } from '../../shared/ui';
 import { useStore } from '../../store/useStore';
@@ -87,6 +88,14 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
                 icon={SplinePointer}
                 label={t('nodeEdit')}
                 onClick={() => setTool('node-edit')}
+                theme={theme}
+            />
+            <Button
+                variant="icon"
+                active={tool === 'fillet'}
+                icon={CornerDownRight}
+                label={t('filletTool') || 'Fillet'}
+                onClick={() => setTool('fillet')}
                 theme={theme}
             />
 

@@ -9,6 +9,7 @@ export interface UiSlice {
     material: { width: number; height: number };
     selectedNodeIndices: number[];
     isSnappingEnabled: boolean;
+    filletRadius: number;
     setTool: (tool: string) => void;
     setZoom: (zoom: number) => void;
     setPan: (pan: { x: number; y: number }) => void;
@@ -16,6 +17,7 @@ export interface UiSlice {
     setMaterial: (material: { width: number; height: number }) => void;
     setSelectedNodeIndices: (indices: number[]) => void;
     setSnappingEnabled: (enabled: boolean) => void;
+    setFilletRadius: (radius: number) => void;
     zoomAtPoint: (delta: number, x: number, y: number) => void;
 }
 
@@ -27,6 +29,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
     selectedNodeIndices: [],
     isSnappingEnabled: true,
+    filletRadius: 5,
     setTool: (tool) => set({ tool }),
     setZoom: (zoom) => set({ zoom }),
     setPan: (pan) => set({ pan }),
@@ -34,6 +37,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     setMaterial: (material) => set({ material }),
     setSelectedNodeIndices: (selectedNodeIndices) => set({ selectedNodeIndices }),
     setSnappingEnabled: (isSnappingEnabled) => set({ isSnappingEnabled }),
+    setFilletRadius: (filletRadius) => set({ filletRadius }),
     zoomAtPoint: (delta, mouseX, mouseY) => {
         const { zoom, pan } = get();
         const newZoom = Math.min(Math.max(zoom * delta, 0.1), 50);

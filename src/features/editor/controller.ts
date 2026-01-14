@@ -11,6 +11,7 @@ import { SelectTool } from '../shapes/tools/select';
 import { TextTool } from '../shapes/tools/text';
 import { TextObject } from '../shapes/models/text';
 import { NodeEditTool } from '../shapes/tools/node';
+import { FilletTool } from '../shapes/tools/fillet';
 import { BooleanOperations } from '../../core/math/boolean';
 import { SVGImporter } from '../../utils/svg-import';
 import { HistoryManager } from './history';
@@ -81,7 +82,8 @@ export class CanvasController {
             polygon: new PolygonTool(this, 6),
             star: new StarTool(this),
             pen: new PenTool(this),
-            'node-edit': new NodeEditTool(this)
+            'node-edit': new NodeEditTool(this),
+            fillet: new FilletTool(this)
         };
         this._tool = 'select';
         this.activeTool = this.tools.select;

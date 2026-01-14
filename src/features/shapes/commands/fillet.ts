@@ -1,12 +1,12 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { Geometry, Point } from '../../../core/math/geometry';
-import { PathNode } from '../../../core/types/core'; // Assuming PathNode is here, or I'll fix import
-import { cloneDeep } from 'lodash'; // Using lodash if available, or manual clone
+import { PathNode } from '../models/node';
+import { cloneDeep } from 'lodash';
 
 // Helper to clone nodes safely
 const cloneNodes = (nodes: PathNode[]): PathNode[] => {
-    return JSON.parse(JSON.stringify(nodes));
+    return nodes.map(n => n instanceof PathNode ? n.clone() : PathNode.fromJSON(n));
 };
 
 export class FilletCornerCommand implements Command {
@@ -70,25 +70,21 @@ export class FilletCornerCommand implements Command {
         // T1 replaces P2? No, P2 is removed, T1 and T2 inserted.
         // Actually simplest is: Replace P2 with T1, Insert T2 after T1.
 
-        const t1Node: PathNode = {
-            x: fillet.start.x,
-            y: fillet.start.y,
-            type: 'smooth', // It's part of a curve now? No, the corner is the transition.
-            // T1 is the end of the line segment P1->T1, and start of the curve T1->T2.
-            // So T1 should have cpIn = T1 (line from P1), and cpOut = calculated cp1.
-            cpIn: { x: fillet.start.x, y: fillet.start.y },
-            cpOut: fillet.cp1
-        };
+        const t1Node = new PathNode(
+            fillet.start.x,
+            fillet.start.y,
+            fillet.start.x, fillet.start.y, // cpIn
+            fillet.cp1.x, fillet.cp1.y,     // cpOut
+            'smooth'
+        );
 
-        const t2Node: PathNode = {
-            x: fillet.end.x,
-            y: fillet.end.y,
-            type: 'smooth',
-            // T2 is end of curve T1->T2, and start of line T2->P3.
-            // So T2 should have cpIn = calculated cp2, and cpOut = T2.
-            cpIn: fillet.cp2,
-            cpOut: { x: fillet.end.x, y: fillet.end.y }
-        };
+        const t2Node = new PathNode(
+            fillet.end.x,
+            fillet.end.y,
+            fillet.cp2.x, fillet.cp2.y,     // cpIn
+            fillet.end.x, fillet.end.y,     // cpOut
+            'smooth'
+        );
 
         // Insert nodes
         if (currentIndex === 0 && shape.closed) {
@@ -184,13 +180,13 @@ export class RemoveRadiusCommand implements Command {
         if (!intersection) return; // Parallel lines, can't restore corner
 
         // Create new corner node
-        const cornerNode: PathNode = {
-            x: intersection.x,
-            y: intersection.y,
-            type: 'corner',
-            cpIn: { x: intersection.x, y: intersection.y },
-            cpOut: { x: intersection.x, y: intersection.y }
-        };
+        const cornerNode = new PathNode(
+            intersection.x,
+            intersection.y,
+            intersection.x, intersection.y,
+            intersection.x, intersection.y,
+            'corner'
+        );
 
         // Remove T2 first (higher index usually, unless wrapping)
         // If wrapping (t1=last, t2=0), index logic is tricky.

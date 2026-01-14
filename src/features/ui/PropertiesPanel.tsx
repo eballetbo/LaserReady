@@ -5,7 +5,6 @@ import {
     Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink,
     AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
     AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
-
 } from 'lucide-react';
 import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, IconSegmentCurve, IconNodeBreak, IconDeleteNode, IconNodeAdd, IconNodeJoin, IconJoinSegment, IconDeleteSegment } from './icons';
 import { CanvasController } from '../editor/controller';
@@ -48,6 +47,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     const [innerRadius, setInnerRadius] = useState(0.382);
     const [alignToPage, setAlignToPage] = useState(false);
     const tool = useStore(state => state.tool);
+    const filletRadius = useStore(state => state.filletRadius || 5);
 
     const selectedObject = selection.length === 1 ? selection[0] : null;
     const hasSelection = selection.length > 0;
@@ -164,6 +164,23 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
     return (
         <div className={`flex flex-col shrink-0 z-20 p-4 ${isEmbedded ? 'w-full' : `w-72 ${theme.panel} border-l ${theme.border}`}`}>
+            {tool === 'fillet' && (
+                <div className="mb-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                    <SectionHeader>{t('filletSettings') || 'Fillet Settings'}</SectionHeader>
+                    <div className="flex gap-2 items-center">
+                        <NumberInput
+                            label={t('radius') || 'Radius'}
+                            value={filletRadius}
+                            onChange={(v) => useStore.getState().setFilletRadius(Number(v))}
+                            theme={theme}
+                            min={0}
+                            step={1}
+                        />
+                        <span className="text-xs text-muted-foreground ml-2">mm</span>
+                    </div>
+                </div>
+            )}
+
             {hasSelection ? (
                 <div className="space-y-6">
                     {/* DIMENSIONS */}
@@ -657,6 +674,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                             </div>
                         </div>
                     )}
+
 
                     {tool !== 'node-edit' && (
                         <div>

@@ -11,6 +11,7 @@ export interface ShapesSlice {
     setSelectedShapes: (ids: string[]) => void;
     setLayers: (layers: LaserLayer[]) => void;
     setActiveLayerId: (id: string) => void;
+    updateShape: (shape: IShape) => void;
 }
 
 const defaultLayer: LaserLayer = {
@@ -29,4 +30,7 @@ export const createShapesSlice: StateCreator<ShapesSlice, [], [], ShapesSlice> =
     setSelectedShapes: (selectedShapes) => set({ selectedShapes }),
     setLayers: (layers) => set({ layers }),
     setActiveLayerId: (activeLayerId) => set({ activeLayerId }),
+    updateShape: (updatedShape) => set((state) => ({
+        shapes: state.shapes.map(s => s.id === updatedShape.id ? updatedShape : s)
+    })),
 });
