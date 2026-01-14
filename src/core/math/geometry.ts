@@ -34,6 +34,208 @@ export const Geometry = {
 
 
 
+    // Vector Math Helpers
+    add(p1: Point, p2: Point): Point {
+        return { x: p1.x + p2.x, y: p1.y + p2.y };
+    },
+
+    sub(p1: Point, p2: Point): Point {
+        return { x: p1.x - p2.x, y: p1.y - p2.y };
+    },
+
+    scale(p: Point, s: number): Point {
+        return { x: p.x * s, y: p.y * s };
+    },
+
+    magnitude(p: Point): number {
+        return Math.sqrt(p.x * p.x + p.y * p.y);
+    },
+
+    normalize(p: Point): Point {
+        const m = this.magnitude(p);
+        return m === 0 ? { x: 0, y: 0 } : { x: p.x / m, y: p.y / m };
+    },
+
+    dot(p1: Point, p2: Point): number {
+        return p1.x * p2.x + p1.y * p2.y;
+    },
+
+    /**
+     * Calculate angle between two vectors (in radians)
+     */
+    angleBetween(v1: Point, v2: Point): number {
+        const dot = this.dot(v1, v2);
+        const m1 = this.magnitude(v1);
+        const m2 = this.magnitude(v2);
+        if (m1 === 0 || m2 === 0) return 0;
+        // Clamp for floating point errors
+        const cos = Math.min(Math.max(dot / (m1 * m2), -1), 1);
+        return Math.acos(cos);
+    },
+
+    /**
+     * Find intersection of two lines defined by point + vector
+     * Line 1: p1 + t * v1
+     * Line 2: p2 + u * v2
+     */
+    getLineIntersection(p1: Point, v1: Point, p2: Point, v2: Point): Point | null {
+        // p1 + t*v1 = p2 + u*v2
+        // t*v1 - u*v2 = p2 - p1
+        // Vector cross product logic (2D)
+        const cross = (a: Point, b: Point) => a.x * b.y - a.y * b.x;
+        const det = cross(v1, v2);
+
+        if (Math.abs(det) < 1e-9) return null; // Parallel
+
+        const d = this.sub(p2, p1);
+        const t = cross(d, v2) / det;
+        // const u = cross(d, v1) / det;
+
+        return this.add(p1, this.scale(v1, t));
+    },
+
+    /**
+     * Calculate Fillet points for a corner P1 -> P2 -> P3
+     * Returns start/end of the arc, and cubic bezier control points.
+     */
+    getFilletPoints(p1: Point, p2: Point, p3: Point, radius: number): {
+        start: Point;
+        end: Point;
+        cp1: Point;
+        cp2: Point;
+        center: Point;
+    } | null {
+        // Vectors from Corner (P2)
+        const v1 = this.normalize(this.sub(p1, p2));
+        const v2 = this.normalize(this.sub(p3, p2));
+
+        // Angle between segments
+        const angle = this.angleBetween(v1, v2);
+
+        // If lines are parallel or colinear, cannot fillet
+        if (angle < 1e-4 || angle > Math.PI - 1e-4) return null;
+
+        // Calculate tangent distance: d = radius / tan(theta / 2)
+        // Note: angleBetween returns 0..PI. 
+        // We want the half-angle of the CORNER vertex.
+        // But angleBetween gives the angle between the two vectors originating from P2.
+        // This IS the corner angle.
+        const theta = angle;
+        const d = radius / Math.tan(theta / 2);
+
+        // Check if d exceeds segment lengths
+        const len1 = this.getDistance(p1, p2); // Squared distance
+        const len2 = this.getDistance(p3, p2); // Squared distance
+        // getDistance returns squared, so sqrt
+        const maxD1 = Math.sqrt(len1) / 2; // Be safe limit to 50%
+        const maxD2 = Math.sqrt(len2) / 2;
+
+        // We could clamp radius, but requirement usually asks to limit or fail.
+        // Let's clam d if necessary, which effectively reduces radius.
+        // Actually proper behavior is usually to limit D so it doesn't cross midpoint (or overlap adjacent fillets).
+        // Let's implicitly clamp d.
+        // For now, if d is too big, let's just use the max possible D (effectively reducing radius).
+        const limitD = Math.min(d, maxD1, maxD2);
+
+        // If we want to strictly respect radius, we might return null if too big?
+        // Let's stick to the requested logic: "limit it".
+        const effectiveD = limitD;
+
+        // Tangent points
+        // T1 is on P2->P1
+        const t1 = this.add(p2, this.scale(v1, effectiveD));
+        // T2 is on P2->P3
+        const t2 = this.add(p2, this.scale(v2, effectiveD));
+
+        // Center calculation
+        // Center is perpendicular to V1 at T1, dist R.
+        // Line1 perp: (-v1.y, v1.x)
+        // Hard to know direction without sidedness (Left/Right turn).
+        // Alternative: Center is on the angle bisector.
+        const bisector = this.normalize(this.add(v1, v2)); // Vector P2 -> Center
+        // BUT we need to use the LIMITED radius if we clamped d.
+        // If d was clamped, effectiveRadius = d * tan(theta/2)
+        const effectiveRadius = effectiveD * Math.tan(theta / 2);
+        const distCenterEffective = effectiveRadius / Math.sin(theta / 2);
+
+        const center = this.add(p2, this.scale(bisector, distCenterEffective));
+
+        // Bezier Approximation (Kappa)
+        // For general angle theta (the sweep angle of the arc).
+        // Wait, the angle between vectors is the Corner Angle (inside triangle).
+        // The Arc Angle (sweep) = 180 - Corner Angle.
+        // Let's verify:
+        // P1---P2---P3 (Straight line, angle 180, sweep 0).
+        // P1 | P2 -- P3 (90 deg corner, sweep 90).
+        // So Sweep Angle = PI - theta.
+        const sweep = Math.PI - theta;
+
+        // Kappa formula for arbitrary arc < 90 deg?
+        // Approximating a circular arc with cubic bezier:
+        // k = 4/3 * tan(sweep / 4)
+        const kappa = (4 / 3) * Math.tan(sweep / 4);
+
+        // Control Points
+        // CP1 = T1 + (derivative at T1) * appropriate_length?
+        // Standard geometric construction:
+        // CP1 = T1 + kappa * Radius * TangentDirection
+        // Tangent Direction at T1: Vector pointing AWAY from P2 towards corner? No.
+        // Tangent is perpendicular to Radius.
+        // Direction is P2->P1 ? No T1 is ON P2->P1.
+        // At T1, the curve starts TANGENT to V1.
+        // So the control point should be along V1? No, T1->P2 is V1 reversed.
+        // T1->P1 is V1.
+        // The curve goes from T1 to T2.
+        // At T1, it is tangent to the line segment.
+        // So CP1 must be on the line P2-P1.
+        // Direction: From T1 towards the "corner" or away?
+        // The curve "cuts" the corner.
+        // So it goes T1 -> T2.
+        // The tangent at T1 points towards the intersection P2?
+        // Yes, the hull P1-P2-P3 contains the curve.
+        // So cp1 is on segment T1-P2.
+        // Vector T1->P2 is -v1 * d.
+        // Normalized direction is -v1. (P1->P2 is -v1)
+        // Wait: v1 was P1-P2 (normalized). So P2->P1 is v1.
+        // T1 = P2 + v1*d.
+        // Path goes T1 -> T2.
+        // Tangent at T1 is towards P2? Yes.
+        // So direction is -v1.
+        // CP1 = T1 + (-v1) * (effectiveRadius * kappa)?
+        // Wait, kappa is usually multiplier of radius? No.
+        // Standard formula: CP distance from T = R * k.
+
+        // Wait, logic check:
+        // Bezier points: P0, P1, P2, P3.
+        // P0 = T1.
+        // P3 = T2.
+        // P1 = T1 + VectorTowardsCorner * (R * k).
+        // P2 = T2 + VectorTowardsCorner * (R * k).
+
+        // VectorTowardsCorner from T1 is P2-T1.
+        // P2 - T1 = P2 - (P2 + v1*d) = -v1*d.
+        // Unit vector is -v1.
+        // Distance is effectiveRadius * kappa?
+        // Let's check 90 deg (sweep PI/2). theta = PI/2.
+        // tan(sweep/4) = tan(PI/8) = 0.414.
+        // k = 4/3 * 0.414 = 0.552.
+        // Correct.
+        // So dist = R * k.
+
+        const distCP = effectiveRadius * kappa;
+
+        const cp1 = this.add(t1, this.scale(this.scale(v1, -1), distCP));
+        const cp2 = this.add(t2, this.scale(this.scale(v2, -1), distCP));
+
+        return {
+            start: t1,
+            end: t2,
+            cp1,
+            cp2,
+            center
+        };
+    },
+
     calculateBezierBoundingBox(nodes: any[], closed: boolean = false): Rect {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
