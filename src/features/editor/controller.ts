@@ -1,5 +1,6 @@
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
+import { RendererConfig } from './render/types';
 import { InputManager } from './input';
 import { ToolManager } from './tool-manager';
 import { PathShape } from '../shapes/models/path';
@@ -27,7 +28,7 @@ export class CanvasController {
     history: HistoryManager;
     snapManager: SnapManager;
     toolManager: ToolManager;
-    config: any;
+    config: RendererConfig;
     onSelectionChange: (selection: IShape[]) => void;
     activePath: PathShape | null;
     previewPoint: { x: number; y: number } | null;
@@ -38,7 +39,7 @@ export class CanvasController {
     unsubscribe: () => void;
     selectedShape?: IShape; // Temporary selection for creation tools
 
-    constructor(canvasElement: HTMLCanvasElement, options: any = {}) {
+    constructor(canvasElement: HTMLCanvasElement, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
         this.canvas = canvasElement;
         this.ctx = this.canvas.getContext('2d')!;
         this.renderer = new CanvasRenderer(this.canvas);

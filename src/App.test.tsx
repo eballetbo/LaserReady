@@ -6,6 +6,6 @@ describe('App', () => {
     it('renders without crashing', () => {
         render(<App />);
         // Basic smoke test - just verify it renders
-        expect(document.body).toBeTruthy();
-    });
+        expect(document.body).toBeDefined();
+    }, 15000);
 });

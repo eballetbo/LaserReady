@@ -37,7 +37,7 @@ class MockEditor extends CanvasController {
         this.history = { execute: vi.fn() } as any;
         this.render = vi.fn(); // This shadow might be late, but the method below handles super calls
         this.getMousePos = vi.fn((e) => ({ x: e.clientX, y: e.clientY }));
-        this.config = { handleRadius: 4, anchorSize: 6 };
+        this.config = { handleRadius: 4, anchorSize: 6 } as any;
         this.zoom = 1;
     }
 
