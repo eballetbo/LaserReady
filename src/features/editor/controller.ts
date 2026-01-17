@@ -5,7 +5,7 @@ import { InputManager } from './input';
 import { ToolManager } from './tool-manager';
 import { PathShape } from '../shapes/models/path';
 import { IShape } from '../shapes/types';
-import { SVGImportService } from '../../utils/svg-import';
+import { SVGImportService } from '../../features/io/svg-import';
 import { HistoryManager } from './history';
 import { SnapManager } from './snapping';
 import { useStore } from '../../store/useStore';
@@ -15,7 +15,7 @@ import { UpdateStyleCommand } from '../shapes/commands/style';
 import { BooleanCommand } from '../shapes/commands/boolean';
 import { GroupCommand } from '../shapes/commands/group';
 import { UngroupCommand } from '../shapes/commands/ungroup';
-import { updateShapeGeometry } from '../../utils/geometry-updater';
+import { updateShapeGeometry } from './utils/geometry-updater';
 
 /**
  * Main Editor Controller.

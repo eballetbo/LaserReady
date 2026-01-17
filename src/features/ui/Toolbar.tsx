@@ -13,7 +13,7 @@ import {
     Magnet,
     CornerDownRight
 } from 'lucide-react';
-import { Button } from '../../shared/ui';
+import { Button } from './components';
 import { useStore } from '../../store/useStore';
 
 interface Theme {

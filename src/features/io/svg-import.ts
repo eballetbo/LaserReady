@@ -1,6 +1,6 @@
 import paper from 'paper';
-import { PathShape } from '../features/shapes/models/path';
-import { PathNode } from '../features/shapes/models/node';
+import { PathShape } from '../../features/shapes/models/path';
+import { PathNode } from '../../features/shapes/models/node';
 
 // Initialize a headless PaperScope for SVG importing
 const scope = new paper.PaperScope();
@@ -92,8 +92,8 @@ export const SVGImporter = {
     }
 };
 
-import { Geometry } from '../core/math/geometry';
-import { IShape } from '../features/shapes/types';
+import { Geometry } from '../../core/math/geometry';
+import { IShape } from '../../features/shapes/types';
 
 export interface SVGImportOptions {
     /** Optional position to center the imported shapes */
@@ -117,46 +117,46 @@ export const SVGImportService = {
      */
     import(svgString: string, options: SVGImportOptions = {}): IShape[] {
         const { position = null, layerId } = options;
-        
+
         // Parse SVG using basic importer
         const shapes = SVGImporter.importSVG(svgString);
-        
+
         if (!shapes || shapes.length === 0) {
             throw new Error('No valid shapes found in SVG');
         }
-        
+
         // Position shapes if a target position is provided
         if (position) {
             this.positionShapes(shapes, position);
         }
-        
+
         // Assign layer ID if provided
         if (layerId) {
             shapes.forEach(shape => shape.layerId = layerId);
         }
-        
+
         return shapes;
     },
-    
+
     /**
      * Positions shapes by translating them so their combined center
      * is at the specified position.
      */
     positionShapes(shapes: IShape[], targetPosition: { x: number; y: number }): void {
         const bounds = Geometry.getCombinedBounds(shapes);
-        
+
         if (!bounds || !bounds.width || !bounds.height) {
             return;
         }
-        
+
         // Calculate current center
         const centerX = bounds.minX + bounds.width / 2;
         const centerY = bounds.minY + bounds.height / 2;
-        
+
         // Calculate translation delta
         const dx = targetPosition.x - centerX;
         const dy = targetPosition.y - centerY;
-        
+
         // Translate all shapes
         shapes.forEach(shape => {
             if (shape.nodes) {

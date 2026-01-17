@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../../contexts/language';
-import { Button, NumberInput, SectionHeader } from '../../shared/ui';
+import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetOptions } from '../shapes/commands/offset';
 import { Check, X } from 'lucide-react';
 

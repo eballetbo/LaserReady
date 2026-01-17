@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, IconSegmentCurve, IconNodeBreak, IconDeleteNode, IconNodeAdd, IconNodeJoin, IconJoinSegment, IconDeleteSegment } from './icons';
 import { CanvasController } from '../editor/controller';
-import { Button, NumberInput, SectionHeader } from '../../shared/ui';
+import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetPanel } from './OffsetPanel';
 import { OffsetCommand } from '../shapes/commands/offset';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';

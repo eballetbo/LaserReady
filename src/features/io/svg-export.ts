@@ -1,7 +1,7 @@
 import paper from 'paper';
-import { BooleanOperations } from '../core/math/boolean';
-import { PIXELS_PER_MM } from '../config/constants';
-import { PathShape } from '../features/shapes/models/path';
+import { BooleanOperations } from '../../core/math/boolean';
+import { PIXELS_PER_MM } from '../../config/constants';
+import { PathShape } from '../../features/shapes/models/path';
 
 // Initialize a headless PaperScope for SVG exporting
 const scope = new paper.PaperScope();
