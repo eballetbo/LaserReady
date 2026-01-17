@@ -1,14 +1,9 @@
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { InputManager } from './input';
+import { ToolManager } from './tool-manager';
 import { PathShape } from '../shapes/models/path';
 import { IShape } from '../shapes/types';
-import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/registry';
-import { PenTool } from '../shapes/tools/pen';
-import { SelectTool } from '../shapes/tools/select';
-import { TextTool } from '../shapes/tools/text';
-import { NodeEditTool } from '../shapes/tools/node';
-import { FilletTool } from '../shapes/tools/fillet';
 import { SVGImportService } from '../../utils/svg-import';
 import { HistoryManager } from './history';
 import { SnapManager } from './snapping';
@@ -31,11 +26,9 @@ export class CanvasController {
     inputManager: InputManager;
     history: HistoryManager;
     snapManager: SnapManager;
+    toolManager: ToolManager;
     config: any;
     onSelectionChange: (selection: IShape[]) => void;
-    tools: Record<string, any>;
-    _tool: string;
-    activeTool: any;
     activePath: PathShape | null;
     previewPoint: { x: number; y: number } | null;
     selectionBox: any | null;
@@ -50,6 +43,7 @@ export class CanvasController {
         this.ctx = this.canvas.getContext('2d')!;
         this.renderer = new CanvasRenderer(this.canvas);
         this.inputManager = new InputManager(this.canvas);
+        this.toolManager = new ToolManager(this, this.inputManager);
         this.history = new HistoryManager();
         this.snapManager = new SnapManager(this);
 
@@ -68,22 +62,7 @@ export class CanvasController {
 
         this.onSelectionChange = options.onSelectionChange || (() => { });
 
-        this.tools = {
-            select: new SelectTool(this),
-            rect: new RectTool(this),
-            circle: new CircleTool(this),
-            text: new TextTool(this),
 
-            triangle: new PolygonTool(this, 3),
-            pentagon: new PolygonTool(this, 5),
-            polygon: new PolygonTool(this, 6),
-            star: new StarTool(this),
-            pen: new PenTool(this),
-            'node-edit': new NodeEditTool(this),
-            fillet: new FilletTool(this)
-        };
-        this._tool = 'select';
-        this.activeTool = this.tools.select;
 
         this.activePath = null; // For pen tool
         this.previewPoint = null;
@@ -93,7 +72,6 @@ export class CanvasController {
         this.zoom = 1;
         this.pan = { x: 0, y: 0 };
 
-        this.initEvents();
 
         // Subscribe to store changes to re-render
         this.unsubscribe = useStore.subscribe((state, _) => {
@@ -142,26 +120,12 @@ export class CanvasController {
         useStore.getState().setSelectedShapes(ids);
     }
 
-    set tool(value) {
-        if (this._tool === value) return;
-
-        if (this.activeTool) {
-            this.activeTool.onDeactivate();
-        }
-
-        this._tool = value;
-        this.activeTool = this.tools[value] || this.tools.select;
-
-        if (this.activeTool) {
-            this.activeTool.onActivate();
-        }
-
-        // Update Zustand store to trigger UI updates
-        useStore.getState().setTool(value);
+    set tool(value: any) {
+        this.toolManager.setTool(value);
     }
 
     get tool() {
-        return this._tool;
+        return this.toolManager.currentToolType;
     }
 
     get activeLayerId() {
@@ -176,28 +140,7 @@ export class CanvasController {
         useStore.getState().setSelectedNodeIndices(value);
     }
 
-    initEvents() {
-        // Delegate to InputManager
-        this.inputManager.on('down', (x, y, e) => {
-            this.handleMouseDown(e, { x, y });
-        });
 
-        this.inputManager.on('move', (x, y, e) => {
-            this.handleMouseMove(e, { x, y });
-        });
-
-        this.inputManager.on('up', (x, y, e) => {
-            this.handleMouseUp(e, { x, y });
-        });
-
-        this.inputManager.on('contextmenu', (x, y, e) => {
-            this.handleContextMenu(e, { x, y });
-        });
-
-        this.inputManager.on('keydown', (e) => {
-            this.handleKeyDown(e as KeyboardEvent);
-        });
-    }
 
     dispose() {
         this.inputManager.dispose();
@@ -230,59 +173,7 @@ export class CanvasController {
     // "activeTool.onMouseDown(e)" -> maybe "activeTool.onMouseDown(e, worldPos)"?
     // I will try to pass worldPos to tools if they support it, but for compatibility I'll ensure getMousePos still works.
 
-    handleMouseDown(e: MouseEvent, worldPos: { x: number, y: number }) {
-        this.startAction();
-        // We attach worldPos to event for convenience? Or pass as 2nd arg.
-        // Let's pass as 2nd arg. Tools might ignore it if not updated.
-        // But wait, if tools rely on editor.getMousePos(e), they will re-calculate it.
-        // That's duplicate work but safe.
-        // Optimally, update tools. But user didn't ask to update tools.
-        if (this.activeTool) this.activeTool.onMouseDown(e, worldPos);
-    }
 
-    handleMouseMove(e: MouseEvent, worldPos: { x: number, y: number }) {
-        if (this.activeTool) this.activeTool.onMouseMove(e, worldPos);
-    }
-
-    handleMouseUp(e: MouseEvent, worldPos: { x: number, y: number }) {
-        if (this.activeTool) this.activeTool.onMouseUp(e, worldPos);
-        this.endAction();
-    }
-
-    handleContextMenu(e: MouseEvent, worldPos: { x: number, y: number }) {
-        if (this.activeTool) this.activeTool.onContextMenu(e, worldPos);
-    }
-
-    handleKeyDown(e: KeyboardEvent) {
-        // SPECS.md § 3: Escape key switches to SelectTool from any other tool
-        if (e.key === 'Escape' && this.tool !== 'select') {
-            this.tool = 'select';
-            this.render();
-            return; // Don't propagate to tool
-        }
-
-        // Ignore keys handled by App.jsx or that shouldn't trigger a save
-        if (e.key === 'Delete' || e.key === 'Backspace') return;
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) return;
-
-        // Group (Ctrl+G)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
-            e.preventDefault();
-            this.groupSelected();
-            return;
-        }
-
-        // Ungroup (Ctrl+U)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-            e.preventDefault();
-            this.ungroupSelected();
-            return;
-        }
-
-        this.startAction();
-        if (this.activeTool) this.activeTool.onKeyDown(e);
-        this.endAction();
-    }
 
     render() {
         // Read state from Store
@@ -346,12 +237,12 @@ export class CanvasController {
     importSVGString(svgString: string, position: { x: number; y: number } | null = null) {
         try {
             this.startAction();
-            
+
             const shapes = SVGImportService.import(svgString, {
                 position,
                 layerId: useStore.getState().activeLayerId
             });
-            
+
             useStore.getState().addShapes(shapes);
             this.selectedShapes = shapes;
             this.render();
