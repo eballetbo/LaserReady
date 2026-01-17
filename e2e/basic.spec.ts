@@ -5,7 +5,7 @@ test.describe('Basic Editor Functionality', () => {
     test('App loads and shows canvas', async ({ page }) => {
         await page.goto('/');
         // Check if canvas exists and is visible
-        await expect(page.locator('.shadow-inner canvas')).toBeVisible();
+        await expect(page.getByTestId('main-canvas')).toBeVisible();
 
         // Check if toolbar exists
         await expect(page.getByText('Select')).toBeVisible();
@@ -15,10 +15,10 @@ test.describe('Basic Editor Functionality', () => {
         await page.goto('/');
 
         // Select Rectangle tool
-        // We use getByTitle because the buttons have titles for tooltips
-        await page.getByTitle('Rectangle').click();
+        // We use getByRole for the main button as per tools.spec.ts
+        await page.getByRole('button', { name: /Shapes|Rect/i }).first().click();
 
-        const canvas = page.locator('.shadow-inner canvas');
+        const canvas = page.getByTestId('main-canvas');
         const box = await canvas.boundingBox();
         if (!box) throw new Error('Canvas not found');
 
@@ -41,9 +41,9 @@ test.describe('Basic Editor Functionality', () => {
         await page.goto('/');
 
         // 1. Draw a shape first
-        await page.getByTitle('Rectangle').click();
+        await page.getByRole('button', { name: /Shapes|Rect/i }).first().click();
 
-        const canvas = page.locator('.shadow-inner canvas');
+        const canvas = page.getByTestId('main-canvas');
         const box = await canvas.boundingBox();
         if (!box) throw new Error('Canvas not found');
 

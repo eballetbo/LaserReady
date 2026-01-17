@@ -9,7 +9,7 @@ test.describe('Application Load', () => {
         await expect(page).toHaveTitle(/LaserReady|Vite|laser-ready/i);
 
         // Verify canvas exists and is visible
-        const canvas = page.locator('canvas');
+        const canvas = page.getByTestId('main-canvas');
         await expect(canvas).toBeVisible();
 
         // Verify Toolbar exists
