@@ -32,6 +32,13 @@ export const Geometry = {
         };
     },
 
+    scalePoint(p: Point, sx: number, sy: number, center: Point): Point {
+        return {
+            x: center.x + (p.x - center.x) * sx,
+            y: center.y + (p.y - center.y) * sy
+        };
+    },
+
 
 
     // Vector Math Helpers

@@ -1,4 +1,5 @@
 import { TextMeasurer } from '../../../utils/text-measure';
+import { Geometry, Point } from '../../../core/math/geometry';
 import { IShape } from '../types';
 
 export interface TextStyle {
@@ -23,11 +24,6 @@ export interface Bounds {
     height: number;
     cx: number;
     cy: number;
-}
-
-export interface Point {
-    x: number;
-    y: number;
 }
 
 export class TextObject implements IShape {
@@ -97,18 +93,16 @@ export class TextObject implements IShape {
             { x: left, y: bottom }
         ];
 
-        const cos = Math.cos(this.rotation);
-        const sin = Math.sin(this.rotation);
-
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
         corners.forEach(p => {
-            // Rotate
-            const rx = p.x * cos - p.y * sin;
-            const ry = p.x * sin + p.y * cos;
-            // Translate back to world
-            const wx = this.x + rx;
-            const wy = this.y + ry;
+            // Corners are relative to anchor (0,0) before rotation.
+            // But TextObject position (this.x, this.y) is the anchor in world space.
+            // Rotated point relative to anchor:
+            const rotated = Geometry.rotatePoint(p, { x: 0, y: 0 }, this.rotation);
+            // Translate to world
+            const wx = this.x + rotated.x;
+            const wy = this.y + rotated.y;
 
             minX = Math.min(minX, wx);
             minY = Math.min(minY, wy);
@@ -135,13 +129,9 @@ export class TextObject implements IShape {
 
     rotate(angle: number, center: Point): void {
         // Rotate position
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        const dx = this.x - center.x;
-        const dy = this.y - center.y;
-
-        this.x = center.x + dx * cos - dy * sin;
-        this.y = center.y + dx * sin + dy * cos;
+        const p = Geometry.rotatePoint({ x: this.x, y: this.y }, center, angle);
+        this.x = p.x;
+        this.y = p.y;
 
         // Update rotation angle
         this.rotation += angle;

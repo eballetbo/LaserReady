@@ -63,14 +63,14 @@ export class PathShape {
 
     scale(sx: number, sy: number, center: { x: number; y: number }): void {
         this.nodes.forEach(n => {
-            n.x = center.x + (n.x - center.x) * sx;
-            n.y = center.y + (n.y - center.y) * sy;
+            const p = Geometry.scalePoint(n, sx, sy, center);
+            n.x = p.x; n.y = p.y;
 
-            n.cpIn.x = center.x + (n.cpIn.x - center.x) * sx;
-            n.cpIn.y = center.y + (n.cpIn.y - center.y) * sy;
+            const cpIn = Geometry.scalePoint(n.cpIn, sx, sy, center);
+            n.cpIn.x = cpIn.x; n.cpIn.y = cpIn.y;
 
-            n.cpOut.x = center.x + (n.cpOut.x - center.x) * sx;
-            n.cpOut.y = center.y + (n.cpOut.y - center.y) * sy;
+            const cpOut = Geometry.scalePoint(n.cpOut, sx, sy, center);
+            n.cpOut.x = cpOut.x; n.cpOut.y = cpOut.y;
         });
     }
 
