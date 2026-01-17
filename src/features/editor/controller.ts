@@ -338,7 +338,7 @@ export class CanvasController {
 
     clear() {
         this.startAction();
-        this.shapes = [];
+        useStore.getState().clearShapes();
         this.selectedShapes = [];
         this.render();
         this.endAction();
@@ -377,8 +377,7 @@ export class CanvasController {
                 const activeLayerId = useStore.getState().activeLayerId;
                 shapes.forEach(shape => shape.layerId = activeLayerId);
 
-                const currentShapes = this.shapes;
-                this.shapes = [...currentShapes, ...shapes];
+                useStore.getState().addShapes(shapes);
                 this.selectedShapes = shapes;
 
                 this.render();

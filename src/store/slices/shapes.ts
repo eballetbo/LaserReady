@@ -12,8 +12,11 @@ export interface ShapesSlice {
     setLayers: (layers: LaserLayer[]) => void;
     setActiveLayerId: (id: string) => void;
     updateShape: (shape: IShape) => void;
+    updateShapes: (shapes: IShape[]) => void;
     addShapes: (shapes: IShape[]) => void;
     removeShapes: (ids: string[]) => void;
+    replaceShapes: (shapes: IShape[]) => void;
+    clearShapes: () => void;
 }
 
 const defaultLayer: LaserLayer = {
@@ -35,6 +38,12 @@ export const createShapesSlice: StateCreator<ShapesSlice, [], [], ShapesSlice> =
     updateShape: (updatedShape) => set((state) => ({
         shapes: state.shapes.map(s => s.id === updatedShape.id ? updatedShape : s)
     })),
+    updateShapes: (updatedShapes) => set((state) => {
+        const updateMap = new Map(updatedShapes.map(s => [s.id, s]));
+        return {
+            shapes: state.shapes.map(s => updateMap.get(s.id) || s)
+        };
+    }),
     addShapes: (newShapes) => set((state) => ({
         shapes: [...state.shapes, ...newShapes]
     })),
@@ -42,4 +51,6 @@ export const createShapesSlice: StateCreator<ShapesSlice, [], [], ShapesSlice> =
         shapes: state.shapes.filter(s => !ids.includes(s.id)),
         selectedShapes: state.selectedShapes.filter(id => !ids.includes(id))
     })),
+    replaceShapes: (shapes) => set({ shapes }),
+    clearShapes: () => set({ shapes: [], selectedShapes: [] }),
 });

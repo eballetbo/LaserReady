@@ -1,4 +1,5 @@
 import { BaseTool } from '../../../core/tools/base';
+import { useStore } from '../../../store/useStore';
 import { PathNode } from '../models/node';
 import { PathShape } from '../models/path';
 import { CanvasController } from '../../editor/controller';
@@ -220,8 +221,8 @@ export class PenTool extends BaseTool {
         if (this.editor.activePath) {
 
             // Remove preview shape from store before committing command
-            const currentShapes = this.editor.shapes;
-            this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.activePath.id);
+            // Remove preview shape from store before committing command
+            useStore.getState().removeShapes([this.editor.activePath.id]);
 
             if (this.editor.activePath.nodes.length < 2) {
                 // If single node, maybe just remove it? 
@@ -244,8 +245,7 @@ export class PenTool extends BaseTool {
         if (this.editor.activePath) {
             if (e.key === 'Enter') {
                 // Command Pattern: Commit the finished path
-                const currentShapes = this.editor.shapes;
-                this.editor.shapes = currentShapes.filter((s: any) => s.id !== this.editor.activePath.id);
+                useStore.getState().removeShapes([this.editor.activePath.id]);
 
                 const command = new CreateShapeCommand(this.editor.activePath);
                 this.editor.history.execute(command);
