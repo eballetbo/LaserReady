@@ -258,8 +258,11 @@ export class CanvasController {
         // Pass a copy of the array to command to avoid reference issues if state changes
         // although selectedShapes getter returns a new array filter.
         // It's safe.
-        const paths = this.selectedShapes.filter(s => s.type === 'path') as PathShape[];
-        if (paths.length === 0) return;
+        // Fix: Allow all path-based shapes (rect, circle, polygon, path, star)
+        // We can check if it has 'nodes' property or try instanceof. 
+        // Best safest given strict Typescript is checking instanceof PathShape.
+        const paths = this.selectedShapes.filter(s => s instanceof PathShape) as PathShape[];
+        if (paths.length < 2) return;
         const command = new BooleanCommand(paths, operation);
         this.history.execute(command);
     }
