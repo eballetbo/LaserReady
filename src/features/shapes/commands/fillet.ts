@@ -2,7 +2,6 @@ import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { Geometry, Point } from '../../../core/math/geometry';
 import { PathNode } from '../models/node';
-import { cloneDeep } from 'lodash';
 
 // Helper to clone nodes safely
 const cloneNodes = (nodes: PathNode[]): PathNode[] => {
