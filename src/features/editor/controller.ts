@@ -2,7 +2,6 @@ import { Geometry } from '../../core/math/geometry';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { InputManager } from './input';
-import { PathNode } from '../shapes/models/node';
 import { PathShape } from '../shapes/models/path';
 import { IShape } from '../shapes/types';
 import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/registry';
@@ -21,6 +20,7 @@ import { UpdateStyleCommand } from '../shapes/commands/style';
 import { BooleanCommand } from '../shapes/commands/boolean';
 import { GroupCommand } from '../shapes/commands/group';
 import { UngroupCommand } from '../shapes/commands/ungroup';
+import { updateShapeGeometry } from '../../utils/geometry-updater';
 
 /**
  * Main Editor Controller.
@@ -424,64 +424,11 @@ export class CanvasController {
         const command = new UngroupCommand(groups as any);
         this.history.execute(command);
     }
-
     updateShape(shape: IShape) {
-        if (!shape || !shape.type || !shape.params || !shape.nodes) return;
-        this.startAction();
-
-        if (shape.type === 'polygon' && shape.params.sides) {
-            let cx = 0, cy = 0;
-            shape.nodes.forEach(n => { cx += n.x; cy += n.y; });
-            const center = { x: cx / shape.nodes.length, y: cy / shape.nodes.length };
-            let totalRadius = 0;
-            shape.nodes.forEach(n => {
-                const dx = n.x - center.x;
-                const dy = n.y - center.y;
-                totalRadius += Math.sqrt(dx * dx + dy * dy);
-            });
-            const radius = totalRadius / shape.nodes.length;
-            const sides = shape.params.sides;
-            const newNodes = [];
-            for (let i = 0; i < sides; i++) {
-                const angle = (i * 2 * Math.PI / sides) - Math.PI / 2;
-                const x = center.x + radius * Math.cos(angle);
-                const y = center.y + radius * Math.sin(angle);
-                const node = new PathNode(x, y);
-                node.cpIn = { x, y };
-                node.cpOut = { x, y };
-                newNodes.push(node);
-            }
-        }
-        if (shape.type === 'star' && shape.params.points && shape.params.innerRadius) {
-            let cx = 0, cy = 0;
-            shape.nodes.forEach(n => { cx += n.x; cy += n.y; });
-            const center = { x: cx / shape.nodes.length, y: cy / shape.nodes.length };
-            let maxDist = 0;
-            shape.nodes.forEach(n => {
-                const dx = n.x - center.x;
-                const dy = n.y - center.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > maxDist) maxDist = dist;
-            });
-            const outerRadius = maxDist;
-            const innerRadius = outerRadius * shape.params.innerRadius;
-            const points = shape.params.points;
-            const newNodes = [];
-            for (let i = 0; i < points * 2; i++) {
-                const radius = i % 2 === 0 ? outerRadius : innerRadius;
-                const angle = (i * Math.PI / points) - Math.PI / 2;
-                const x = center.x + radius * Math.cos(angle);
-                const y = center.y + radius * Math.sin(angle);
-                const node = new PathNode(x, y);
-                node.cpIn = { x, y };
-                node.cpOut = { x, y };
-                newNodes.push(node);
-            }
-            shape.nodes = newNodes;
-        }
-
-        this.setZoom(this.zoom / 1.2);
+        updateShapeGeometry(shape);
+        useStore.getState().updateShape(shape);
     }
+
 
     resetZoom() {
         this.fitToScreen();
