@@ -16,8 +16,6 @@ import {
     TEXT_STROKE_WIDTH,
     POINT_EQUALITY_THRESHOLD,
     NODE_SKELETON_COLOR,
-    POINT_EQUALITY_THRESHOLD,
-    NODE_SKELETON_COLOR,
     NODE_HANDLE_LINE_COLOR,
     NODE_SKELETON_WIDTH,
     NODE_HANDLE_CIRCLE_RADIUS
@@ -481,7 +479,7 @@ export class CanvasRenderer {
         this.ctx.lineTo(previewPoint.x, previewPoint.y);
         this.ctx.strokeStyle = PEN_PREVIEW_COLOR;
         this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
-        this.ctx.setLineDash(PEN_DASH_PATTERN);
+        this.ctx.setLineDash([...PEN_DASH_PATTERN]);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
     }

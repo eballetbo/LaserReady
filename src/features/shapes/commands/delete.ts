@@ -1,12 +1,12 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { PathShape } from '../models/path';
+import { IShape } from '../types';
 
 export class DeleteShapeCommand implements Command {
-    private shapesToDelete: PathShape[];
+    private shapesToDelete: IShape[];
     private previousSelectedIds: string[];
 
-    constructor(shapesToDelete: PathShape[]) {
+    constructor(shapesToDelete: IShape[]) {
         this.shapesToDelete = shapesToDelete;
         // Capture selection state before deletion, or maybe we don't need to restore exact selection?
         // Usually good UX to restore selection on undo.

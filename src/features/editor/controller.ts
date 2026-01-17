@@ -1,18 +1,16 @@
-// @ts-nocheck - Progressive TypeScript migration, refine types incrementally
 import { Geometry } from '../../core/math/geometry';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { InputManager } from './input';
 import { PathNode } from '../shapes/models/node';
 import { PathShape } from '../shapes/models/path';
+import { IShape } from '../shapes/types';
 import { RectTool, CircleTool, PolygonTool, StarTool } from '../shapes/registry';
 import { PenTool } from '../shapes/tools/pen';
 import { SelectTool } from '../shapes/tools/select';
 import { TextTool } from '../shapes/tools/text';
-import { TextObject } from '../shapes/models/text';
 import { NodeEditTool } from '../shapes/tools/node';
 import { FilletTool } from '../shapes/tools/fillet';
-import { BooleanOperations } from '../../core/math/boolean';
 import { SVGImporter } from '../../utils/svg-import';
 import { HistoryManager } from './history';
 import { SnapManager } from './snapping';
@@ -35,7 +33,7 @@ export class CanvasController {
     history: HistoryManager;
     snapManager: SnapManager;
     config: any;
-    onSelectionChange: (selection: any[]) => void;
+    onSelectionChange: (selection: IShape[]) => void;
     tools: Record<string, any>;
     _tool: string;
     activeTool: any;
@@ -46,11 +44,11 @@ export class CanvasController {
     zoom: number;
     pan: { x: number; y: number };
     unsubscribe: () => void;
-    selectedShape?: any; // Temporary selection for creation tools
+    selectedShape?: IShape; // Temporary selection for creation tools
 
-    constructor(canvasElement: HTMLCanvasElement, options = {}) {
+    constructor(canvasElement: HTMLCanvasElement, options: any = {}) {
         this.canvas = canvasElement;
-        this.ctx = this.canvas.getContext('2d');
+        this.ctx = this.canvas.getContext('2d')!;
         this.renderer = new CanvasRenderer(this.canvas);
         this.inputManager = new InputManager(this.canvas);
         this.history = new HistoryManager();
@@ -99,7 +97,7 @@ export class CanvasController {
         this.initEvents();
 
         // Subscribe to store changes to re-render
-        this.unsubscribe = useStore.subscribe((state, prevState) => {
+        this.unsubscribe = useStore.subscribe((state, _) => {
             // Sync selection from store to local property
             // This fixes the stale node insertion issue while keeping compatibility with tools that write to selectedShapes
             // Sync zoom and pan if changed externally (e.g. from toolbar or input)
@@ -126,21 +124,21 @@ export class CanvasController {
     }
 
     // Proxy getter to get shapes from store for tools usage
-    get shapes() {
+    get shapes(): IShape[] {
         return useStore.getState().shapes;
     }
 
-    set shapes(value) {
+    set shapes(value: IShape[]) {
         useStore.getState().setShapes(value);
     }
 
     // Proxy for selectedShapes. 
-    get selectedShapes() {
+    get selectedShapes(): IShape[] {
         const { shapes, selectedShapes } = useStore.getState();
         return shapes.filter(s => selectedShapes.includes(s.id));
     }
 
-    set selectedShapes(value) {
+    set selectedShapes(value: IShape[]) {
         const ids = value.map(s => s.id);
         useStore.getState().setSelectedShapes(ids);
     }
@@ -198,7 +196,7 @@ export class CanvasController {
         });
 
         this.inputManager.on('keydown', (e) => {
-            this.handleKeyDown(e);
+            this.handleKeyDown(e as KeyboardEvent);
         });
     }
 
@@ -207,7 +205,7 @@ export class CanvasController {
         if (this.unsubscribe) this.unsubscribe();
     }
 
-    getMousePos(evt) {
+    getMousePos(evt: MouseEvent) {
         // Fallback or utility if needed, but tools should use the passed point preferably.
         // However, existing tools likely call this.editor.getMousePos(e).
         // So we should maintain this method, but delegate to InputManager logic or use stored transform.
@@ -233,7 +231,7 @@ export class CanvasController {
     // "activeTool.onMouseDown(e)" -> maybe "activeTool.onMouseDown(e, worldPos)"?
     // I will try to pass worldPos to tools if they support it, but for compatibility I'll ensure getMousePos still works.
 
-    handleMouseDown(e, worldPos) {
+    handleMouseDown(e: MouseEvent, worldPos: { x: number, y: number }) {
         this.startAction();
         // We attach worldPos to event for convenience? Or pass as 2nd arg.
         // Let's pass as 2nd arg. Tools might ignore it if not updated.
@@ -243,20 +241,20 @@ export class CanvasController {
         if (this.activeTool) this.activeTool.onMouseDown(e, worldPos);
     }
 
-    handleMouseMove(e, worldPos) {
+    handleMouseMove(e: MouseEvent, worldPos: { x: number, y: number }) {
         if (this.activeTool) this.activeTool.onMouseMove(e, worldPos);
     }
 
-    handleMouseUp(e, worldPos) {
+    handleMouseUp(e: MouseEvent, worldPos: { x: number, y: number }) {
         if (this.activeTool) this.activeTool.onMouseUp(e, worldPos);
         this.endAction();
     }
 
-    handleContextMenu(e, worldPos) {
+    handleContextMenu(e: MouseEvent, worldPos: { x: number, y: number }) {
         if (this.activeTool) this.activeTool.onContextMenu(e, worldPos);
     }
 
-    handleKeyDown(e) {
+    handleKeyDown(e: KeyboardEvent) {
         // SPECS.md § 3: Escape key switches to SelectTool from any other tool
         if (e.key === 'Escape' && this.tool !== 'select') {
             this.tool = 'select';
@@ -317,7 +315,7 @@ export class CanvasController {
 
     /* ... Remaining methods unchanged ... */
 
-    moveSelected(dx, dy) {
+    moveSelected(dx: number, dy: number) {
         if (this.selectedShapes.length > 0) {
             // We assume startAction is called by the tool onMouseDown
             const command = new MoveShapeCommand(this, this.selectedShapes, dx, dy);
@@ -354,21 +352,25 @@ export class CanvasController {
 
                 if (position) {
                     const bounds = Geometry.getCombinedBounds(shapes);
-                    const centerX = bounds.minX + bounds.width / 2;
-                    const centerY = bounds.minY + bounds.height / 2;
-                    const dx = position.x - centerX;
-                    const dy = position.y - centerY;
+                    if (bounds) {
+                        const centerX = bounds.minX + bounds.width! / 2;
+                        const centerY = bounds.minY + bounds.height! / 2;
+                        const dx = position.x - centerX;
+                        const dy = position.y - centerY;
 
-                    shapes.forEach(shape => {
-                        shape.nodes.forEach(node => {
-                            node.x += dx;
-                            node.y += dy;
-                            node.cpIn.x += dx;
-                            node.cpIn.y += dy;
-                            node.cpOut.x += dx;
-                            node.cpOut.y += dy;
+                        shapes.forEach(shape => {
+                            if (shape.nodes) {
+                                shape.nodes.forEach(node => {
+                                    node.x += dx;
+                                    node.y += dy;
+                                    node.cpIn.x += dx;
+                                    node.cpIn.y += dy;
+                                    node.cpOut.x += dx;
+                                    node.cpOut.y += dy;
+                                });
+                            }
                         });
-                    });
+                    }
                 }
 
                 // Assign active layer to imported shapes
@@ -391,16 +393,16 @@ export class CanvasController {
     }
 
     performBooleanOperation(operation: 'unite' | 'subtract' | 'intersect' | 'exclude') {
-        if (this.selectedShapes.length < 2) return;
-
         // Pass a copy of the array to command to avoid reference issues if state changes
         // although selectedShapes getter returns a new array filter.
         // It's safe.
-        const command = new BooleanCommand(this.selectedShapes, operation);
+        const paths = this.selectedShapes.filter(s => s.type === 'path') as PathShape[];
+        if (paths.length === 0) return;
+        const command = new BooleanCommand(paths, operation);
         this.history.execute(command);
     }
 
-    applyStyle(style) {
+    applyStyle(style: Partial<IShape>) {
         if (this.selectedShapes.length === 0) return;
 
         const command = new UpdateStyleCommand(this.selectedShapes, style);
@@ -420,12 +422,12 @@ export class CanvasController {
         const groups = this.selectedShapes.filter(s => s.type === 'group');
         if (groups.length === 0) return;
 
-        const command = new UngroupCommand(groups);
+        const command = new UngroupCommand(groups as any);
         this.history.execute(command);
     }
 
-    updateShape(shape) {
-        if (!shape || !shape.type || !shape.params) return;
+    updateShape(shape: IShape) {
+        if (!shape || !shape.type || !shape.params || !shape.nodes) return;
         this.startAction();
 
         if (shape.type === 'polygon' && shape.params.sides) {
@@ -450,9 +452,7 @@ export class CanvasController {
                 node.cpOut = { x, y };
                 newNodes.push(node);
             }
-            shape.nodes = newNodes;
         }
-
         if (shape.type === 'star' && shape.params.points && shape.params.innerRadius) {
             let cx = 0, cy = 0;
             shape.nodes.forEach(n => { cx += n.x; cy += n.y; });
@@ -488,7 +488,7 @@ export class CanvasController {
         this.fitToScreen();
     }
 
-    setZoom(value) {
+    setZoom(value: number) {
         const newZoom = Math.max(0.1, Math.min(5, value));
         useStore.getState().setZoom(newZoom);
         // Note: unsubscribe listener will catch this update and update inputManager
@@ -496,7 +496,7 @@ export class CanvasController {
 
     // Note: unsubscribe listener will catch this update and update inputManager
 
-    fitToScreen(margin = 40) {
+    fitToScreen(margin: number = 40) {
 
         // Use canvas dimensions (which now track viewport)
         const containerWidth = this.canvas.width;
@@ -510,7 +510,6 @@ export class CanvasController {
         // Calculate Scale
         const scaleX = (containerWidth - margin * 2) / matW;
         const scaleY = (containerHeight - margin * 2) / matH;
-        const newZoom = Math.min(scaleX, scaleY, 1); // Don't zoom in more than 100% by default? Or yes? User said "Fit". Let's use fit.
         // Actually fit usually allows zooming out, but maybe max 1.
         // Let's just use min(scaleX, scaleY) clamped for sanity.
         const clampedZoom = Math.max(0.01, Math.min(50, Math.min(scaleX, scaleY)));

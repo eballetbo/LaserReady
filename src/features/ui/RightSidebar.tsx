@@ -3,7 +3,7 @@ import { Settings, Library } from 'lucide-react';
 import { useLanguage } from '../../contexts/language';
 import PropertiesPanel from './PropertiesPanel';
 import AssetLibrary from './AssetLibrary';
-import { CanvasController } from '../../editor/controller';
+import { CanvasController } from '../editor/controller';
 
 interface Theme {
     iconColor: string;
