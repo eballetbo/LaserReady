@@ -3,6 +3,7 @@ import { OffsetCommand } from './offset';
 import { useStore } from '../../../store/useStore';
 import { PathShape } from '../models/path';
 import { PathNode } from '../models/node';
+import { IShape } from '../types';
 
 // Helper to create a simple rectangle PathShape
 const createRect = (id: string, x: number, y: number, w: number, h: number): PathShape => {
@@ -22,10 +23,10 @@ describe('OffsetCommand', () => {
         useStore.setState({
             shapes: [],
             selectedShapes: [],
-            addShapes: (newShapes) => useStore.setState(state => ({ shapes: [...state.shapes, ...newShapes] })),
-            removeShapes: (ids) => useStore.setState(state => ({ shapes: state.shapes.filter(s => !ids.includes(s.id)) })),
-            setSelectedShapes: (ids) => useStore.setState({ selectedShapes: ids }),
-            updateShape: (updated) => useStore.setState(state => ({
+            addShapes: (newShapes: IShape[]) => useStore.setState(state => ({ shapes: [...state.shapes, ...newShapes] })),
+            removeShapes: (ids: string[]) => useStore.setState(state => ({ shapes: state.shapes.filter(s => !ids.includes(s.id)) })),
+            setSelectedShapes: (ids: string[]) => useStore.setState({ selectedShapes: ids }),
+            updateShape: (updated: IShape) => useStore.setState(state => ({
                 shapes: state.shapes.map(s => s.id === updated.id ? updated : s)
             }))
         } as any);
@@ -49,7 +50,7 @@ describe('OffsetCommand', () => {
 
         // Verify offset approximate size
         // Original 100x100 -> Offset +10 -> 120x120
-        const bounds = newShape!.getBounds();
+        const bounds = (newShape as PathShape).getBounds();
         expect(Math.round(bounds.width)).toBe(120);
     });
 
@@ -68,7 +69,7 @@ describe('OffsetCommand', () => {
 
         expect(shape.id).not.toBe('s1');
 
-        const bounds = shape.getBounds();
+        const bounds = (shape as PathShape).getBounds();
         expect(Math.round(bounds.width)).toBe(120);
     });
 
