@@ -522,6 +522,58 @@ export class NodeEditTool extends BaseTool {
         return -1;
     }
 
+    /**
+     * Gets the bounding box for a segment (including control points)
+     */
+    private getSegmentBounds(n1: any, n2: any): { minX: number, minY: number, maxX: number, maxY: number } {
+        const xs = [n1.x, n1.cpOut.x, n2.cpIn.x, n2.x];
+        const ys = [n1.y, n1.cpOut.y, n2.cpIn.y, n2.y];
+
+        return {
+            minX: Math.min(...xs),
+            minY: Math.min(...ys),
+            maxX: Math.max(...xs),
+            maxY: Math.max(...ys)
+        };
+    }
+
+    /**
+     * Checks if a point is near a bounding box
+     */
+    private isPointNearBounds(
+        x: number,
+        y: number,
+        bounds: { minX: number, minY: number, maxX: number, maxY: number },
+        threshold: number
+    ): boolean {
+        return x >= bounds.minX - threshold &&
+            x <= bounds.maxX + threshold &&
+            y >= bounds.minY - threshold &&
+            y <= bounds.maxY + threshold;
+    }
+
+    /**
+     * Determines optimal step count based on curve complexity
+     */
+    private getStepCount(n1: any, n2: any): number {
+        // Check if it's a straight line (handles collapsed to anchor points)
+        const isLine =
+            (Math.abs(n1.cpOut.x - n1.x) < 0.01 && Math.abs(n1.cpOut.y - n1.y) < 0.01) &&
+            (Math.abs(n2.cpIn.x - n2.x) < 0.01 && Math.abs(n2.cpIn.y - n2.y) < 0.01);
+
+        if (isLine) {
+            return 2; // Just test start and end for straight lines
+        }
+
+        // For curves, estimate complexity based on handle distances
+        const handleDist1 = Math.hypot(n1.cpOut.x - n1.x, n1.cpOut.y - n1.y);
+        const handleDist2 = Math.hypot(n2.cpIn.x - n2.x, n2.cpIn.y - n2.y);
+        const maxHandleDist = Math.max(handleDist1, handleDist2);
+
+        // Adaptive: more steps for curvier segments
+        return Math.max(3, Math.min(20, Math.ceil(maxHandleDist / 10)));
+    }
+
     private getHitSegment(x: number, y: number, shape: any): { index: number, t: number } | null {
         const threshold = 10;
         const toleranceSq = threshold * threshold;
@@ -536,7 +588,15 @@ export class NodeEditTool extends BaseTool {
             const p0 = shape.nodes[i];
             const p3 = shape.nodes[nextIndex];
 
-            const STEPS = 50;
+            // NEW: Early rejection with bounding box
+            const bounds = this.getSegmentBounds(p0, p3);
+            if (!this.isPointNearBounds(x, y, bounds, threshold)) {
+                continue; // Skip this segment entirely
+            }
+
+            // NEW: Adaptive step count
+            const STEPS = this.getStepCount(p0, p3);
+
             for (let s = 1; s < STEPS; s++) {
                 const t = s / STEPS;
                 const mt = 1 - t;
@@ -560,6 +620,7 @@ export class NodeEditTool extends BaseTool {
         }
         return bestHit;
     }
+
 
     private updateCursor(x: number, y: number) {
         if (this.editor.selectedShapes.length !== 1) {
