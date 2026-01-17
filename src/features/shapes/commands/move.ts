@@ -1,7 +1,6 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { CanvasController } from '../../editor/controller';
-import { PathShape } from '../models/path';
 import { IShape } from '../types';
 
 export class MoveShapeCommand implements Command {
@@ -9,7 +8,7 @@ export class MoveShapeCommand implements Command {
     private dx: number;
     private dy: number;
 
-    constructor(editor: CanvasController, shapes: IShape[], dx: number, dy: number) {
+    constructor(_editor: CanvasController, shapes: IShape[], dx: number, dy: number) {
         this.shapesToMove = shapes;
         this.dx = dx;
         this.dy = dy;
@@ -25,7 +24,7 @@ export class MoveShapeCommand implements Command {
 
         // Let's stick to the pattern: Mutate then update store to trigger re-render.
         this.shapesToMove.forEach(shape => {
-            shape.move(this.dx, this.dy);
+            shape.move!(this.dx, this.dy);
         });
 
         // Trigger store update
@@ -36,7 +35,7 @@ export class MoveShapeCommand implements Command {
 
     undo(): void {
         this.shapesToMove.forEach(shape => {
-            shape.move(-this.dx, -this.dy);
+            shape.move!(-this.dx, -this.dy);
         });
 
         const { shapes, setShapes } = useStore.getState();

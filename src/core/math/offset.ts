@@ -71,7 +71,7 @@ const fromPaperItem = (item: paper.Item): PathShape[] => {
 export function offsetShape(
     shape: PathShape,
     distance: number,
-    options: { join?: JoinStyle, limit?: number } = {}
+    _options: { join?: JoinStyle, limit?: number } = {}
 ): PathShape[] {
     if (Math.abs(distance) < 1e-5) {
         return [shape.clone()];
@@ -114,7 +114,7 @@ export function offsetShape(
             if (vec.length < 1e-4) continue; // Skip tiny segments
 
             // Normalize then scale (avoids argument count ambiguity in some TS defs)
-            const normal = vec.normalize().multiply(radius).rotate(90);
+            const normal = vec.normalize().multiply(radius).rotate(90, new scope.Point(0, 0));
 
             // 4 corners of the thick line segment
             const c1 = p1.add(normal);

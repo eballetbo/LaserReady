@@ -585,7 +585,7 @@ export class SelectTool extends BaseTool {
         this.resizeHandle = null;
     }
 
-    onKeyDown(e: KeyboardEvent): void {
+    onKeyDown(_e: KeyboardEvent): void {
         // Escape key is handled globally in PathEditor
     }
 

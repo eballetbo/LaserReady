@@ -1,6 +1,6 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { offsetShape, offsetShapes, JoinStyle } from '../../../core/math/offset';
+import { offsetShape, JoinStyle } from '../../../core/math/offset';
 import { PathShape } from '../models/path';
 import { IShape } from '../types';
 

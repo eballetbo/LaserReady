@@ -60,7 +60,7 @@ export class RectTool extends BaseTool {
         this.editor.render();
     }
 
-    onMouseUp(e: MouseEvent): void {
+    onMouseUp(_e: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
 

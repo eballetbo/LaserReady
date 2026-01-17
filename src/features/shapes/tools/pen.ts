@@ -1,4 +1,4 @@
-import { BaseTool, IEditorContext } from '../../../core/tools/base';
+import { BaseTool } from '../../../core/tools/base';
 import { PathNode } from '../models/node';
 import { PathShape } from '../models/path';
 import { CanvasController } from '../../editor/controller';
@@ -209,7 +209,7 @@ export class PenTool extends BaseTool {
         }
     }
 
-    onMouseUp(e: MouseEvent) {
+    onMouseUp(_e: MouseEvent) {
         this.draggingItem = null;
     }
 

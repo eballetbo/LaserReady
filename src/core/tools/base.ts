@@ -30,11 +30,11 @@ export class BaseTool {
         this.editor = editor;
     }
 
-    onMouseDown(event: MouseEvent): void { }
-    onMouseMove(event: MouseEvent): void { }
-    onMouseUp(event: MouseEvent): void { }
-    onContextMenu(event: MouseEvent): void { }
-    onKeyDown(event: KeyboardEvent): void { }
+    onMouseDown(_event: MouseEvent): void { }
+    onMouseMove(_event: MouseEvent): void { }
+    onMouseUp(_event: MouseEvent): void { }
+    onContextMenu(_event: MouseEvent): void { }
+    onKeyDown(_event: KeyboardEvent): void { }
     onActivate(): void { }
     onDeactivate(): void { }
 }

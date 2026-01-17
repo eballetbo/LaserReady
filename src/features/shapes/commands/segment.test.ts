@@ -40,8 +40,8 @@ describe('Segment Commands', () => {
 
             const shapes = useStore.getState().shapes;
             const updatedShape = shapes[0];
-            const n1 = updatedShape.nodes[0];
-            const n2 = updatedShape.nodes[1];
+            const n1 = updatedShape.nodes![0];
+            const n2 = updatedShape.nodes![1];
 
             // Handles should be extended
             expect(n1.cpOut.x).toBeGreaterThan(0);
@@ -61,8 +61,8 @@ describe('Segment Commands', () => {
 
             const shapes = useStore.getState().shapes;
             const updatedShape = shapes[0];
-            const n1 = updatedShape.nodes[0];
-            const n2 = updatedShape.nodes[1];
+            const n1 = updatedShape.nodes![0];
+            const n2 = updatedShape.nodes![1];
 
             expect(n1.cpOut.x).toBe(0);
             expect(n2.cpIn.x).toBe(100);
@@ -74,8 +74,8 @@ describe('Segment Commands', () => {
             // Setup a curved segment
             const shapes = useStore.getState().shapes;
             const shape = shapes[0];
-            shape.nodes[0].cpOut = { x: 30, y: 10 };
-            shape.nodes[1].cpIn = { x: 70, y: -10 };
+            shape.nodes![0].cpOut = { x: 30, y: 10 };
+            shape.nodes![1].cpIn = { x: 70, y: -10 };
         });
 
         it('should convert a curved segment to a line', () => {
@@ -84,8 +84,8 @@ describe('Segment Commands', () => {
 
             const shapes = useStore.getState().shapes;
             const updatedShape = shapes[0];
-            const n1 = updatedShape.nodes[0];
-            const n2 = updatedShape.nodes[1];
+            const n1 = updatedShape.nodes![0];
+            const n2 = updatedShape.nodes![1];
 
             // Handles should be retracted to anchors
             expect(n1.cpOut.x).toBe(n1.x);
@@ -101,8 +101,8 @@ describe('Segment Commands', () => {
 
             const shapes = useStore.getState().shapes;
             const updatedShape = shapes[0];
-            const n1 = updatedShape.nodes[0];
-            const n2 = updatedShape.nodes[1];
+            const n1 = updatedShape.nodes![0];
+            const n2 = updatedShape.nodes![1];
 
             expect(n1.cpOut.x).toBe(30);
             expect(n1.cpOut.y).toBe(10);

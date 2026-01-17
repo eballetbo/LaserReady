@@ -6,7 +6,7 @@ import { useStore } from '../../../store/useStore';
 import { Geometry } from '../../../core/math/geometry';
 
 // Mock Geometry.isPointInBezierPath to avoid canvas API limitations in jsdom
-vi.spyOn(Geometry, 'isPointInBezierPath').mockImplementation((ctx, shape, x, y) => {
+vi.spyOn(Geometry, 'isPointInBezierPath').mockImplementation((_ctx, shape, x, y) => {
     // Simple bounding box hit test for testing
     const bounds = Geometry.calculateBoundingBox(shape.nodes || []);
     return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
@@ -476,7 +476,7 @@ describe('SelectTool - Multi-Select Move', () => {
         tool = new SelectTool(mockEditor);
 
         // Mock hitTestShape
-        (tool as any).hitTestShape = (shape: any, x: number, y: number) => {
+        (tool as any).hitTestShape = (shape: any, x: number, _y: number) => {
             if (shape.id === 's1' && x < 100) return true;
             return false;
         };

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SnapManager, SnapResult } from './snapping';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { SnapManager } from './snapping';
 import { CanvasController } from './controller';
 import { PathNode } from '../shapes/models/node';
 

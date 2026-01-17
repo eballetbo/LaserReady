@@ -40,7 +40,7 @@ export class RotateShapeCommand implements Command {
                     rotation: (shape as any).rotation
                 };
             }
-            return { type: 'other', ...shape };
+            return { ...shape, type: 'other' };
         });
     }
 

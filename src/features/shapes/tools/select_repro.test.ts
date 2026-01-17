@@ -130,7 +130,7 @@ describe('Hit Testing Reproduction', () => {
 
         expect(updatedShape).toBeInstanceOf(PathShape);
         expect(typeof updatedShape.clone).toBe('function');
-        expect(updatedShape.nodes.length).toBe(2);
+        expect(updatedShape.nodes!.length).toBe(2);
     });
 });
 

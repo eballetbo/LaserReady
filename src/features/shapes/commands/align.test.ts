@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { AlignCommand } from './align';
 import { useStore } from '../../../store/useStore';
 import { IShape } from '../types';

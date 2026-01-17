@@ -1,6 +1,6 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { Geometry, Point } from '../../../core/math/geometry';
+import { Geometry } from '../../../core/math/geometry';
 import { PathNode } from '../models/node';
 
 // Helper to clone nodes safely

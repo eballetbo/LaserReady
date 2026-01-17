@@ -34,7 +34,7 @@ export const SVGImporter = {
                 fillColor: path.fillColor ? path.fillColor.toCSS(true) : undefined
             };
 
-            shapes.push(new PathShape(nodes, path.closed, 'imported-layer', null, style)); // Added default layerId, null type, and style as params
+            shapes.push(new PathShape(nodes, path.closed, 'imported-layer', undefined, style)); // Added default layerId, null type, and style as params
         };
 
         const traverse = (node: paper.Item) => {

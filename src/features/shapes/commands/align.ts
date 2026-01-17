@@ -1,8 +1,7 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { IShape, AlignType, AlignReference } from '../types';
+import { AlignType, AlignReference } from '../types';
 import { Geometry, Rect } from '../../../core/math/geometry';
-
 export class AlignCommand implements Command {
     private shapeIds: string[];
     private alignType: AlignType;
