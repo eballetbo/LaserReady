@@ -91,3 +91,84 @@ export const SVGImporter = {
         return shapes;
     }
 };
+
+import { Geometry } from '../core/math/geometry';
+import { IShape } from '../features/shapes/types';
+
+export interface SVGImportOptions {
+    /** Optional position to center the imported shapes */
+    position?: { x: number; y: number } | null;
+    /** Layer ID to assign to all imported shapes */
+    layerId?: string;
+}
+
+/**
+ * Extended SVGImporter with high-level import functionality.
+ * Adds positioning and layer assignment on top of basic SVG parsing.
+ */
+export const SVGImportService = {
+    /**
+     * Imports an SVG string with optional positioning and layer assignment.
+     * 
+     * @param svgString - The SVG content as a string
+     * @param options - Import options (position, layerId)
+     * @returns Array of IShape objects ready to be added to the store
+     * @throws Error if SVG parsing fails or no shapes found
+     */
+    import(svgString: string, options: SVGImportOptions = {}): IShape[] {
+        const { position = null, layerId } = options;
+        
+        // Parse SVG using basic importer
+        const shapes = SVGImporter.importSVG(svgString);
+        
+        if (!shapes || shapes.length === 0) {
+            throw new Error('No valid shapes found in SVG');
+        }
+        
+        // Position shapes if a target position is provided
+        if (position) {
+            this.positionShapes(shapes, position);
+        }
+        
+        // Assign layer ID if provided
+        if (layerId) {
+            shapes.forEach(shape => shape.layerId = layerId);
+        }
+        
+        return shapes;
+    },
+    
+    /**
+     * Positions shapes by translating them so their combined center
+     * is at the specified position.
+     */
+    positionShapes(shapes: IShape[], targetPosition: { x: number; y: number }): void {
+        const bounds = Geometry.getCombinedBounds(shapes);
+        
+        if (!bounds || !bounds.width || !bounds.height) {
+            return;
+        }
+        
+        // Calculate current center
+        const centerX = bounds.minX + bounds.width / 2;
+        const centerY = bounds.minY + bounds.height / 2;
+        
+        // Calculate translation delta
+        const dx = targetPosition.x - centerX;
+        const dy = targetPosition.y - centerY;
+        
+        // Translate all shapes
+        shapes.forEach(shape => {
+            if (shape.nodes) {
+                shape.nodes.forEach(node => {
+                    node.x += dx;
+                    node.y += dy;
+                    node.cpIn.x += dx;
+                    node.cpIn.y += dy;
+                    node.cpOut.x += dx;
+                    node.cpOut.y += dy;
+                });
+            }
+        });
+    }
+};

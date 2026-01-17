@@ -1,4 +1,3 @@
-import { Geometry } from '../../core/math/geometry';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { InputManager } from './input';
@@ -10,7 +9,7 @@ import { SelectTool } from '../shapes/tools/select';
 import { TextTool } from '../shapes/tools/text';
 import { NodeEditTool } from '../shapes/tools/node';
 import { FilletTool } from '../shapes/tools/fillet';
-import { SVGImporter } from '../../utils/svg-import';
+import { SVGImportService } from '../../utils/svg-import';
 import { HistoryManager } from './history';
 import { SnapManager } from './snapping';
 import { useStore } from '../../store/useStore';
@@ -346,48 +345,20 @@ export class CanvasController {
 
     importSVGString(svgString: string, position: { x: number; y: number } | null = null) {
         try {
-            const shapes = SVGImporter.importSVG(svgString);
-            if (shapes && shapes.length > 0) {
-                this.startAction();
-
-                if (position) {
-                    const bounds = Geometry.getCombinedBounds(shapes);
-                    if (bounds) {
-                        const centerX = bounds.minX + bounds.width! / 2;
-                        const centerY = bounds.minY + bounds.height! / 2;
-                        const dx = position.x - centerX;
-                        const dy = position.y - centerY;
-
-                        shapes.forEach(shape => {
-                            if (shape.nodes) {
-                                shape.nodes.forEach(node => {
-                                    node.x += dx;
-                                    node.y += dy;
-                                    node.cpIn.x += dx;
-                                    node.cpIn.y += dy;
-                                    node.cpOut.x += dx;
-                                    node.cpOut.y += dy;
-                                });
-                            }
-                        });
-                    }
-                }
-
-                // Assign active layer to imported shapes
-                const activeLayerId = useStore.getState().activeLayerId;
-                shapes.forEach(shape => shape.layerId = activeLayerId);
-
-                useStore.getState().addShapes(shapes);
-                this.selectedShapes = shapes;
-
-                this.render();
-                this.endAction();
-            } else {
-                alert("No valid shapes found in SVG");
-            }
-        } catch (e) {
+            this.startAction();
+            
+            const shapes = SVGImportService.import(svgString, {
+                position,
+                layerId: useStore.getState().activeLayerId
+            });
+            
+            useStore.getState().addShapes(shapes);
+            this.selectedShapes = shapes;
+            this.render();
+            this.endAction();
+        } catch (e: any) {
             console.error("SVG Import Error:", e);
-            alert("Error importing SVG");
+            alert(e.message || "Error importing SVG");
         }
     }
 
