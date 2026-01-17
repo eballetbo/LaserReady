@@ -32,6 +32,13 @@ export const Geometry = {
         };
     },
 
+    /**
+     * Scales a point relative to a center origin.
+     * @param p Point to scale
+     * @param sx Scale factor X
+     * @param sy Scale factor Y
+     * @param center Origin of scaling
+     */
     scalePoint(p: Point, sx: number, sy: number, center: Point): Point {
         return {
             x: center.x + (p.x - center.x) * sx,
@@ -412,6 +419,11 @@ export const Geometry = {
             bounds.minY > rect.maxY);
     },
 
+    /**
+     * Calculates the bounding box that encompasses all provided shapes.
+     * @param shapes Array of shapes (must implement getBounds or have nodes)
+     * @returns combined Rect or null if empty
+     */
     getCombinedBounds(shapes: any[]): Rect | null {
         if (!shapes || shapes.length === 0) return null;
 
