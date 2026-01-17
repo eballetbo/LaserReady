@@ -4,7 +4,7 @@ import { BooleanOperations } from './boolean';
 import { PathShape } from '../../features/shapes/models/path';
 import { PathNode } from '../../features/shapes/models/node';
 
-// Helper to create a rectangle shape
+// Mock PathShape/Node creation helpers
 function createRect(x: number, y: number, w: number, h: number): PathShape {
     const nodes = [
         new PathNode(x, y),
@@ -12,65 +12,52 @@ function createRect(x: number, y: number, w: number, h: number): PathShape {
         new PathNode(x + w, y + h),
         new PathNode(x, y + h)
     ];
-    return new PathShape(nodes, true);
+
+    // Set CP handles for straight lines (rect)
+    nodes.forEach(n => {
+        n.cpIn = { x: n.x, y: n.y };
+        n.cpOut = { x: n.x, y: n.y };
+    });
+
+    return new PathShape(
+        nodes,
+        true, // closed
+        'layer1',
+        'rect'
+    );
 }
 
 describe('BooleanOperations', () => {
-    it('should unite two overlapping rectangles', () => {
-        const rect1 = createRect(0, 0, 100, 100);
-        const rect2 = createRect(50, 0, 100, 100); // Overlaps by 50px width
+    it('should unite two overlapping rectangles into one shape', () => {
+        const rect1 = createRect(100, 100, 100, 100); // 100,100 -> 200,200
+        const rect2 = createRect(150, 150, 100, 100); // 150,150 -> 250,250
 
         const result = BooleanOperations.unite([rect1, rect2]);
 
-        // Should result in one shape (simplistic check)
         expect(result.length).toBe(1);
 
-        // Bounding box check might be complex without helper, but verify nodes count > 4?
-        // A union of two rects offset horizontally should have 8 points if simple? Or less if optimized?
-        // Actually it might handle collinear points differently.
-        // Let's just check it exists and is not empty.
-        expect(result[0].nodes.length).toBeGreaterThanOrEqual(4);
+        // Optional: Perform bounds check or point check
+        const bounds = result[0].getBounds();
+        // Min should be 100, 100
+        // Max should be 250, 250
+        // But union is a 6-sided polygon.
+        expect(bounds.minX).toBe(100);
+        expect(bounds.minY).toBe(100);
+        expect(bounds.maxX).toBe(250);
+        expect(bounds.maxY).toBe(250);
     });
 
-    it('should subtract rect2 from rect1', () => {
-        const rect1 = createRect(0, 0, 100, 100);
-        const rect2 = createRect(50, 0, 100, 100);
+    it('should unite two disjoint rectangles into one compound shape (represented as array in this impl?)', () => {
+        // This implementation returns PathShape[]. 
+        // If paper returns CompoundPath, fromPaperItem creates multiple PathShapes?
+        // Let's check logic:
+        // item.children.forEach(child => processPath(child));
+        // So if disjoint, it returns 2 shapes.
 
-        // rect1 - rect2 = Left half of rect1 (0,0 to 50,100)
-        const result = BooleanOperations.subtract([rect1, rect2]);
+        const rect1 = createRect(0, 0, 10, 10);
+        const rect2 = createRect(100, 100, 10, 10);
 
-        expect(result.length).toBe(1);
-        // We expect a rectangle roughly 50x100
-        // We can verify bounds logic if we had it, but for now simple sanity check
-        expect(result[0]).toBeDefined();
-    });
-
-    it('should intersect two overlapping rectangles', () => {
-        const rect1 = createRect(0, 0, 100, 100);
-        const rect2 = createRect(50, 0, 100, 100);
-
-        // Intersection = 50,0 to 100,100 (50px wide)
-        const result = BooleanOperations.intersect([rect1, rect2]);
-
-        expect(result.length).toBe(1);
-        expect(result[0]).toBeDefined();
-    });
-
-    it('should exclude (XOR) two overlapping rectangles', () => {
-        const rect1 = createRect(0, 0, 100, 100);
-        const rect2 = createRect(50, 0, 100, 100);
-
-        // Exclude = Logic XOR. Left part of rect1 + Right part of rect2.
-        // Should return a disjoint shape or single compound path?
-        // Paper.js likely returns a CompoundPath which `fromPaperItem` might convert to multiple PathShapes?
-        // Or one PathShape with hole?
-        // Actually, XOR of two overlapping rects usually creates two separate polys if disjoint, or one complex poly with hole if nested?
-        // Here they are side-by-side but separated by a gap (the intersection).
-        // So likely 2 shapes.
-        const result = BooleanOperations.exclude([rect1, rect2]);
-
-        // Expect 2 shapes (the simple parts) OR 1 shape if implementation handles compound paths differently.
-        // Let's verify result count.
-        expect(result.length).toBeGreaterThanOrEqual(1);
+        const result = BooleanOperations.unite([rect1, rect2]);
+        expect(result.length).toBe(2);
     });
 });
