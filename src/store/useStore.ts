@@ -9,3 +9,9 @@ export const useStore = create<AppState>()((...a) => ({
     ...createShapesSlice(...a),
     ...createUiSlice(...a),
 }));
+
+// Expose store for E2E testing
+if (typeof window !== 'undefined') {
+    (window as any).useStore = useStore;
+    (window as any).store = useStore;
+}

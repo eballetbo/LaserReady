@@ -117,6 +117,7 @@ export default function Canvas({
             <div ref={containerRef} className="relative bg-white overflow-hidden shadow-inner">
                 <canvas
                     ref={canvasRef}
+                    data-testid="main-canvas"
                     className="block touch-none select-none outline-none w-full h-full"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
