@@ -8,7 +8,7 @@ import { LASER_MODES } from './config/laser-modes';
 import { exportToSVG, downloadSVG } from './features/io/svg-export';
 import { PIXELS_PER_MM } from './config/constants';
 import { LanguageProvider, useLanguage } from './contexts/language';
-import { SpeedInsights } from '@vercel/speed-insights/react';
+
 
 
 // --- CONSTANTS ---
@@ -312,7 +312,7 @@ function AppContent() {
                     deleteSelected={deleteSelected}
                 />
             </div>
-            <SpeedInsights />
+
         </div >
     );
 }
