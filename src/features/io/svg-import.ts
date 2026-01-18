@@ -94,6 +94,7 @@ export const SVGImporter = {
 
 import { Geometry } from '../../core/math/geometry';
 import { IShape } from '../../features/shapes/types';
+import { SVGAttributeParser } from './svg-parser';
 
 export interface SVGImportOptions {
     /** Optional position to center the imported shapes */
@@ -118,11 +119,60 @@ export const SVGImportService = {
     import(svgString: string, options: SVGImportOptions = {}): IShape[] {
         const { position = null, layerId } = options;
 
+        // Parse attributes to determine physical scale
+        const attributes = SVGAttributeParser.parseRootAttributes(svgString);
+
         // Parse SVG using basic importer
         const shapes = SVGImporter.importSVG(svgString);
 
         if (!shapes || shapes.length === 0) {
             throw new Error('No valid shapes found in SVG');
+        }
+
+        // Apply scaling if physical dimensions differ from imported dimensions
+        if (attributes && attributes.widthPx) {
+            // Calculate effective bounds of the raw import
+            const bounds = Geometry.getCombinedBounds(shapes);
+            const importedWidth = bounds ? bounds.width : 0;
+
+            let scaleFactor = 1;
+            let shouldScale = false;
+
+            if (importedWidth > 0 && Math.abs(importedWidth - attributes.widthPx) > 0.1) {
+                if (attributes.viewBox) {
+                    // If viewBox exists, trust the ratio: Physical / Imported
+                    // (Assuming imported width initially matches viewBox width in user units)
+                    scaleFactor = attributes.widthPx / importedWidth;
+                    shouldScale = true;
+                } else {
+                    // No viewBox, trust physical width overrides
+                    scaleFactor = attributes.widthPx / importedWidth;
+                    shouldScale = true;
+                }
+            }
+
+            if (shouldScale) {
+                shapes.forEach(shape => {
+                    if (shape.nodes) {
+                        shape.nodes.forEach(node => {
+                            node.x *= scaleFactor;
+                            node.y *= scaleFactor;
+                            node.cpIn.x *= scaleFactor;
+                            node.cpIn.y *= scaleFactor;
+                            node.cpOut.x *= scaleFactor;
+                            node.cpOut.y *= scaleFactor;
+                        });
+                    }
+
+                    // PathShape logic for style scaling
+                    // Cast to any to safely access potentially optional or specific properties 
+                    // without complex type guards for this patch.
+                    const s = shape as any;
+                    if (s.style && typeof s.style.strokeWidth === 'number') {
+                        s.style.strokeWidth *= scaleFactor;
+                    }
+                });
+            }
         }
 
         // Position shapes if a target position is provided
