@@ -62,55 +62,56 @@ export const BooleanOperations = {
 
     /**
      * Performs a boolean operation on an array of shapes.
-     * @returns {Array<PathShape>} Resulting shapes
+     * @returns {Array<PathShape> | null} Resulting shapes or null if failed
      */
-    perform(shapes: PathShape[], operation: BooleanOperation): PathShape[] {
+    perform(shapes: PathShape[], operation: BooleanOperation): PathShape[] | null {
         if (!shapes || shapes.length < 2) return shapes;
 
         // Convert all to paper paths
-        const items = shapes.map(s => this.toPaperPath(s));
+        let items: paper.Path[] = [];
 
-        // Perform operation sequentially
-        let result: paper.PathItem = items[0];
+        try {
+            items = shapes.map(s => this.toPaperPath(s));
 
-        // We need to cast dynamic operation name or use specific methods, but checking string works for now with any/keyof cast if needed
-        // but paper.PathItem has these methods.
+            // Perform operation sequentially
+            let result: paper.PathItem = items[0];
 
-        for (let i = 1; i < items.length; i++) {
-            const next = items[i];
-
-            // paper.js types issue: unite/subtract etc might not be on Item directly but PathItem. Path extends PathItem.
-            // result starts as Path (from toPaperPath).
-            // Boolean ops return PathItem.
-
-            switch (operation) {
-                case 'unite':
-                    result = result.unite(next);
-                    break;
-                case 'subtract':
-                    result = result.subtract(next);
-                    break;
-                case 'intersect':
-                    result = result.intersect(next);
-                    break;
-                case 'exclude':
-                    result = result.exclude(next);
-                    break;
+            for (let i = 1; i < items.length; i++) {
+                const next = items[i];
+                switch (operation) {
+                    case 'unite':
+                        result = result.unite(next);
+                        break;
+                    case 'subtract':
+                        result = result.subtract(next);
+                        break;
+                    case 'intersect':
+                        result = result.intersect(next);
+                        break;
+                    case 'exclude':
+                        result = result.exclude(next);
+                        break;
+                }
             }
+
+            // Convert result back
+            const resultShapes = this.fromPaperItem(result);
+
+            // Remove final result from scope if it's a new item (operations usually create new items)
+            if (result !== items[0]) result.remove();
+
+            return resultShapes;
+        } catch (error) {
+            console.error(`Boolean operation '${operation}' failed:`, error);
+            return null;
+        } finally {
+            // Cleanup paper items to avoid memory leaks
+            items.forEach(i => i.remove());
         }
-
-        // Convert result back
-        const resultShapes = this.fromPaperItem(result);
-
-        // Cleanup paper items to avoid memory leaks
-        items.forEach(i => i.remove());
-        if (result !== items[0]) result.remove(); // Remove final result from scope
-
-        return resultShapes;
     },
 
-    unite(shapes: PathShape[]) { return this.perform(shapes, 'unite'); },
-    subtract(shapes: PathShape[]) { return this.perform(shapes, 'subtract'); },
-    intersect(shapes: PathShape[]) { return this.perform(shapes, 'intersect'); },
-    exclude(shapes: PathShape[]) { return this.perform(shapes, 'exclude'); }
+    unite(shapes: PathShape[]): PathShape[] | null { return this.perform(shapes, 'unite'); },
+    subtract(shapes: PathShape[]): PathShape[] | null { return this.perform(shapes, 'subtract'); },
+    intersect(shapes: PathShape[]): PathShape[] | null { return this.perform(shapes, 'intersect'); },
+    exclude(shapes: PathShape[]): PathShape[] | null { return this.perform(shapes, 'exclude'); }
 };

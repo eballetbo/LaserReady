@@ -1,10 +1,10 @@
-
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { BooleanOperations } from './boolean';
 import { PathShape } from '../../features/shapes/models/path';
 import { PathNode } from '../../features/shapes/models/node';
 
-// Mock PathShape/Node creation helpers
+// ... (existing helper function)
+
 function createRect(x: number, y: number, w: number, h: number): PathShape {
     const nodes = [
         new PathNode(x, y),
@@ -35,6 +35,9 @@ describe('BooleanOperations', () => {
 
             const result = BooleanOperations.unite([rect1, rect2]);
 
+            expect(result).not.toBeNull();
+            if (!result) return;
+
             expect(result.length).toBe(1);
             const bounds = result[0].getBounds();
             expect(bounds.minX).toBe(100);
@@ -48,6 +51,10 @@ describe('BooleanOperations', () => {
             const rect2 = createRect(100, 100, 10, 10);
 
             const result = BooleanOperations.unite([rect1, rect2]);
+
+            expect(result).not.toBeNull();
+            if (!result) return;
+
             // If paper returns CompoundPath, fromPaperItem creates multiple PathShapes
             expect(result.length).toBe(2);
         });
@@ -60,6 +67,9 @@ describe('BooleanOperations', () => {
 
             // Subtract rect2 from rect1
             const result = BooleanOperations.subtract([rect1, rect2]);
+
+            expect(result).not.toBeNull();
+            if (!result) return;
 
             // Expected L-shape or similar.
             expect(result.length).toBe(1);
@@ -85,6 +95,9 @@ describe('BooleanOperations', () => {
 
             const result = BooleanOperations.intersect([rect1, rect2]);
 
+            expect(result).not.toBeNull();
+            if (!result) return;
+
             expect(result.length).toBe(1);
 
             // Intersection is 150,150 to 200,200
@@ -100,6 +113,10 @@ describe('BooleanOperations', () => {
             const rect2 = createRect(100, 100, 10, 10);
 
             const result = BooleanOperations.intersect([rect1, rect2]);
+
+            expect(result).not.toBeNull();
+            if (!result) return;
+
             // Current implementation returns 1 shape with 0 nodes for disjoint intersection
             if (result.length > 0) {
                 expect(result[0].nodes.length).toBe(0);
@@ -116,6 +133,9 @@ describe('BooleanOperations', () => {
 
             const result = BooleanOperations.exclude([rect1, rect2]);
 
+            expect(result).not.toBeNull();
+            if (!result) return;
+
             // Result should be 2 shapes? Or 1 compound shape?
             // Usually 'exclude' (XOR) returns a compound path if the single continuous path isn't possible,
             // or multiple paths.
@@ -124,6 +144,33 @@ describe('BooleanOperations', () => {
 
             // Depending on implementation, might return 1 compound path converted to >1 PathShapes, or 1 PathShape if connected.
             expect(result.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('error handling', () => {
+        it('should return null and log error when operation fails', () => {
+            const rect1 = createRect(0, 0, 10, 10);
+            const rect2 = createRect(5, 5, 10, 10);
+
+            // Mock toPaperPath to throw an error
+            const activeSpy = vi.spyOn(BooleanOperations, 'toPaperPath').mockImplementation(() => {
+                throw new Error('Simulated Paper.js error');
+            });
+
+            // Spy on console.error to suppress output during test and verify it was called
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
+            const result = BooleanOperations.unite([rect1, rect2]);
+
+            expect(result).toBeNull();
+            expect(consoleSpy).toHaveBeenCalledWith(
+                "Boolean operation 'unite' failed:",
+                expect.any(Error)
+            );
+
+            // Restore mocks
+            activeSpy.mockRestore();
+            consoleSpy.mockRestore();
         });
     });
 });
