@@ -71,7 +71,7 @@ export const BooleanOperations = {
         const items = shapes.map(s => this.toPaperPath(s));
 
         // Perform operation sequentially
-        let result: paper.Item = items[0];
+        let result: paper.PathItem = items[0];
 
         // We need to cast dynamic operation name or use specific methods, but checking string works for now with any/keyof cast if needed
         // but paper.PathItem has these methods.
@@ -83,10 +83,19 @@ export const BooleanOperations = {
             // result starts as Path (from toPaperPath).
             // Boolean ops return PathItem.
 
-            const opMethod = (result as any)[operation];
-            if (typeof opMethod === 'function') {
-                const temp = opMethod.call(result, next);
-                result = temp;
+            switch (operation) {
+                case 'unite':
+                    result = result.unite(next);
+                    break;
+                case 'subtract':
+                    result = result.subtract(next);
+                    break;
+                case 'intersect':
+                    result = result.intersect(next);
+                    break;
+                case 'exclude':
+                    result = result.exclude(next);
+                    break;
             }
         }
 
