@@ -38,18 +38,21 @@ export const exportToSVG = (shapes: PathShape[], width: number, height: number):
     const widthMM = (width / PIXELS_PER_MM).toFixed(2);
     const heightMM = (height / PIXELS_PER_MM).toFixed(2);
 
-    // Export SVG
-    let svgString = scope.project.exportSVG({
-        asString: true,
+    // Export SVG as DOM Element
+    const svg = scope.project.exportSVG({
+        asString: false,
         bounds: 'view' // preserve the canvas structure (0,0 to width,height)
-    }) as string;
+    }) as SVGElement;
 
-    // Modify the SVG tag to use physical units (mm) for width/height
-    // but keep the viewBox in pixels so the internal coordinates remain valid.
-    svgString = svgString.replace(/width="[\d.]+"/, `width="${widthMM}mm"`);
-    svgString = svgString.replace(/height="[\d.]+"/, `height="${heightMM}mm"`);
+    // Set physical units
+    svg.setAttribute('width', `${widthMM}mm`);
+    svg.setAttribute('height', `${heightMM}mm`);
 
-    return svgString;
+    // Explicitly set viewBox to pixels to ensure internal coordinates map correctly
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    // Serialize to string
+    return new XMLSerializer().serializeToString(svg);
 };
 
 export const downloadSVG = (svgString: string, filename: string = 'design.svg'): void => {
