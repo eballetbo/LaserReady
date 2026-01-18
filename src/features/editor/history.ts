@@ -6,20 +6,17 @@ import { Command } from '../../core/commands/command';
  */
 export class HistoryManager {
     private limit: number;
-    private undoStack: any[];
-    private redoStack: any[];
-    private lastStateStr: string | null;
+    private undoStack: Command[];
+    private redoStack: Command[];
 
     constructor(limit: number = 50) {
         this.limit = limit;
         this.undoStack = [];
         this.redoStack = [];
-        this.lastStateStr = null;
     }
 
     /**
-     * STEP 2: Execute a command and add it to the undo stack.
-     * This is the new Command Pattern interface.
+     * Execute a command and add it to the undo stack.
      * @param command The command to execute
      */
     execute(command: Command): void {
@@ -34,96 +31,32 @@ export class HistoryManager {
 
         // Clear redo stack on new action
         this.redoStack = [];
-
-        // Reset lastStateStr since we're using commands now
-        this.lastStateStr = null;
     }
 
     /**
-     * Pushes a new state to the history.
-     * LEGACY: For backward compatibility with state-based undo.
-     * @param state The state to save.
+     * Undo the last command.
      */
-    push(state: any): void {
-        const stateStr = JSON.stringify(state);
+    undo(): void {
+        if (this.undoStack.length === 0) return;
 
-        // Avoid duplicates
-        if (stateStr === this.lastStateStr) {
-            return;
+        const command = this.undoStack.pop();
+        if (command) {
+            command.undo();
+            this.redoStack.push(command);
         }
-
-        this.undoStack.push(state);
-        this.lastStateStr = stateStr;
-
-        if (this.undoStack.length > this.limit) {
-            this.undoStack.shift();
-        }
-        // Clear redo stack on new action
-        this.redoStack = [];
     }
 
     /**
-     * STEP 3: Command-aware undo.
-     * Detects if stack contains Commands or state snapshots.
-     * @param currentState The current state (only used for legacy state-based undo)
-     * @returns The previous state (only for legacy), or null
+     * Redo the last undone command.
      */
-    undo(currentState?: any): any | null {
-        if (this.undoStack.length === 0) return null;
+    redo(): void {
+        if (this.redoStack.length === 0) return;
 
-        const item = this.undoStack.pop();
-
-        // STEP 3: Detect if item is a Command
-        if (item && typeof item === 'object' && 'execute' in item && 'undo' in item) {
-            // It's a Command!
-            item.undo();  // Command handles restoration itself
-            this.redoStack.push(item);
-            return null;  // Commands don't return state
+        const command = this.redoStack.pop();
+        if (command) {
+            command.execute();
+            this.undoStack.push(command);
         }
-
-        // Legacy state-based undo
-        const previousState = item;
-        if (currentState !== undefined) {
-            this.redoStack.push(currentState);
-        }
-
-        // Update lastStateStr for legacy path
-        if (this.undoStack.length > 0) {
-            this.lastStateStr = JSON.stringify(this.undoStack[this.undoStack.length - 1]);
-        } else {
-            this.lastStateStr = null;
-        }
-
-        return previousState;
-    }
-
-    /**
-     * STEP 3: Command-aware redo.
-     * Detects if stack contains Commands or state snapshots.
-     * @param currentState The current state (only used for legacy state-based redo)
-     * @returns The next state (only for legacy), or null
-     */
-    redo(currentState?: any): any | null {
-        if (this.redoStack.length === 0) return null;
-
-        const item = this.redoStack.pop();
-
-        // STEP 3: Detect if item is a Command
-        if (item && typeof item === 'object' && 'execute' in item && 'undo' in item) {
-            // It's a Command!
-            item.execute();  // Re-execute the command
-            this.undoStack.push(item);
-            return null;  // Commands don't return state
-        }
-
-        // Legacy state-based redo
-        const nextState = item;
-        if (currentState !== undefined) {
-            this.undoStack.push(currentState);
-            this.lastStateStr = JSON.stringify(currentState);
-        }
-
-        return nextState;
     }
 
     canUndo(): boolean {
@@ -137,6 +70,5 @@ export class HistoryManager {
     clear(): void {
         this.undoStack = [];
         this.redoStack = [];
-        this.lastStateStr = null;
     }
 }
