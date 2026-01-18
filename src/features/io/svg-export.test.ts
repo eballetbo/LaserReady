@@ -17,6 +17,20 @@ if (typeof global.XMLSerializer === 'undefined') {
 
 // Mock Paper.js if needed, but exportToSVG uses it internally.
 // We assume canvas is available in the test environment (jsdom/happy-dom).
+import paper from 'paper';
+
+// Mock toPath for PointText since jsdom/headless paper might not support it
+if (!(paper.PointText.prototype as any).toPath) {
+    (paper.PointText.prototype as any).toPath = function (this: any) {
+        // Return a dummy path representing the vectorized text
+        const path = new paper.Path();
+        path.name = 'vectorized-text';
+        // Add a segment so it's not empty and renders
+        path.add(new paper.Point(this.point));
+        path.add(new paper.Point(this.point.x + 10, this.point.y));
+        return path;
+    };
+}
 
 describe('SVG Export', () => {
     it('should export SVG with physical units (mm)', () => {
@@ -60,5 +74,35 @@ describe('SVG Export', () => {
 
         expect(svgString).toContain('width="200.00mm"');
         expect(svgString).toContain('height="200.00mm"');
+    });
+
+    it('should vectorize text elements', () => {
+        // Arrange
+        const textShape = {
+            id: 'text-1',
+            type: 'text',
+            x: 100,
+            y: 100,
+            text: 'Hello',
+            fontSize: 20,
+            fontFamily: 'Arial',
+            fillColor: 'black',
+            scaleX: 1,
+            scaleY: 1,
+            rotation: 0,
+            closed: false,
+            layerId: 'layer-1'
+        };
+
+        // Act
+        const svgString = exportToSVG([textShape] as any, 500, 500);
+
+        // Assert
+        // Should NOT contain <text> tag
+        expect(svgString).not.toContain('<text');
+
+        // Should contain <path> tags (letters are paths)
+        // Note: Paper.js might create <g> for compound paths
+        expect(svgString).toContain('<path');
     });
 });

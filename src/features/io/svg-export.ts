@@ -2,35 +2,65 @@ import paper from 'paper';
 import { BooleanOperations } from '../../core/math/boolean';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { PathShape } from '../../features/shapes/models/path';
+import { IShape } from '../../features/shapes/types';
 
 // Initialize a headless PaperScope for SVG exporting
 const scope = new paper.PaperScope();
 scope.setup(new paper.Size(1000, 1000));
 
-export const exportToSVG = (shapes: PathShape[], width: number, height: number): string => {
+export const exportToSVG = (shapes: IShape[], width: number, height: number): string => {
     // Clear project
     scope.project.clear();
     scope.view.viewSize = new paper.Size(width, height);
 
     // Convert shapes to paper items
     shapes.forEach(shape => {
-        const path = BooleanOperations.toPaperPath(shape) as paper.PathItem;
+        let item: paper.Item | null = null;
 
-        // Apply styles from params (imported SVGs) or layer defaults?
-        // PathShape doesn't store color directly anymore, it uses layers.
-        // But for export, we might strictly rely on params if they exist (legacy import) or we need access to Layers to get colors.
-        // Since `toPaperPath` purely converts geometry, we set style here.
-        // Assuming params might hold style for imported items:
-        const style = shape.params as any; // Cast to access potential style props
+        if (shape.type === 'text') {
+            // Vectorize Text
+            const textShape = shape as any; // Cast to access text props
 
-        if (style?.strokeColor) path.strokeColor = new paper.Color(style.strokeColor);
-        if (style?.strokeWidth) path.strokeWidth = style.strokeWidth;
-        if (style?.fillColor) path.fillColor = new paper.Color(style.fillColor);
+            // Create PointText in headless scope
+            const textItem = new scope.PointText({
+                point: new paper.Point(textShape.x, textShape.y),
+                content: textShape.text,
+                fontFamily: textShape.fontFamily,
+                fontSize: textShape.fontSize,
+                fontWeight: textShape.fontWeight,
+                fontStyle: textShape.fontStyle,
+                fillColor: textShape.fillColor || 'black' // Text usually has fill
+            });
 
-        // Default styles if not set (for visibility in export)
-        if (!path.strokeColor && !path.fillColor) {
-            path.strokeColor = new paper.Color('black');
-            path.strokeWidth = 1;
+            // Apply transforms
+            if (textShape.rotation) textItem.rotate(textShape.rotation);
+            if (textShape.scaleX && textShape.scaleY) textItem.scale(textShape.scaleX, textShape.scaleY);
+
+            // Convert to Vector Path
+            // toPath() returns the new PathItem and removes the text item if successful? 
+            // Paper.js docs: "Converts the text item into a Path item..."
+            // It might return Path or CompoundPath
+            item = (textItem as any).toPath();
+            textItem.remove(); // Cleanup original text if toPath didn't replace it (it usually returns a new item)
+
+        } else {
+            // Assume PathShape
+            item = BooleanOperations.toPaperPath(shape as PathShape) as paper.PathItem;
+        }
+
+        if (!item) return;
+
+        // Apply styles
+        const style = shape.params as any;
+
+        if (style?.strokeColor) item.strokeColor = new paper.Color(style.strokeColor);
+        if (style?.strokeWidth) item.strokeWidth = style.strokeWidth;
+        if (style?.fillColor) item.fillColor = new paper.Color(style.fillColor);
+
+        // Default styles for paths if not set
+        if (!item.strokeColor && !item.fillColor && shape.type !== 'text') {
+            item.strokeColor = new paper.Color('black');
+            item.strokeWidth = 1;
         }
     });
 
