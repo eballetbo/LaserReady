@@ -216,14 +216,14 @@ function AppContent() {
                             type="number"
                             value={(material.width / PIXELS_PER_MM).toFixed(0)}
                             onChange={(e) => setMaterial({ ...material, width: Number(e.target.value) * PIXELS_PER_MM })}
-                            className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium`}
+                            className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         />
                         <span className={`text-xs ${theme.textMuted} mx-1`}>x</span>
                         <input
                             type="number"
                             value={(material.height / PIXELS_PER_MM).toFixed(0)}
                             onChange={(e) => setMaterial({ ...material, height: Number(e.target.value) * PIXELS_PER_MM })}
-                            className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium`}
+                            className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         />
                         <span className={`text-[10px] ${theme.textMuted} ml-2`}>mm</span>
                     </div>
