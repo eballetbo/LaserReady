@@ -11,7 +11,7 @@ import {
     Star,
     Type,
     Magnet,
-    CornerDownRight
+    SquareRoundCorner
 } from 'lucide-react';
 import { Button } from './components';
 import { useStore } from '../../store/useStore';
@@ -93,8 +93,8 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
             <Button
                 variant="icon"
                 active={tool === 'fillet'}
-                icon={CornerDownRight}
-                label={t('filletTool') || 'Fillet'}
+                icon={SquareRoundCorner}
+                label={t('filletTool')}
                 onClick={() => setTool('fillet')}
                 theme={theme}
             />
