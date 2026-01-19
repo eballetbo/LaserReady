@@ -1,3 +1,5 @@
+import { DEFAULT_FILL_COLOR, DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH } from './constants';
+
 export interface LaserMode {
     id: string;
     label: string;
@@ -31,8 +33,8 @@ export const LASER_MODES: LaserModes = {
     ENGRAVE: {
         id: 'engrave',
         label: 'Gravar',
-        color: '#000000',
-        strokeWidth: 0,
-        fill: '#000000'
+        color: DEFAULT_STROKE_COLOR,
+        strokeWidth: DEFAULT_STROKE_WIDTH, // Use default stroke width
+        fill: DEFAULT_FILL_COLOR
     }
 };
