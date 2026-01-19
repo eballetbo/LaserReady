@@ -67,6 +67,29 @@ export interface Translation {
     fontFamily: string;
     fontSize: string;
     convertToPath: string;
+    // Tooltips/Labels
+    handTool: string;
+    filletTool: string;
+    snap: string;
+
+    // Offset Panel
+    offsetPath: string;
+    distance: string;
+    positiveOutward: string;
+    createCopies: string;
+    joinStyle: string;
+    round: string;
+    sharp: string;
+    bevel: string;
+    apply: string;
+    cancel: string;
+
+    // Fillet Settings
+    filletSettings: string;
+    radius: string;
+
+    // Library
+    category: string;
 }
 
 export const en: Translation = {
@@ -137,4 +160,27 @@ export const en: Translation = {
     fontFamily: "Font Family",
     fontSize: "Font Size",
     convertToPath: "Convert to Path",
+    // Tooltips/Labels
+    handTool: "Hand Tool",
+    filletTool: "Fillet Tool",
+    snap: "Snap",
+
+    // Offset Panel
+    offsetPath: "Offset Path",
+    distance: "Distance",
+    positiveOutward: "Positive: Outward, Negative: Inward",
+    createCopies: "Create Copies",
+    joinStyle: "Corner Style",
+    round: "Round",
+    sharp: "Sharp (Miter)",
+    bevel: "Bevel",
+    apply: "Apply",
+    cancel: "Cancel",
+
+    // Fillet Settings
+    filletSettings: "Fillet Settings",
+    radius: "Radius",
+
+    // Asset Library
+    category: 'Category',
 };

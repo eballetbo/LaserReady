@@ -68,4 +68,27 @@ export const es: Translation = {
     fontFamily: "Fuente",
     fontSize: "Tamaño",
     convertToPath: "Convertir a Trayecto",
+    // Tooltips/Labels
+    handTool: "Herramienta Mano",
+    filletTool: "Herramienta Redondeo",
+    snap: "Ajuste",
+
+    // Offset Panel
+    offsetPath: "Desplazar Trayecto",
+    distance: "Distancia",
+    positiveOutward: "Positivo: Hacia afuera, Negativo: Hacia adentro",
+    createCopies: "Crear Copias",
+    joinStyle: "Estilo de Esquina",
+    round: "Redondo",
+    sharp: "Agudo (Inglete)",
+    bevel: "Biselado",
+    apply: "Aplicar",
+    cancel: "Cancelar",
+
+    // Fillet Settings
+    filletSettings: "Configuración de Redondeo",
+    radius: "Radio",
+
+    // Asset Library
+    category: 'Categoría',
 };
