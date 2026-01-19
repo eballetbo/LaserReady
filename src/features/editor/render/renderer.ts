@@ -27,6 +27,7 @@ import { RendererConfig } from './types';
 export class CanvasRenderer {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
+    private lineDashOffset: number = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -405,6 +406,22 @@ export class CanvasRenderer {
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = SELECTION_LINE_WIDTH / zoom;
         this.ctx.setLineDash(SELECTION_DASH_PATTERN.map(v => v / zoom));
+        this.ctx.lineDashOffset = -this.lineDashOffset / zoom;
+    }
+
+    /**
+     * Updates the dash offset for the marching ants animation.
+     * Should be called on each animation frame.
+     */
+    updateDashAnimation(deltaTime: number): void {
+        // Speed: pixels per second
+        const speed = 50;
+        this.lineDashOffset += (speed * deltaTime) / 1000;
+        // Reset to prevent overflow (sum of dash pattern)
+        const patternSum = SELECTION_DASH_PATTERN[0] + SELECTION_DASH_PATTERN[1];
+        if (this.lineDashOffset >= patternSum) {
+            this.lineDashOffset -= patternSum;
+        }
     }
 
     drawSelectionBounds(bounds: any, config: RendererConfig, zoom: number): void {

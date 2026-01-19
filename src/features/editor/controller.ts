@@ -38,6 +38,8 @@ export class CanvasController {
     pan: { x: number; y: number };
     unsubscribe: () => void;
     selectedShape?: IShape; // Temporary selection for creation tools
+    private animationFrameId: number | null = null;
+    private lastFrameTime: number = 0;
 
     constructor(canvasElement: HTMLCanvasElement, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
         this.canvas = canvasElement;
@@ -81,6 +83,15 @@ export class CanvasController {
             if (state.isSnappingEnabled !== this.snapManager.settings.enabled) {
                 this.snapManager.settings.enabled = state.isSnappingEnabled;
             }
+
+            // Manage animation based on selection state
+            const hasSelection = state.selectedShapes.length > 0 && state.tool === 'select';
+            if (hasSelection && !this.animationFrameId) {
+                this.startSelectionAnimation();
+            } else if (!hasSelection && this.animationFrameId) {
+                this.stopSelectionAnimation();
+            }
+
             this.render();
         });
 
@@ -136,8 +147,29 @@ export class CanvasController {
 
 
     dispose() {
+        this.stopSelectionAnimation();
         this.inputManager.dispose();
         if (this.unsubscribe) this.unsubscribe();
+    }
+
+    private startSelectionAnimation(): void {
+        if (this.animationFrameId) return;
+        this.lastFrameTime = performance.now();
+        const animate = (currentTime: number) => {
+            const deltaTime = currentTime - this.lastFrameTime;
+            this.lastFrameTime = currentTime;
+            this.renderer.updateDashAnimation(deltaTime);
+            this.render();
+            this.animationFrameId = requestAnimationFrame(animate);
+        };
+        this.animationFrameId = requestAnimationFrame(animate);
+    }
+
+    private stopSelectionAnimation(): void {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
     }
 
     getMousePos(evt: MouseEvent) {
