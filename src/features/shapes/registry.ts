@@ -279,7 +279,7 @@ export class StarTool extends BaseTool {
         this.isDragging = false;
         this.dragStart = null;
         this.points = points;
-        this.innerRadius = innerRadius; // Ratio 0-1
+        this.innerRadius = innerRadius; // Ratio 0-1 relative to outer radius
     }
 
     onMouseDown(e: MouseEvent): void {
@@ -287,6 +287,7 @@ export class StarTool extends BaseTool {
         this.isDragging = true;
         this.dragStart = { x, y };
 
+        // Initial shape with 0 radius at click point
         const nodes: PathNode[] = [];
         for (let i = 0; i < this.points * 2; i++) {
             nodes.push(new PathNode(x, y));
@@ -299,57 +300,47 @@ export class StarTool extends BaseTool {
     }
 
     onMouseMove(e: MouseEvent): void {
-        if (!this.isDragging || !this.editor.selectedShape) return;
+        if (!this.isDragging || !this.editor.selectedShape || !this.dragStart) return;
         const { x, y } = this.editor.getMousePos(e);
 
-        let w = x - this.dragStart!.x;
-        let h = y - this.dragStart!.y;
+        // Center-to-Tip Logic
+        // Center is dragStart
+        const cx = this.dragStart.x;
+        const cy = this.dragStart.y;
 
-        if (e.shiftKey) {
-            const d = Math.max(Math.abs(w), Math.abs(h));
-            w = d * Math.sign(w || 1);
-            h = d * Math.sign(h || 1);
-        }
+        // Vector from Center to Mouse
+        const dx = x - cx;
+        const dy = y - cy;
+
+        // Radius is distance
+        const radius = Math.sqrt(dx * dx + dy * dy);
+
+        // Rotation is angle of mouse vector
+        // We want the first point (i=0) to align with this angle
+        const rotation = Math.atan2(dy, dx);
 
         const points = this.points;
         const n = this.editor.selectedShape.nodes;
-        const destX = this.dragStart!.x;
-        const destY = this.dragStart!.y;
 
-        // Calculate unit star vertices (radius 1)
-        const unitPoints: Point[] = [];
-        let uMinX = Infinity, uMinY = Infinity, uMaxX = -Infinity, uMaxY = -Infinity;
-
-        // For Star, we have Outer (R=1) and Inner (R=innerRadius) vertices
-        // We need to compute bounds of the STAR shape itself.
+        // Generate points
         for (let i = 0; i < points * 2; i++) {
             const isOuter = i % 2 === 0;
-            const r = isOuter ? 1 : this.innerRadius;
-            const angle = (i * Math.PI / points) - Math.PI / 2;
+            const r = isOuter ? radius : radius * this.innerRadius;
 
-            const px = r * Math.cos(angle);
-            const py = r * Math.sin(angle);
+            // Angle mapping:
+            // i=0 is Outer, angle = rotation.
+            // i=1 is Inner
+            // Step is PI / points
+            const angle = rotation + i * (Math.PI / points);
 
-            unitPoints.push({ x: px, y: py });
-            uMinX = Math.min(uMinX, px);
-            uMinY = Math.min(uMinY, py);
-            uMaxX = Math.max(uMaxX, px);
-            uMaxY = Math.max(uMaxY, py);
-        }
+            n[i].x = cx + r * Math.cos(angle);
+            n[i].y = cy + r * Math.sin(angle);
 
-        const uW = uMaxX - uMinX;
-        const uH = uMaxY - uMinY;
-
-        for (let i = 0; i < points * 2; i++) {
-            const up = unitPoints[i];
-            const relX = (up.x - uMinX) / (uW || 1);
-            const relY = (up.y - uMinY) / (uH || 1);
-
-            n[i].x = destX + relX * w;
-            n[i].y = destY + relY * h;
+            // Star lines are straight, so handles are at vertices
             n[i].cpIn = { x: n[i].x, y: n[i].y };
             n[i].cpOut = { x: n[i].x, y: n[i].y };
         }
+
         this.editor.render();
     }
 
