@@ -213,17 +213,42 @@ export class PolygonTool extends BaseTool {
             h = d * Math.sign(h || 1);
         }
 
-        const rx = Math.abs(w) / 2;
-        const ry = Math.abs(h) / 2;
-        const cx = this.dragStart!.x + w / 2;
-        const cy = this.dragStart!.y + h / 2;
         const sides = this.sides;
         const n = this.editor.selectedShape.nodes;
 
+        // Calculate unit polygon vertices (radius 1, centered at 0)
+        // Note: We use the same angle logic as before to preserve orientation
+        const unitPoints: Point[] = [];
+        let uMinX = Infinity, uMinY = Infinity, uMaxX = -Infinity, uMaxY = -Infinity;
+
         for (let i = 0; i < sides; i++) {
             const angle = (i * 2 * Math.PI / sides) - Math.PI / 2;
-            n[i].x = cx + rx * Math.cos(angle);
-            n[i].y = cy + ry * Math.sin(angle);
+            const px = Math.cos(angle);
+            const py = Math.sin(angle);
+            unitPoints.push({ x: px, y: py });
+            uMinX = Math.min(uMinX, px);
+            uMinY = Math.min(uMinY, py);
+            uMaxX = Math.max(uMaxX, px);
+            uMaxY = Math.max(uMaxY, py);
+        }
+
+        const uW = uMaxX - uMinX;
+        const uH = uMaxY - uMinY;
+
+        // Map unit polygon vertices to the drag bounding box.
+        // This ensures the shape's bounds exactly match the drag area, allowing "Fit to Bounds" behavior.
+        const destX = this.dragStart!.x;
+        const destY = this.dragStart!.y;
+
+        for (let i = 0; i < sides; i++) {
+            const up = unitPoints[i];
+            // Normalize to 0..1 relative to its own bounds
+            const relX = (up.x - uMinX) / (uW || 1); // Avoid div zero
+            const relY = (up.y - uMinY) / (uH || 1);
+
+            n[i].x = destX + relX * w;
+            n[i].y = destY + relY * h;
+
             n[i].cpIn = { x: n[i].x, y: n[i].y };
             n[i].cpOut = { x: n[i].x, y: n[i].y };
         }
@@ -286,27 +311,42 @@ export class StarTool extends BaseTool {
             h = d * Math.sign(h || 1);
         }
 
-        const rx = Math.abs(w) / 2;
-        const ry = Math.abs(h) / 2;
-        const cx = this.dragStart!.x + w / 2;
-        const cy = this.dragStart!.y + h / 2;
-
-        const outerRx = rx;
-        const outerRy = ry;
-        const innerRx = rx * this.innerRadius;
-        const innerRy = ry * this.innerRadius;
-
         const points = this.points;
         const n = this.editor.selectedShape.nodes;
+        const destX = this.dragStart!.x;
+        const destY = this.dragStart!.y;
 
+        // Calculate unit star vertices (radius 1)
+        const unitPoints: Point[] = [];
+        let uMinX = Infinity, uMinY = Infinity, uMaxX = -Infinity, uMaxY = -Infinity;
+
+        // For Star, we have Outer (R=1) and Inner (R=innerRadius) vertices
+        // We need to compute bounds of the STAR shape itself.
         for (let i = 0; i < points * 2; i++) {
             const isOuter = i % 2 === 0;
-            const rX = isOuter ? outerRx : innerRx;
-            const rY = isOuter ? outerRy : innerRy;
-
+            const r = isOuter ? 1 : this.innerRadius;
             const angle = (i * Math.PI / points) - Math.PI / 2;
-            n[i].x = cx + rX * Math.cos(angle);
-            n[i].y = cy + rY * Math.sin(angle);
+
+            const px = r * Math.cos(angle);
+            const py = r * Math.sin(angle);
+
+            unitPoints.push({ x: px, y: py });
+            uMinX = Math.min(uMinX, px);
+            uMinY = Math.min(uMinY, py);
+            uMaxX = Math.max(uMaxX, px);
+            uMaxY = Math.max(uMaxY, py);
+        }
+
+        const uW = uMaxX - uMinX;
+        const uH = uMaxY - uMinY;
+
+        for (let i = 0; i < points * 2; i++) {
+            const up = unitPoints[i];
+            const relX = (up.x - uMinX) / (uW || 1);
+            const relY = (up.y - uMinY) / (uH || 1);
+
+            n[i].x = destX + relX * w;
+            n[i].y = destY + relY * h;
             n[i].cpIn = { x: n[i].x, y: n[i].y };
             n[i].cpOut = { x: n[i].x, y: n[i].y };
         }
