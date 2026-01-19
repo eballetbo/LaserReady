@@ -90,16 +90,17 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
                 onClick={() => setTool('node-edit')}
                 theme={theme}
             />
-            <Button
-                variant="icon"
-                active={tool === 'fillet'}
-                icon={SquareRoundCorner}
-                label={t('filletTool')}
-                onClick={() => setTool('fillet')}
-                theme={theme}
-            />
 
             <div className="h-px w-6 bg-gray-200 my-1" />
+
+            <Button
+                variant="icon"
+                active={tool === 'pen'}
+                icon={PenLine}
+                label={t('penTool')}
+                onClick={() => setTool('pen')}
+                theme={theme}
+            />
 
             {/* Shape Tools with Submenu */}
             <Button
@@ -113,20 +114,24 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
                 submenuContent={shapeSubmenu}
             />
 
-            <Button
-                variant="icon"
-                active={tool === 'pen'}
-                icon={PenLine}
-                label={t('penTool')}
-                onClick={() => setTool('pen')}
-                theme={theme}
-            />
+
             <Button
                 variant="icon"
                 active={tool === 'text'}
                 icon={Type}
                 label={t('textTool')}
                 onClick={() => setTool('text')}
+                theme={theme}
+            />
+
+            <div className="h-px w-6 bg-gray-200 my-1" />
+
+            <Button
+                variant="icon"
+                active={tool === 'fillet'}
+                icon={SquareRoundCorner}
+                label={t('filletTool')}
+                onClick={() => setTool('fillet')}
                 theme={theme}
             />
 
