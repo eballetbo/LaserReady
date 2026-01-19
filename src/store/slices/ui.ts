@@ -25,7 +25,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     tool: 'select',
     zoom: 1,
     pan: { x: 0, y: 0 },
-    isDarkMode: true,
+    isDarkMode: false,
     material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
     selectedNodeIndices: [],
     isSnappingEnabled: true,
