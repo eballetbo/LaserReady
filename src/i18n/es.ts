@@ -72,6 +72,7 @@ export const es: Translation = {
     handTool: "Herramienta Mano",
     filletTool: "Herramienta Redondeo",
     snap: "Ajuste",
+    offsetTool: "Herramienta Desplazamiento",
 
     // Offset Panel
     offsetPath: "Desplazar Trayecto",

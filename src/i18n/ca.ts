@@ -72,6 +72,7 @@ export const ca: Translation = {
     handTool: "Eina Mà",
     filletTool: "Eina Arrodoniment",
     snap: "Ajust",
+    offsetTool: "Eina Desplaçament",
 
     // Offset Panel
     offsetPath: "Desplaçar Traçat",

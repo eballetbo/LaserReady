@@ -48,7 +48,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     const [points, setPoints] = useState(5);
     const [innerRadius, setInnerRadius] = useState(0.382);
     const [alignToPage, setAlignToPage] = useState(false);
-    const [showOffsetPanel, setShowOffsetPanel] = useState(false);
+
     const tool = useStore(state => state.tool);
     const filletRadius = useStore(state => state.filletRadius || 5);
 
@@ -182,6 +182,22 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                         <span className="text-xs text-muted-foreground ml-2">mm</span>
                     </div>
                 </div>
+            )}
+
+            {tool === 'offset' && (
+                <OffsetPanel
+                    theme={theme}
+                    onApply={(_dist, opts) => {
+                        if (editor && selection.length > 0) {
+                            const ids = selection.map(s => s.id);
+                            editor.history.execute(new OffsetCommand(ids, opts));
+                            editor.render();
+                            // Switch back to select tool after apply
+                            useStore.setState({ tool: 'select' });
+                        }
+                    }}
+                    onCancel={() => useStore.setState({ tool: 'select' })}
+                />
             )}
 
             {hasSelection ? (
@@ -685,29 +701,14 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                             <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>
                             <div className="space-y-4">
 
-                                {/* Offset Panel Integration */}
-                                {showOffsetPanel ? (
-                                    <OffsetPanel
-                                        theme={theme}
-                                        onApply={(_dist, opts) => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
-                                                editor.history.execute(new OffsetCommand(ids, opts));
-                                                editor.render();
-                                                setShowOffsetPanel(false);
-                                            }
-                                        }}
-                                        onCancel={() => setShowOffsetPanel(false)}
-                                    />
-                                ) : (
-                                    <Button
-                                        variant="iconText"
-                                        onClick={() => setShowOffsetPanel(true)}
-                                        icon={Scaling}
-                                        label={t('offsetPath') || 'Offset Path'}
-                                        theme={theme}
-                                    />
-                                )}
+                                {/* Offset Button in Operations (optional shortcut) */}
+                                <Button
+                                    variant="iconText"
+                                    onClick={() => useStore.setState({ tool: 'offset' })} // Activate tool
+                                    icon={Scaling}
+                                    label={t('offsetPath') || 'Offset Path'}
+                                    theme={theme}
+                                />
 
                                 {/* Boolean Ops (Only if multiple) */}
                                 {selection.length > 1 && (

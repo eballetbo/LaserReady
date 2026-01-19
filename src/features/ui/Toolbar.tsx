@@ -11,7 +11,8 @@ import {
     Star,
     Type,
     Magnet,
-    SquareRoundCorner
+    SquareRoundCorner,
+    Scaling
 } from 'lucide-react';
 import { Button } from './components';
 import { useStore } from '../../store/useStore';
@@ -132,6 +133,16 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
                 icon={SquareRoundCorner}
                 label={t('filletTool')}
                 onClick={() => setTool('fillet')}
+                theme={theme}
+            />
+
+            {/* Offset Tool */}
+            <Button
+                variant="icon"
+                active={tool === 'offset'}
+                icon={Scaling}
+                label={t('offsetTool')}
+                onClick={() => setTool('offset')}
                 theme={theme}
             />
 

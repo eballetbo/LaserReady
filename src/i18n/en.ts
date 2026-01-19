@@ -71,6 +71,7 @@ export interface Translation {
     handTool: string;
     filletTool: string;
     snap: string;
+    offsetTool: string;
 
     // Offset Panel
     offsetPath: string;
@@ -164,6 +165,7 @@ export const en: Translation = {
     handTool: "Hand Tool",
     filletTool: "Fillet Tool",
     snap: "Snap",
+    offsetTool: "Offset Tool",
 
     // Offset Panel
     offsetPath: "Offset Path",
