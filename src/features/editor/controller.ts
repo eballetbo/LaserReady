@@ -1,4 +1,4 @@
-import { DEFAULT_GRID_SPACING } from '../../config/constants';
+import { EDITOR_CONFIG } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
@@ -49,15 +49,7 @@ export class CanvasController {
         this.snapManager = new SnapManager(this);
 
         this.config = {
-            anchorSize: 8,
-            handleRadius: 5,
-            colorAnchor: '#007bff',
-            colorHandle: '#ff3333',
-            colorHandleLine: '#ffaaaa',
-            colorStroke: '#333',
-            colorFill: 'rgba(0, 123, 255, 0.05)',
-            colorSelection: 'rgba(0, 123, 255, 0.1)',
-            gridSpacing: DEFAULT_GRID_SPACING,
+            ...EDITOR_CONFIG,
             ...options
         };
 

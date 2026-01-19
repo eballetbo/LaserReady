@@ -14,7 +14,7 @@ export const DEFAULT_GRID_LINE_WIDTH = 1;
 // ========================================
 // COLORS
 // ========================================
-export const SELECTION_COLOR = '#00a8ff';
+export const SELECTION_COLOR = '#555555';
 export const ANCHOR_COLOR = '#007bff';
 export const HANDLE_COLOR = '#ff3333';
 export const HANDLE_LINE_COLOR = '#ffaaaa';
@@ -41,7 +41,7 @@ export const NODE_SKELETON_WIDTH = 0.5;
 export const NODE_HANDLE_CIRCLE_RADIUS = 3;
 export const DEFAULT_STROKE_WIDTH = 1;
 export const SELECTION_LINE_WIDTH = 2;
-export const SELECTION_DASH_PATTERN = [4, 4] as const;
+export const SELECTION_DASH_PATTERN = [10, 15] as const;
 export const PEN_DASH_PATTERN = [5, 5] as const;
 export const ROTATION_HANDLE_OFFSET = 20;
 

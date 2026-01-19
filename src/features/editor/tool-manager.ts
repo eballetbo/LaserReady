@@ -57,6 +57,11 @@ export class ToolManager {
             this.activeTool.onDeactivate();
         }
 
+        // Clear selection when switching away from select tool
+        if (this._currentToolType === 'select' && type !== 'select' && type !== 'node-edit') {
+            useStore.getState().setSelectedShapes([]);
+        }
+
         this._currentToolType = type;
         this.activeTool = this.tools[type] || this.tools.select;
 

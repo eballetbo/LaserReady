@@ -6,10 +6,10 @@ import {
     DEFAULT_GRID_LINE_WIDTH,
     DEFAULT_LAYER_COLOR,
     DEFAULT_STROKE_WIDTH,
-    SELECTION_LINE_WIDTH,
     PEN_PREVIEW_COLOR,
     PEN_DASH_PATTERN,
     SELECTION_DASH_PATTERN,
+    SELECTION_LINE_WIDTH,
     ROTATION_HANDLE_OFFSET,
     DEFAULT_FONT_SIZE,
     DEFAULT_FONT_FAMILY,
@@ -182,7 +182,7 @@ export class CanvasRenderer {
         if (shape.type === 'group') {
             this.drawGroup(shape, isSelected, selectedShapes, layers, config, toolType, zoom);
         } else if (shape.type === 'text') {
-            this.drawText(shape, isSelected, config, layerColor, layerMode);
+            this.drawText(shape, isSelected, config, layerColor, layerMode, zoom);
         } else {
             this.drawPath(shape, isSelected, config, layerColor, layerMode, zoom);
         }
@@ -271,25 +271,18 @@ export class CanvasRenderer {
         // 2. Stroke Width Override
         const strokeWidth = shape.strokeWidth !== undefined ? shape.strokeWidth : DEFAULT_STROKE_WIDTH;
 
-        // 3. Stroke Color Override
-        const strokeColor = isSelected ? config.colorSelection : (shape.strokeColor || layerColor);
-
-        this.ctx.strokeStyle = strokeColor;
-        this.ctx.lineWidth = Math.max(strokeWidth, 1 / zoom);
-        this.ctx.stroke();
-
-        // Selection overlay (always draw if selected, to show selection even if shape is invisible)
+        // 3. Stroke Color and Style
         if (isSelected) {
-            this.ctx.strokeStyle = config.colorSelection;
-            this.ctx.strokeStyle = config.colorSelection;
-            this.ctx.lineWidth = SELECTION_LINE_WIDTH;
-            this.ctx.setLineDash([...SELECTION_DASH_PATTERN]);
-            this.ctx.stroke();
-            this.ctx.setLineDash([]);
-            // Optional: Extra fill for selection
-            this.ctx.fillStyle = config.colorSelection;
-            this.ctx.fill();
+            // Selected: Use grey dashed stroke
+            this.setSelectionStyle(zoom, config.colorSelection);
+        } else {
+            // Normal: Use shape/layer color
+            const strokeColor = shape.strokeColor || layerColor;
+            this.ctx.strokeStyle = strokeColor;
+            this.ctx.lineWidth = Math.max(strokeWidth, 1 / zoom);
         }
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
     }
 
     drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndices: number[], zoom: number, config: RendererConfig): void {
@@ -408,10 +401,16 @@ export class CanvasRenderer {
         });
     }
 
+    private setSelectionStyle(zoom: number, color: string): void {
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = SELECTION_LINE_WIDTH / zoom;
+        this.ctx.setLineDash(SELECTION_DASH_PATTERN.map(v => v / zoom));
+    }
+
     drawSelectionBounds(bounds: any, config: RendererConfig, zoom: number): void {
         const anchorSize = config.anchorSize / zoom;
         const handleRadius = config.handleRadius / zoom;
-        const lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
+        const lineWidth = DEFAULT_STROKE_WIDTH / zoom;
         const rotationHandleOffset = ROTATION_HANDLE_OFFSET / zoom;
 
         // Draw rotation handle
@@ -428,11 +427,9 @@ export class CanvasRenderer {
         this.drawCircle(handleX, handleY, handleRadius, config.colorSelection);
 
         // Draw bounding box
-        this.ctx.strokeStyle = config.colorSelection;
-        this.ctx.lineWidth = lineWidth;
-        this.ctx.setLineDash([...SELECTION_DASH_PATTERN]);
-        this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
-        this.ctx.setLineDash([]);
+        // this.setSelectionStyle(zoom, config.colorSelection);
+        // this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
+        // this.ctx.setLineDash([]);
 
         // Draw 8 resize handles
         this.ctx.fillStyle = config.colorAnchor;
@@ -487,7 +484,7 @@ export class CanvasRenderer {
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
     }
 
-    drawText(textObject: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode): void {
+    drawText(textObject: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
         this.ctx.save();
 
         // Font settings
@@ -529,11 +526,7 @@ export class CanvasRenderer {
             // This might be expensive if using measure
             // Ideally textObject has a `getBounds()` method we can assume exists
             const bounds = textObject.getBounds ? textObject.getBounds() : { minX: textObject.x, minY: textObject.y, width: 100, height: 20 };
-            this.ctx.strokeStyle = config.colorSelection;
-            this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
-            this.ctx.strokeStyle = config.colorSelection;
-            this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
-            this.ctx.setLineDash([...SELECTION_DASH_PATTERN]);
+            this.setSelectionStyle(zoom, config.colorSelection);
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
             this.ctx.setLineDash([]);
         }
