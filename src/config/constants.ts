@@ -41,6 +41,7 @@ export const NODE_SKELETON_WIDTH = 0.5;
 export const NODE_HANDLE_CIRCLE_RADIUS = 3;
 export const DEFAULT_STROKE_WIDTH = 1;
 export const SELECTION_LINE_WIDTH = 2;
+export const SELECTION_DASH_PATTERN = [4, 4] as const;
 export const PEN_DASH_PATTERN = [5, 5] as const;
 export const ROTATION_HANDLE_OFFSET = 20;
 

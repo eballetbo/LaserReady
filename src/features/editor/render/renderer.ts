@@ -9,6 +9,7 @@ import {
     SELECTION_LINE_WIDTH,
     PEN_PREVIEW_COLOR,
     PEN_DASH_PATTERN,
+    SELECTION_DASH_PATTERN,
     ROTATION_HANDLE_OFFSET,
     DEFAULT_FONT_SIZE,
     DEFAULT_FONT_FAMILY,
@@ -280,8 +281,11 @@ export class CanvasRenderer {
         // Selection overlay (always draw if selected, to show selection even if shape is invisible)
         if (isSelected) {
             this.ctx.strokeStyle = config.colorSelection;
+            this.ctx.strokeStyle = config.colorSelection;
             this.ctx.lineWidth = SELECTION_LINE_WIDTH;
+            this.ctx.setLineDash([...SELECTION_DASH_PATTERN]);
             this.ctx.stroke();
+            this.ctx.setLineDash([]);
             // Optional: Extra fill for selection
             this.ctx.fillStyle = config.colorSelection;
             this.ctx.fill();
@@ -426,7 +430,9 @@ export class CanvasRenderer {
         // Draw bounding box
         this.ctx.strokeStyle = config.colorSelection;
         this.ctx.lineWidth = lineWidth;
+        this.ctx.setLineDash([...SELECTION_DASH_PATTERN]);
         this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
+        this.ctx.setLineDash([]);
 
         // Draw 8 resize handles
         this.ctx.fillStyle = config.colorAnchor;
@@ -525,7 +531,11 @@ export class CanvasRenderer {
             const bounds = textObject.getBounds ? textObject.getBounds() : { minX: textObject.x, minY: textObject.y, width: 100, height: 20 };
             this.ctx.strokeStyle = config.colorSelection;
             this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
+            this.ctx.strokeStyle = config.colorSelection;
+            this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
+            this.ctx.setLineDash([...SELECTION_DASH_PATTERN]);
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
+            this.ctx.setLineDash([]);
         }
     }
 
