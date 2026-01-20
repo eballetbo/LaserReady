@@ -9,7 +9,6 @@ import {
     PEN_PREVIEW_COLOR,
     SELECTION_DASH_PATTERN,
     SELECTION_DASH_SPEED,
-    SELECTION_LINE_WIDTH,
     ROTATION_HANDLE_OFFSET,
     DEFAULT_FONT_SIZE,
     DEFAULT_FONT_FAMILY,
@@ -78,7 +77,7 @@ export class CanvasRenderer {
         const step = spacing;
 
         this.ctx.strokeStyle = DEFAULT_GRID_COLOR;
-        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
+        this.ctx.lineWidth = DEFAULT_STROKE_WIDTH / zoom;
 
         this.ctx.beginPath();
 
@@ -404,7 +403,7 @@ export class CanvasRenderer {
 
     private setSelectionStyle(zoom: number, color: string): void {
         this.ctx.strokeStyle = color;
-        this.ctx.lineWidth = SELECTION_LINE_WIDTH / zoom;
+        this.ctx.lineWidth = DEFAULT_STROKE_WIDTH / zoom;
         this.ctx.setLineDash(SELECTION_DASH_PATTERN.map(v => v / zoom));
         this.ctx.lineDashOffset = -this.lineDashOffset / zoom;
     }
