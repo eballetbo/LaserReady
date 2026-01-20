@@ -1,5 +1,4 @@
-
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { exportToSVG } from './svg-export';
 import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
