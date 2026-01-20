@@ -21,7 +21,7 @@ export const HANDLE_LINE_COLOR = '#ffaaaa';
 export const DEFAULT_STROKE_COLOR = '#333';
 export const DEFAULT_FILL_COLOR = 'rgba(0, 123, 255, 0.05)';
 export const DEFAULT_LAYER_COLOR = '#000000';
-export const PEN_PREVIEW_COLOR = '#999';
+export const PEN_PREVIEW_COLOR = '#000000';
 
 export const NODE_SKELETON_COLOR = '#888888';
 export const NODE_CORNER_COLOR = '#0000FF'; // Blue

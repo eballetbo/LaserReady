@@ -7,7 +7,6 @@ import {
     DEFAULT_LAYER_COLOR,
     DEFAULT_STROKE_WIDTH,
     PEN_PREVIEW_COLOR,
-    PEN_DASH_PATTERN,
     SELECTION_DASH_PATTERN,
     SELECTION_DASH_SPEED,
     SELECTION_LINE_WIDTH,
@@ -150,7 +149,7 @@ export class CanvasRenderer {
 
         // Draw preview line for Pen tool
         if (toolType === 'pen' && activePath && previewPoint) {
-            this.drawPenPreview(activePath, previewPoint, previewOrigin);
+            this.drawPenPreview(activePath, previewPoint, zoom, previewOrigin);
         }
 
 
@@ -473,7 +472,7 @@ export class CanvasRenderer {
         this.ctx.fill();
     }
 
-    drawPenPreview(activePath: any, previewPoint: { x: number; y: number }, origin: { x: number; y: number } | null = null): void {
+    drawPenPreview(activePath: any, previewPoint: { x: number; y: number }, zoom: number, origin: { x: number; y: number } | null = null): void {
         if (!activePath.nodes || activePath.nodes.length === 0) return;
 
         let startPoint = origin;
@@ -486,8 +485,7 @@ export class CanvasRenderer {
         this.ctx.moveTo(startPoint.x, startPoint.y);
         this.ctx.lineTo(previewPoint.x, previewPoint.y);
         this.ctx.strokeStyle = PEN_PREVIEW_COLOR;
-        this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
-        this.ctx.setLineDash([...PEN_DASH_PATTERN]);
+        this.ctx.lineWidth = DEFAULT_STROKE_WIDTH / zoom;
         this.ctx.stroke();
         this.ctx.setLineDash([]);
     }
