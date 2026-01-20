@@ -9,6 +9,7 @@ import {
     PEN_PREVIEW_COLOR,
     PEN_DASH_PATTERN,
     SELECTION_DASH_PATTERN,
+    SELECTION_DASH_SPEED,
     SELECTION_LINE_WIDTH,
     ROTATION_HANDLE_OFFSET,
     DEFAULT_FONT_SIZE,
@@ -414,9 +415,7 @@ export class CanvasRenderer {
      * Should be called on each animation frame.
      */
     updateDashAnimation(deltaTime: number): void {
-        // Speed: pixels per second
-        const speed = 50;
-        this.lineDashOffset += (speed * deltaTime) / 1000;
+        this.lineDashOffset += (SELECTION_DASH_SPEED * deltaTime) / 1000;
         // Reset to prevent overflow (sum of dash pattern)
         const patternSum = SELECTION_DASH_PATTERN[0] + SELECTION_DASH_PATTERN[1];
         if (this.lineDashOffset >= patternSum) {
