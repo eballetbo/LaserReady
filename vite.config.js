@@ -22,6 +22,18 @@ export default defineConfig(({ mode }) => {
         renderer: {},
       }),
     ],
+    build: {
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'paper-vendor' : ['paper'],
+            'react-vendor': ['react', 'react-dom'],
+            'ui-libs': ['lucide-react'], 
+          },
+        },
+      },
+    },
     base: isElectron ? './' : '/',
     test: {
       globals: true,
