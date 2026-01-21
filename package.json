@@ -12,7 +12,8 @@
     "build:linux": "npm run build && electron-builder --linux flatpak",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "test:e2e": "npx playwright test --reporter=line"
   },
   "build": {
     "appId": "com.laserready.app",
