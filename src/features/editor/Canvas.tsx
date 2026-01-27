@@ -21,6 +21,7 @@ export default function Canvas({
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const editorRef = useRef<CanvasController | null>(null);
+    const hasPerformedInitialFit = useRef(false);
 
     // Initial Setup
     useEffect(() => {
@@ -65,6 +66,12 @@ export default function Canvas({
                     canvasRef.current.width = clientWidth;
                     canvasRef.current.height = clientHeight;
                     editorRef.current.render();
+
+                    // Initial Fit to Screen once we have valid dimensions
+                    if (!hasPerformedInitialFit.current && clientWidth > 0 && clientHeight > 0) {
+                        editorRef.current.fitToScreen();
+                        hasPerformedInitialFit.current = true;
+                    }
                 }
             }
         });
