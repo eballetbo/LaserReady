@@ -29,7 +29,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
     selectedNodeIndices: [],
     isSnappingEnabled: false,
-    filletRadius: 5,
+    filletRadius: 5 * PIXELS_PER_MM,
     setTool: (tool) => set({ tool }),
     setZoom: (zoom) => set({ zoom }),
     setPan: (pan) => set({ pan }),

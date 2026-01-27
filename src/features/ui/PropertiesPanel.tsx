@@ -173,8 +173,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     <div className="flex gap-2 items-center">
                         <NumberInput
                             label={t('radius') || 'Radius'}
-                            value={filletRadius}
-                            onChange={(v) => useStore.getState().setFilletRadius(Number(v))}
+                            value={Number((filletRadius / PIXELS_PER_MM).toFixed(2))}
+                            onChange={(v) => useStore.getState().setFilletRadius(Number(v) * PIXELS_PER_MM)}
                             theme={theme}
                             min={0}
                             step={1}
