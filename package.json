@@ -2,6 +2,11 @@
   "name": "laser-ready",
   "private": true,
   "version": "0.0.0",
+  "description": "A simple laser cutting software",
+  "author": {
+    "name": "Enric Balletbo i Serra",
+    "email": "eballetbo@gmail.com"
+  },
   "license": "GPL-3.0",
   "type": "module",
   "main": "dist-electron/main.js",
