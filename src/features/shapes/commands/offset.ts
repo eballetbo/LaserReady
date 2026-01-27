@@ -27,6 +27,8 @@ export class OffsetCommand implements Command {
         const { shapes, addShapes, removeShapes, setSelectedShapes } = useStore.getState();
         const targets = shapes.filter(s => this.shapeIds.includes(s.id));
 
+
+
         if (targets.length === 0) return;
 
         // If we already ran this (redo), we just re-apply the changes

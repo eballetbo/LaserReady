@@ -4,13 +4,12 @@ import { useLanguage } from '../../contexts/language';
 import {
     Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink,
     AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-    AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter, Scaling,
+    AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
 } from 'lucide-react';
 import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, IconSegmentCurve, IconNodeBreak, IconDeleteNode, IconNodeAdd, IconNodeJoin, IconJoinSegment, IconDeleteSegment } from './icons';
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetPanel } from './OffsetPanel';
-import { OffsetCommand } from '../shapes/commands/offset';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
@@ -185,19 +184,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
             )}
 
             {tool === 'offset' && (
-                <OffsetPanel
-                    theme={theme}
-                    onApply={(_dist, opts) => {
-                        if (editor && selection.length > 0) {
-                            const ids = selection.map(s => s.id);
-                            editor.history.execute(new OffsetCommand(ids, opts));
-                            editor.render();
-                            // Switch back to select tool after apply
-                            useStore.setState({ tool: 'select' });
-                        }
-                    }}
-                    onCancel={() => useStore.setState({ tool: 'select' })}
-                />
+                <OffsetPanel theme={theme} />
             )}
 
             {hasSelection ? (
@@ -701,14 +688,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                             <SectionHeader>{t('operations') || 'Operations'}</SectionHeader>
                             <div className="space-y-4">
 
-                                {/* Offset Button in Operations (optional shortcut) */}
-                                <Button
-                                    variant="iconText"
-                                    onClick={() => useStore.setState({ tool: 'offset' })} // Activate tool
-                                    icon={Scaling}
-                                    label={t('offsetPath') || 'Offset Path'}
-                                    theme={theme}
-                                />
+
 
                                 {/* Boolean Ops (Only if multiple) */}
                                 {selection.length > 1 && (

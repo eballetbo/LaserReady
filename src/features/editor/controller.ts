@@ -226,6 +226,11 @@ export class CanvasController {
         }
 
         this.onSelectionChange(selectedObjects);
+
+        // Allow active tool to draw overlay (previews)
+        if (this.toolManager.activeTool && 'drawOverlay' in this.toolManager.activeTool) {
+            (this.toolManager.activeTool as any).drawOverlay(this.ctx);
+        }
     }
 
     /* ... Remaining methods unchanged ... */

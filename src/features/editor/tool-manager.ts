@@ -8,10 +8,11 @@ import { TextTool } from '../shapes/tools/text';
 import { PenTool } from '../shapes/tools/pen';
 import { NodeEditTool } from '../shapes/tools/node';
 import { FilletTool } from '../shapes/tools/fillet';
+import { OffsetTool } from '../shapes/tools/offset';
 
 // ToolType is likely defined in types.ts or inferred, but let's define it here or import if found.
 // Based on controller, it uses string literals.
-export type ToolType = 'select' | 'rect' | 'circle' | 'triangle' | 'pentagon' | 'polygon' | 'star' | 'pen' | 'text' | 'node-edit' | 'fillet' | 'hand';
+export type ToolType = 'select' | 'rect' | 'circle' | 'triangle' | 'pentagon' | 'polygon' | 'star' | 'pen' | 'text' | 'node-edit' | 'fillet' | 'hand' | 'offset';
 
 export class ToolManager {
     private editor: CanvasController;
@@ -37,7 +38,8 @@ export class ToolManager {
             star: new StarTool(editor),
             pen: new PenTool(editor),
             'node-edit': new NodeEditTool(editor),
-            fillet: new FilletTool(editor)
+            fillet: new FilletTool(editor),
+            offset: new OffsetTool(editor)
         };
 
         // Set initial tool
@@ -58,7 +60,7 @@ export class ToolManager {
         }
 
         // Clear selection when switching away from select tool
-        if (this._currentToolType === 'select' && type !== 'select' && type !== 'node-edit') {
+        if (this._currentToolType === 'select' && type !== 'select' && type !== 'node-edit' && type !== 'offset') {
             useStore.getState().setSelectedShapes([]);
         }
 
