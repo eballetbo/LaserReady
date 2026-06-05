@@ -7,9 +7,17 @@ import { IShape } from '../types';
 import { OffsetCommand } from '../commands/offset';
 import { Geometry } from '../../../core/math/geometry';
 
+interface OffsetPreviewCache {
+    shapeId: string;
+    distance: number;
+    join: string;
+    results: { nodes: { x: number; y: number; cpIn: { x: number; y: number }; cpOut: { x: number; y: number } }[]; closed: boolean }[];
+}
+
 export class OffsetTool extends BaseTool {
     hoveredShape: IShape | null = null;
-    hoveredShapeState: PathShape | null = null; // Store hydrated state for consistency
+    hoveredShapeState: PathShape | null = null;
+    private previewCache: OffsetPreviewCache | null = null;
 
     constructor(editor: IEditorContext) {
         super(editor);
@@ -23,6 +31,7 @@ export class OffsetTool extends BaseTool {
     onDeactivate(): void {
         this.hoveredShape = null;
         this.hoveredShapeState = null;
+        this.previewCache = null;
         this.editor.canvas.style.cursor = 'default';
         this.editor.render();
     }
@@ -43,8 +52,8 @@ export class OffsetTool extends BaseTool {
 
         if (newHover !== this.hoveredShape) {
             this.hoveredShape = newHover;
+            this.previewCache = null;
 
-            // Hydrate immediately on hover change to avoid jitter
             if (this.hoveredShape) {
                 if (this.hoveredShape instanceof PathShape) {
                     this.hoveredShapeState = this.hoveredShape;
@@ -90,46 +99,48 @@ export class OffsetTool extends BaseTool {
         const zoom = this.editor.zoom;
         const pan = this.editor.pan;
 
+        const cache = this.previewCache;
+        let results: OffsetPreviewCache['results'];
+
+        if (cache && cache.shapeId === this.hoveredShape.id && cache.distance === offsetDistance && cache.join === offsetJoin) {
+            results = cache.results;
+        } else {
+            try {
+                results = offsetShape(this.hoveredShapeState, offsetDistance, { join: offsetJoin });
+                this.previewCache = { shapeId: this.hoveredShape.id, distance: offsetDistance, join: offsetJoin, results };
+            } catch {
+                return;
+            }
+        }
+
         ctx.save();
         ctx.translate(pan.x, pan.y);
         ctx.scale(zoom, zoom);
 
-        ctx.strokeStyle = '#00ff00'; // Green preview
-        ctx.lineWidth = 2 / zoom; // Slightly thicker
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2 / zoom;
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
 
-        try {
-            const results = offsetShape(this.hoveredShapeState, offsetDistance, { join: offsetJoin });
-
-            results.forEach(res => {
-                ctx.beginPath();
-                if (res.nodes.length > 0) {
-                    const start = res.nodes[0];
-                    ctx.moveTo(start.x, start.y);
-                    const limit = res.closed ? res.nodes.length : res.nodes.length - 1;
-                    for (let i = 0; i < limit; i++) {
-                        const curr = res.nodes[i];
-                        const next = res.nodes[(i + 1) % res.nodes.length];
-                        ctx.bezierCurveTo(
-                            curr.cpOut.x, curr.cpOut.y,
-                            next.cpIn.x, next.cpIn.y,
-                            next.x, next.y
-                        );
-                    }
+        results.forEach(res => {
+            ctx.beginPath();
+            if (res.nodes.length > 0) {
+                const start = res.nodes[0];
+                ctx.moveTo(start.x, start.y);
+                const limit = res.closed ? res.nodes.length : res.nodes.length - 1;
+                for (let i = 0; i < limit; i++) {
+                    const curr = res.nodes[i];
+                    const next = res.nodes[(i + 1) % res.nodes.length];
+                    ctx.bezierCurveTo(
+                        curr.cpOut.x, curr.cpOut.y,
+                        next.cpIn.x, next.cpIn.y,
+                        next.x, next.y
+                    );
                 }
-                if (res.closed) ctx.closePath();
-                ctx.stroke();
-            });
-
-            // Highlight original shape too?
-            ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
-            ctx.lineWidth = 1 / zoom;
-            // Draw original... (omitted for cleaner look, just preview offset)
-
-        } catch (e) {
-            console.warn('Offset preview failed', e);
-        }
+            }
+            if (res.closed) ctx.closePath();
+            ctx.stroke();
+        });
 
         ctx.restore();
     }
