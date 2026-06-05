@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      visualizer(),
+      mode === 'analyze' && visualizer({ open: true }),
       isElectron && electron({
         main: {
           entry: 'electron/main.ts',

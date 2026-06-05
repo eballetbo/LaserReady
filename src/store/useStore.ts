@@ -10,8 +10,8 @@ export const useStore = create<AppState>()((...a) => ({
     ...createUiSlice(...a),
 }));
 
-// Expose store for E2E testing
-if (typeof window !== 'undefined') {
+// Expose store for E2E testing (dev/test only)
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
     (window as any).useStore = useStore;
     (window as any).store = useStore;
 }
