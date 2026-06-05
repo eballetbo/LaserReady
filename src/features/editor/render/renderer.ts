@@ -550,15 +550,27 @@ export class CanvasRenderer {
             ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
             : undefined;
 
+        let blockXOffset = 0;
+        if (alignX !== 'left' && totalWidth !== undefined) {
+            if (alignX === 'center') blockXOffset = -totalWidth / 2;
+            else if (alignX === 'right') blockXOffset = -totalWidth;
+        }
+
+        const alignY = textObject.alignY || 'top';
+        let blockYOffset = 0;
+        const totalHeight = lines.length * lineHeight;
+        if (alignY === 'middle') blockYOffset = -totalHeight / 2;
+        else if (alignY === 'bottom') blockYOffset = -totalHeight;
+
         lines.forEach((line: string, i: number) => {
-            let xOffset = 0;
-            if (alignX !== 'left' && totalWidth !== undefined) {
+            let xOffset = blockXOffset;
+            if (totalWidth !== undefined) {
                 const lineW = textObject.measureLineWidth!(line);
-                if (alignX === 'center') xOffset = (totalWidth - lineW) / 2;
-                else if (alignX === 'right') xOffset = totalWidth - lineW;
+                if (alignX === 'center') xOffset = blockXOffset + (totalWidth - lineW) / 2;
+                else if (alignX === 'right') xOffset = blockXOffset + (totalWidth - lineW);
             }
 
-            const y = i * lineHeight;
+            const y = blockYOffset + i * lineHeight;
 
             if (hSpace === 0) {
                 if (layerMode === 'ENGRAVE') {
