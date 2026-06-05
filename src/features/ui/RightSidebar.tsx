@@ -4,18 +4,9 @@ import { useLanguage } from '../../contexts/language';
 import PropertiesPanel from './PropertiesPanel';
 import AssetLibrary from './AssetLibrary';
 import { CanvasController } from '../editor/controller';
+import { ThemeColors } from '../../config/themes';
 
-interface Theme {
-    iconColor: string;
-    buttonHover: string;
-    border: string;
-    panel: string;
-    text: string;
-    textMuted: string;
-    inputBg?: string;
-    inputBorder?: string;
-    [key: string]: string | undefined;
-}
+type Theme = ThemeColors;
 
 interface RightSidebarProps {
     theme: Theme;
