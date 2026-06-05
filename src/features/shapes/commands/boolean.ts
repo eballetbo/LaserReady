@@ -22,31 +22,24 @@ export class BooleanCommand implements Command {
     execute(): void {
         const { shapes, setShapes, setSelectedShapes, activeLayerId } = useStore.getState();
 
-        // Calculate result if not already done (lazy calculation to keep constructor light, 
-        // but ensure deterministic result for redo)
         if (!this.resultShapes) {
-            // Perform operation
-            // Note: BooleanOperations returns NEW instances
-            this.resultShapes = BooleanOperations.perform(this.originalShapes, this.operation);
+            const result = BooleanOperations.perform(this.originalShapes, this.operation);
 
-            // Assign active layer to new shapes (or inherit?)
-            // Usually result inherits from primary shape or active layer.
-            // Let's use activeLayerId for simplicity as per Controller logic.
+            if (!result || result.length === 0) {
+                console.warn(`Boolean '${this.operation}' produced no result — originals preserved.`);
+                return;
+            }
+
+            this.resultShapes = result;
             this.resultShapes.forEach(s => s.layerId = activeLayerId);
         }
 
-        // Remove original shapes from store
         const originalIds = this.originalShapes.map(s => s.id);
         const keptShapes = shapes.filter(s => !originalIds.includes(s.id));
-
-        // Add result shapes
-        // Use non-null assertion as we populated it
-        const newShapes = [...keptShapes, ...this.resultShapes!];
+        const newShapes = [...keptShapes, ...this.resultShapes];
 
         setShapes(newShapes);
-
-        // Select the new result shapes
-        setSelectedShapes(this.resultShapes!.map(s => s.id));
+        setSelectedShapes(this.resultShapes.map(s => s.id));
     }
 
     undo(): void {
