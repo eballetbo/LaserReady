@@ -4,41 +4,33 @@ import { CanvasController } from '../../editor/controller';
 import { IShape } from '../types';
 
 export class MoveShapeCommand implements Command {
-    private shapesToMove: IShape[];
+    private shapeIds: string[];
     private dx: number;
     private dy: number;
 
     constructor(_editor: CanvasController, shapes: IShape[], dx: number, dy: number) {
-        this.shapesToMove = shapes;
+        this.shapeIds = shapes.map(s => s.id);
         this.dx = dx;
         this.dy = dy;
     }
 
     execute(): void {
-        // We mutate the shapes directly because they are mutable objects in our model currently.
-        // However, to be Redux/Zustand pure, we should clone. 
-        // But CanvasController expects mutation for performance during drag?
-        // If we clone every frame of drag, it might be slow.
-        // BUT, the command pattern implies atomic operations.
-        // If this command is executed 60fps, we want to update the store 60fps.
-
-        // Let's stick to the pattern: Mutate then update store to trigger re-render.
-        this.shapesToMove.forEach(shape => {
-            shape.move!(this.dx, this.dy);
-        });
-
-        // Trigger store update
         const { shapes, setShapes } = useStore.getState();
-        // Since we mutated objects inside the array, we need to create a new array reference
+        shapes.forEach(shape => {
+            if (this.shapeIds.includes(shape.id) && shape.move) {
+                shape.move(this.dx, this.dy);
+            }
+        });
         setShapes([...shapes]);
     }
 
     undo(): void {
-        this.shapesToMove.forEach(shape => {
-            shape.move!(-this.dx, -this.dy);
-        });
-
         const { shapes, setShapes } = useStore.getState();
+        shapes.forEach(shape => {
+            if (this.shapeIds.includes(shape.id) && shape.move) {
+                shape.move(-this.dx, -this.dy);
+            }
+        });
         setShapes([...shapes]);
     }
 }
