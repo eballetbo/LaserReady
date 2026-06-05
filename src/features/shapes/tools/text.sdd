@@ -144,7 +144,7 @@ Tasks:
   [x] Text on path — flow text along a selected PathShape.
   [x] Auto-weld overlapping characters (boolean union on rendered outlines).
   [x] TextOptionsBar UI component (font, size, spacing, alignment, toggles).
-  [ ] Undo/redo for all text property changes via commands.
+  [x] Undo/redo for all text property changes via commands.
 
 Done when:
   Multi-line text renders with configurable line spacing.
