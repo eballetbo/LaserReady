@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { CanvasController } from '../features/shapes';
 import { TOOL_SHORTCUTS } from '../config/shortcuts';
 import { ZOOM_STEP } from '../config/constants';
+import { confirmDialog } from '../features/ui/Toast';
 
 interface ShortcutDeps {
     editor: CanvasController | null;
@@ -52,9 +53,9 @@ export function useGlobalShortcuts(deps: ShortcutDeps) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
                 if (editor && editor.shapes.length > 0) {
-                    if (confirm('Create a new document? Unsaved changes will be lost.')) {
-                        editor.newDocument();
-                    }
+                    confirmDialog('Create a new document? Unsaved changes will be lost.').then(confirmed => {
+                        if (confirmed) editor.newDocument();
+                    });
                 } else {
                     editor?.newDocument();
                 }
