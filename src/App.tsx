@@ -186,6 +186,17 @@ function AppContent() {
                 handleSaveProject();
             }
 
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                if (editor && editor.shapes.length > 0) {
+                    if (confirm('Create a new document? Unsaved changes will be lost.')) {
+                        editor.newDocument();
+                    }
+                } else {
+                    editor?.newDocument();
+                }
+            }
+
             if ((e.ctrlKey || e.metaKey) && e.key === ']') {
                 e.preventDefault();
                 if (e.shiftKey) editor?.bringToFront();

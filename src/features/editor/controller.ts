@@ -359,6 +359,17 @@ export class CanvasController {
         this.history.execute(command);
     }
 
+    newDocument() {
+        useStore.getState().clearShapes();
+        this.history.clear();
+        this.activePath = null;
+        this.previewPoint = null;
+        this.selectionBox = null;
+        this.clipboard = [];
+        this.fitToScreen();
+        this.render();
+    }
+
     selectAll() {
         this.selectedShapes = [...this.shapes];
         this.render();

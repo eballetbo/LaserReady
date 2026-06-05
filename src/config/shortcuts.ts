@@ -48,6 +48,10 @@ export const SHORTCUT_DESCRIPTIONS: Record<string, string> = {
     'Arrow keys': 'Nudge 1px',
     'Shift+Arrow': 'Nudge 10px',
 
+    // File
+    'Ctrl+N': 'New document',
+    'Ctrl+S': 'Save project',
+
     // View
     'Ctrl+0': 'Fit to screen',
     'Ctrl++': 'Zoom in',
