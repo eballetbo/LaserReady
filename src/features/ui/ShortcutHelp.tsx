@@ -46,15 +46,19 @@ export default function ShortcutHelp({ onClose }: ShortcutHelpProps) {
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
             onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shortcut-help-title"
         >
             <div
                 className="bg-gray-900 text-gray-100 rounded-lg shadow-2xl border border-gray-700 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-                    <h2 className="text-lg font-semibold">Keyboard Shortcuts</h2>
+                    <h2 id="shortcut-help-title" className="text-lg font-semibold">Keyboard Shortcuts</h2>
                     <button
                         onClick={onClose}
+                        aria-label="Close"
                         className="p-1 rounded hover:bg-gray-700 transition"
                     >
                         <X size={18} />

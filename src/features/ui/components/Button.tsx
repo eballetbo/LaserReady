@@ -55,6 +55,8 @@ export const Button: React.FC<ButtonProps> = ({
                     onClick={onClick}
                     disabled={disabled}
                     title={title || label}
+                    aria-label={label}
+                    aria-pressed={active}
                     className={`${sizeClasses[size]} mb-2 rounded-lg transition-all flex justify-center items-center relative
                         ${disabled ? 'opacity-30 cursor-not-allowed' : ''}
                         ${!disabled && active
@@ -85,6 +87,7 @@ export const Button: React.FC<ButtonProps> = ({
             <button
                 onClick={onClick}
                 title={title || label}
+                aria-label={label}
                 className={`p-2 rounded border ${theme.border} ${theme.buttonHover} flex flex-col items-center gap-1 ${className}`}
             >
                 {Icon && <Icon size={20} />}
@@ -98,6 +101,7 @@ export const Button: React.FC<ButtonProps> = ({
             <button
                 onClick={onClick}
                 title={title || label}
+                aria-label={label}
                 className={`w-full py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors ${className}`}
             >
                 {Icon && <Icon size={16} className="inline mr-2" />}
