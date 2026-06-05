@@ -1,26 +1,53 @@
-// Defining a minimal interface for what BaseTool expects from Editor.
-// In a full migration, this should be imported from the Editor component or a meaningful type.
+import { IShape } from '../../features/shapes/types';
+import { RendererConfig } from '../../features/editor/render/types';
+import { Point, Rect } from '../math/geometry';
+
+export interface SelectionBox {
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+}
+
+export interface IHistoryManager {
+    execute(command: { execute(): void; undo(): void }): void;
+    undo(): void;
+    redo(): void;
+    canUndo(): boolean;
+    canRedo(): boolean;
+    clear(): void;
+}
+
+export interface ISnapManager {
+    snapPoint(candidate: Point, excludeIds?: string[]): { point: Point; type: string; sourceShapeId?: string };
+    snapAngle(angle: number, constrain: boolean): number;
+    activeSnap: { point: Point; type: string } | null;
+    settings: { enabled: boolean; grid: boolean; objects: boolean; threshold: number };
+    clear(): void;
+}
+
 export interface IEditorContext {
-    shapes: any[];
-    selectedShapes: any[];
-    config: any;
+    shapes: IShape[];
+    selectedShapes: IShape[];
+    config: RendererConfig;
     tool: string;
-    activePath: any;
-    previewPoint: any;
-    renderer: any;
+    activePath: IShape | null;
+    previewPoint: Point | null;
+    renderer: { drawScene(...args: unknown[]): void };
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    getMousePos: (e: MouseEvent) => { x: number; y: number };
+    getMousePos: (e: MouseEvent) => Point;
     render: () => void;
+    renderImmediate: () => void;
     moveSelected: (dx: number, dy: number) => void;
     activeLayerId: string;
-    selectionBox: any | null; // Drag selection preview box
-    previewOrigin: { x: number; y: number } | null; // Custom start point for preview line (optional)
-    history: any; // HistoryManager
-    selectedShape?: any; // Temporary selection for creation tools
+    selectionBox: SelectionBox | null;
+    previewOrigin: Point | null;
+    history: IHistoryManager;
+    selectedShape?: IShape;
     zoom: number;
-    pan: { x: number; y: number };
-    snapManager: any;
+    pan: Point;
+    snapManager: ISnapManager;
 }
 
 export class BaseTool {
