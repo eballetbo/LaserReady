@@ -45,6 +45,7 @@ export class CanvasController {
     private animationFrameId: number | null = null;
     private lastFrameTime: number = 0;
     private renderPending: boolean = false;
+    private lastSelectionIds: string = '';
     private renderFrameId: number | null = null;
 
     constructor(canvasElement: HTMLCanvasElement, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
@@ -240,7 +241,11 @@ export class CanvasController {
             this.renderer.drawSnapMarker(this.snapManager.activeSnap, zoom, pan);
         }
 
-        this.onSelectionChange(selectedObjects);
+        const selectionKey = selectedIds.join(',');
+        if (selectionKey !== this.lastSelectionIds) {
+            this.lastSelectionIds = selectionKey;
+            this.onSelectionChange(selectedObjects);
+        }
 
         if (this.toolManager.activeTool && 'drawOverlay' in this.toolManager.activeTool) {
             (this.toolManager.activeTool as any).drawOverlay(this.ctx);
