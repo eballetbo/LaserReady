@@ -523,14 +523,16 @@ export class SelectTool extends BaseTool {
                 sy = s * Math.sign(sy);
             }
 
-            // Execute resize via Command for undo/redo support
-            const command = new ResizeShapeCommand(
-                this.editor.selectedShapes as any[],
-                sx,
-                sy,
-                { x: fixedX, y: fixedY }
-            );
-            this.editor.history.execute(command);
+            const epsilon = 0.0001;
+            if (Math.abs(sx - 1) > epsilon || Math.abs(sy - 1) > epsilon) {
+                const command = new ResizeShapeCommand(
+                    this.editor.selectedShapes as any[],
+                    sx,
+                    sy,
+                    { x: fixedX, y: fixedY }
+                );
+                this.editor.history.execute(command);
+            }
         }
 
         if (this.isDragSelecting && this.dragStart) {
