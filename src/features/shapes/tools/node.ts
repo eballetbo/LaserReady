@@ -392,7 +392,11 @@ export class NodeEditTool extends BaseTool {
         // If multiple nodes selected, ambiguous. Use first?
         // Or check hovered segment.
         const getTargetNodeIndex = (): number | null => {
-            if (indices.length === 1) return indices[0];
+            if (indices.length === 1) {
+                const idx = indices[0];
+                if (!shape.closed && idx === shape.nodes.length - 1) return null;
+                return idx;
+            }
             if (this.lastMousePos) {
                 const hit = this.getHitSegment(this.lastMousePos.x, this.lastMousePos.y, shape);
                 if (hit) return hit.index;
