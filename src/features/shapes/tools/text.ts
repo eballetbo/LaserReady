@@ -1,10 +1,12 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { TextObject } from '../models/text';
 import { useStore } from '../../../store/useStore';
+import { ChangeTextCommand } from '../commands/text';
 
 export class TextTool extends BaseTool {
     activeText: any | null; // TextObject
     textarea: HTMLTextAreaElement | null;
+    private originalText: string = '';
 
     constructor(editor: IEditorContext) {
         super(editor);
@@ -55,9 +57,10 @@ export class TextTool extends BaseTool {
     startEditing(textObject: any) {
         if (this.activeText === textObject && this.textarea) return;
 
-        this.finishEditing(); // Finish previous editing if any
+        this.finishEditing();
 
         this.activeText = textObject;
+        this.originalText = textObject.text;
         this.editor.selectedShapes = [textObject];
 
         // Create hidden textarea
@@ -107,8 +110,12 @@ export class TextTool extends BaseTool {
             this.textarea = null;
         }
         if (this.activeText) {
-            if (this.activeText.text.trim() === '') {
+            const currentText = this.activeText.text;
+            if (currentText.trim() === '') {
                 useStore.getState().removeShapes([this.activeText.id]);
+            } else if (currentText !== this.originalText) {
+                const command = new ChangeTextCommand(this.activeText.id, this.originalText, currentText);
+                this.editor.history.execute(command);
             }
             this.activeText = null;
             this.editor.render();
