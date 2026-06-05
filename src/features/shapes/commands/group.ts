@@ -8,6 +8,7 @@ export class GroupCommand implements Command {
     private shapesToGroup: IShape[];
     private groupShape: GroupShape | null = null;
     private originalIds: string[];
+    private originalIndices: number[] = [];
 
     constructor(shapes: IShape[]) {
         this.shapesToGroup = shapes;
@@ -17,16 +18,15 @@ export class GroupCommand implements Command {
     execute(): void {
         const { shapes, setShapes, setSelectedShapes } = useStore.getState();
 
-        // If explicitly grouped before (redo), reuse the instance to preserve ID
         if (!this.groupShape) {
             this.groupShape = new GroupShape(this.shapesToGroup);
         }
 
-        // Remove individual shapes
-        const newShapes = shapes.filter(s => !this.originalIds.includes(s.id));
+        this.originalIndices = this.originalIds.map(id => shapes.findIndex(s => s.id === id));
+        const insertIdx = Math.min(...this.originalIndices);
 
-        // Add group
-        newShapes.push(this.groupShape);
+        const newShapes = shapes.filter(s => !this.originalIds.includes(s.id));
+        newShapes.splice(insertIdx, 0, this.groupShape);
 
         setShapes(newShapes);
         setSelectedShapes([this.groupShape.id]);
@@ -37,17 +37,12 @@ export class GroupCommand implements Command {
 
         if (!this.groupShape) return;
 
-        // Remove group
         const newShapes = shapes.filter(s => s.id !== this.groupShape!.id);
 
-        // Restore individual shapes
-        // Append them back. 
-        // Note: original z-order relative to other shapes is lost if we just append.
-        // But relative z-order among themselves is preserved if shapesToGroup was sorted?
-        // Usually shapesToGroup comes from selection, which might be arbitrary order?
-        // Ideally we should insert them where the group was?
-        // For now, appending is the mvp behavior.
-        newShapes.push(...this.shapesToGroup);
+        this.shapesToGroup.forEach((shape, i) => {
+            const idx = this.originalIndices[i];
+            newShapes.splice(idx, 0, shape);
+        });
 
         setShapes(newShapes);
         setSelectedShapes(this.originalIds);

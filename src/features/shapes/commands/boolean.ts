@@ -11,11 +11,11 @@ export class BooleanCommand implements Command {
     private resultShapes: PathShape[] | null = null;
     private operation: BooleanOperationType;
     private originalSelection: string[];
+    private originalIndices: number[] = [];
 
     constructor(shapes: PathShape[], operation: BooleanOperationType) {
         this.originalShapes = shapes;
         this.operation = operation;
-        // Capture selection IDs to restore on undo
         this.originalSelection = shapes.map(s => s.id);
     }
 
@@ -35,30 +35,31 @@ export class BooleanCommand implements Command {
         }
 
         const originalIds = this.originalShapes.map(s => s.id);
-        const keptShapes = shapes.filter(s => !originalIds.includes(s.id));
-        const newShapes = [...keptShapes, ...this.resultShapes];
+        this.originalIndices = originalIds.map(id => shapes.findIndex(s => s.id === id));
 
-        setShapes(newShapes);
+        const insertIdx = Math.min(...this.originalIndices);
+        const keptShapes = shapes.filter(s => !originalIds.includes(s.id));
+        keptShapes.splice(insertIdx, 0, ...this.resultShapes);
+
+        setShapes(keptShapes);
         setSelectedShapes(this.resultShapes.map(s => s.id));
     }
 
     undo(): void {
         const { shapes, setShapes, setSelectedShapes } = useStore.getState();
 
-        // Remove result shapes
-        const resultIds = this.resultShapes!.map(s => s.id);
+        if (!this.resultShapes) return;
+
+        const resultIds = this.resultShapes.map(s => s.id);
         const keptShapes = shapes.filter(s => !resultIds.includes(s.id));
 
-        // Restore original shapes
-        // We must put them back. Order might matter for z-index? 
-        // Ideally we'd splice them back at their original indices, but for now append is standard.
-        // Or if we want to be fancy, we could try to restore relative order.
-        // Let's stick to append for simplicity/stability.
-        const restoredShapes = [...keptShapes, ...this.originalShapes];
+        const restoredShapes = [...keptShapes];
+        this.originalShapes.forEach((shape, i) => {
+            const idx = this.originalIndices[i];
+            restoredShapes.splice(idx, 0, shape);
+        });
 
         setShapes(restoredShapes);
-
-        // Restore selection
         setSelectedShapes(this.originalSelection);
     }
 }

@@ -18,18 +18,20 @@ export class UngroupCommand implements Command {
         this.originalGroupIds = groups.map(g => g.id);
     }
 
+    private originalGroupIndices: number[] = [];
+
     execute(): void {
         const { shapes, setShapes, setSelectedShapes } = useStore.getState();
 
-        // Remove groups
-        let newShapes = shapes.filter(s => !this.originalGroupIds.includes(s.id));
+        this.originalGroupIndices = this.originalGroupIds.map(id => shapes.findIndex(s => s.id === id));
 
+        let newShapes = shapes.filter(s => !this.originalGroupIds.includes(s.id));
         let allChildren: IShape[] = [];
 
-        // Add children of each group
-        this.groupsToUngroup.forEach(group => {
+        this.groupsToUngroup.forEach((group, gi) => {
             if (group.children) {
-                newShapes.push(...group.children);
+                const insertIdx = this.originalGroupIndices[gi];
+                newShapes.splice(insertIdx, 0, ...group.children);
                 allChildren.push(...group.children);
             }
         });
@@ -41,9 +43,6 @@ export class UngroupCommand implements Command {
     undo(): void {
         const { shapes, setShapes, setSelectedShapes } = useStore.getState();
 
-        // We need to remove the children that were ungrouped.
-        // And put the groups back.
-
         const childrenIds: string[] = [];
         this.groupsToUngroup.forEach(g => {
             if (g.children) {
@@ -51,11 +50,12 @@ export class UngroupCommand implements Command {
             }
         });
 
-        // Remove children from root
         const newShapes = shapes.filter(s => !childrenIds.includes(s.id));
 
-        // Add groups back
-        newShapes.push(...this.groupsToUngroup);
+        this.groupsToUngroup.forEach((group, gi) => {
+            const idx = this.originalGroupIndices[gi];
+            newShapes.splice(idx, 0, group);
+        });
 
         setShapes(newShapes);
         setSelectedShapes(this.originalGroupIds);
