@@ -8,6 +8,10 @@ interface ShortcutHelpProps {
 
 const CATEGORIES: { title: string; keys: string[] }[] = [
     {
+        title: 'File',
+        keys: ['Ctrl+N', 'Ctrl+S']
+    },
+    {
         title: 'Tools',
         keys: ['V', 'N', 'P', 'R', 'E', 'T', 'O', 'F', 'S']
     },
