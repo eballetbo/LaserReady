@@ -135,8 +135,8 @@ Tasks:
   [x] Multi-line text support (Enter key inserts newline).
   [x] Horizontal character spacing (hSpace property + rendering).
   [x] Vertical line spacing (vSpace property + rendering).
-  [ ] Text horizontal alignment (left / center / right).
-  [ ] Text vertical alignment (top / middle / bottom).
+  [x] Text horizontal alignment (left / center / right).
+  [x] Text vertical alignment (top / middle / bottom).
   [ ] Upper case display toggle (non-destructive).
   [ ] Bold and italic style rendering with font variant selection.
   [ ] Text bending — circular arc layout with drag handle.

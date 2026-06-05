@@ -59,6 +59,45 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — vertical alignment (alignY)', () => {
+    it('defaults alignY to top', () => {
+        const t = new TextObject(100, 100, 'Hello');
+        expect(t.alignY).toBe('top');
+    });
+
+    it('middle alignment: anchor is at vertical center', () => {
+        const t = new TextObject(100, 100, 'Hello', { alignY: 'middle' });
+        const bounds = t.getBounds();
+        expect(bounds.cy).toBeCloseTo(100, 0);
+    });
+
+    it('bottom alignment: anchor is at bottom edge', () => {
+        const t = new TextObject(100, 100, 'Hello', { alignY: 'bottom' });
+        const bounds = t.getBounds();
+        expect(bounds.maxY).toBeCloseTo(100, 0);
+    });
+
+    it('height is the same regardless of alignY', () => {
+        const top = new TextObject(0, 0, 'AB\nCD', { alignY: 'top' });
+        const mid = new TextObject(0, 0, 'AB\nCD', { alignY: 'middle' });
+        const bot = new TextObject(0, 0, 'AB\nCD', { alignY: 'bottom' });
+
+        expect(mid.getBounds().height).toBeCloseTo(top.getBounds().height, 1);
+        expect(bot.getBounds().height).toBeCloseTo(top.getBounds().height, 1);
+    });
+
+    it('alignY persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'X', { alignY: 'middle' });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.alignY).toBe('middle');
+    });
+
+    it('alignY persists through clone', () => {
+        const t = new TextObject(0, 0, 'X', { alignY: 'bottom' });
+        expect(t.clone().alignY).toBe('bottom');
+    });
+});
+
 describe('TextObject — horizontal alignment (alignX)', () => {
     it('defaults alignX to left', () => {
         const t = new TextObject(100, 100, 'Hello');
