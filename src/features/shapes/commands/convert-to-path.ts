@@ -3,6 +3,7 @@ import { useStore } from '../../../store/useStore';
 import { PathShape } from '../models/path';
 import { GroupShape } from '../models/group';
 import { PathNode } from '../models/node';
+import { notify } from '../../ui/Toast';
 import { TextObject } from '../models/text';
 import opentype from 'opentype.js';
 
@@ -34,7 +35,7 @@ export class ConvertToPathCommand implements Command {
         opentype.load(FONT_URL, (err: any, font: opentype.Font | undefined) => {
             if (err || !font) {
                 console.error('[ConvertToPath] Font could not be loaded:', err);
-                alert('Failed to load font for text conversion. Please check your internet connection.');
+                notify('Failed to load font for text conversion. Please check your internet connection.', 'error');
                 return;
             }
             console.log('[ConvertToPath] Font loaded successfully. Generating path...');
