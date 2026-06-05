@@ -1,5 +1,6 @@
 
 import { Geometry, Point } from '../../../core/math/geometry';
+import { TEXT_LINE_HEIGHT_MULTIPLIER } from '../../../config/constants';
 import { IShape } from '../types';
 
 export interface TextStyle {
@@ -66,7 +67,7 @@ export class TextObject implements IShape {
     getBounds(): Bounds {
         let maxWidth = 0;
         const lines = this.text.split('\n');
-        const lineHeight = this.fontSize * 1.2;
+        const lineHeight = this.fontSize * TEXT_LINE_HEIGHT_MULTIPLIER;
         const height = lines.length * lineHeight;
 
         lines.forEach(line => {
