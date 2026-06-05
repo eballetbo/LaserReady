@@ -2,6 +2,63 @@ import { describe, it, expect } from 'vitest';
 import { TextObject } from '../models/text';
 import { TEXT_LINE_HEIGHT_MULTIPLIER } from '../../../config/constants';
 
+describe('TextObject — horizontal character spacing (hSpace)', () => {
+    it('defaults hSpace to 0', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.hSpace).toBe(0);
+    });
+
+    it('stores hSpace from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { hSpace: 25 });
+        expect(t.hSpace).toBe(25);
+    });
+
+    it('measureLineWidth increases with positive hSpace', () => {
+        const normal = new TextObject(0, 0, 'ABCDE');
+        const spaced = new TextObject(0, 0, 'ABCDE', { hSpace: 50 });
+
+        const normalWidth = normal.measureLineWidth('ABCDE');
+        const spacedWidth = spaced.measureLineWidth('ABCDE');
+
+        expect(spacedWidth).toBeGreaterThan(normalWidth);
+        const expectedExtra = spaced.fontSize * (50 / 100) * 4;
+        expect(spacedWidth - normalWidth).toBeCloseTo(expectedExtra, 1);
+    });
+
+    it('measureLineWidth decreases with negative hSpace', () => {
+        const normal = new TextObject(0, 0, 'ABCDE');
+        const tight = new TextObject(0, 0, 'ABCDE', { hSpace: -20 });
+
+        expect(tight.measureLineWidth('ABCDE')).toBeLessThan(normal.measureLineWidth('ABCDE'));
+    });
+
+    it('single character is not affected by hSpace', () => {
+        const normal = new TextObject(0, 0, 'A');
+        const spaced = new TextObject(0, 0, 'A', { hSpace: 50 });
+
+        expect(spaced.measureLineWidth('A')).toBe(normal.measureLineWidth('A'));
+    });
+
+    it('getBounds width reflects hSpace', () => {
+        const normal = new TextObject(0, 0, 'HELLO');
+        const spaced = new TextObject(0, 0, 'HELLO', { hSpace: 30 });
+
+        expect(spaced.getBounds().width).toBeGreaterThan(normal.getBounds().width);
+    });
+
+    it('hSpace persists through toJSON/fromJSON', () => {
+        const original = new TextObject(0, 0, 'Test', { hSpace: 15 });
+        const restored = TextObject.fromJSON(original.toJSON());
+        expect(restored.hSpace).toBe(15);
+    });
+
+    it('hSpace persists through clone', () => {
+        const original = new TextObject(0, 0, 'Test', { hSpace: -10 });
+        const cloned = original.clone();
+        expect(cloned.hSpace).toBe(-10);
+    });
+});
+
 describe('TextTool — multi-line text support', () => {
     it('TextObject stores newlines in text property', () => {
         const t = new TextObject(100, 200, 'Line 1\nLine 2\nLine 3');
