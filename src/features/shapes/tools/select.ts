@@ -160,8 +160,8 @@ export class SelectTool extends BaseTool {
                 const snapshot = this.initialSnapshots[i];
                 if (!snapshot) return;
                 restoreSnapshot(shape, snapshot);
-                if (typeof (shape as any).rotate === 'function') {
-                    (shape as any).rotate(deltaAngle, this.rotationCenter);
+                if (shape.rotate) {
+                    shape.rotate(deltaAngle, this.rotationCenter!);
                 }
             });
 
@@ -275,8 +275,8 @@ export class SelectTool extends BaseTool {
                 const snapshot = this.initialSnapshots[i];
                 if (!snapshot) return;
                 restoreSnapshot(shape, snapshot);
-                if ('move' in shape) {
-                    (shape as any).move(totalDx, totalDy);
+                if (shape.move) {
+                    shape.move(totalDx, totalDy);
                 }
             });
 
@@ -515,9 +515,8 @@ export class SelectTool extends BaseTool {
 
     private hitTestShape(shape: IShape, x: number, y: number): boolean {
         if (shape.type === 'group') {
-            const group = shape as any;
-            if (!group.children) return false;
-            return group.children.some((child: IShape) => this.hitTestShape(child, x, y));
+            if (!shape.children) return false;
+            return shape.children.some(child => this.hitTestShape(child, x, y));
         } else if (shape.type === 'text') {
             const bounds = shape.getBounds ? shape.getBounds() : null;
             if (!bounds) return false;
@@ -589,8 +588,8 @@ export class SelectTool extends BaseTool {
             const snapshot = this.initialSnapshots[i];
             if (!snapshot) return;
             restoreSnapshot(shape, snapshot);
-            if ((shape as any).scale) {
-                (shape as any).scale(sx, sy, { x: fixedX, y: fixedY });
+            if (shape.scale) {
+                shape.scale(sx, sy, { x: fixedX, y: fixedY });
             }
         });
     }
