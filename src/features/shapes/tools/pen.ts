@@ -236,6 +236,15 @@ export class PenTool extends BaseTool {
     }
 
     onDeactivate(): void {
+        if (this.editor.activePath) {
+            if (this.editor.activePath.nodes.length >= 2) {
+                useStore.getState().removeShapes([this.editor.activePath.id]);
+                const cmd = new CreateShapeCommand(this.editor.activePath);
+                this.editor.history.execute(cmd);
+            } else {
+                useStore.getState().removeShapes([this.editor.activePath.id]);
+            }
+        }
         this.editor.activePath = null;
         this.editor.previewPoint = null;
         this.editor.previewOrigin = null;
