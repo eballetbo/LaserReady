@@ -37,7 +37,8 @@ export class BooleanCommand implements Command {
         const originalIds = this.originalShapes.map(s => s.id);
         this.originalIndices = originalIds.map(id => shapes.findIndex(s => s.id === id));
 
-        const insertIdx = Math.min(...this.originalIndices);
+        const validIndices = this.originalIndices.filter(i => i !== -1);
+        const insertIdx = validIndices.length > 0 ? Math.min(...validIndices) : 0;
         const keptShapes = shapes.filter(s => !originalIds.includes(s.id));
         keptShapes.splice(insertIdx, 0, ...this.resultShapes);
 

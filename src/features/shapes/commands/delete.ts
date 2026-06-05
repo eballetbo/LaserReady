@@ -29,7 +29,11 @@ export class DeleteShapeCommand implements Command {
         const restoredShapes = [...shapes];
         this.shapesToDelete.forEach((shape, i) => {
             const idx = this.originalIndices[i];
-            restoredShapes.splice(idx, 0, shape);
+            if (idx === -1) {
+                restoredShapes.push(shape);
+            } else {
+                restoredShapes.splice(Math.min(idx, restoredShapes.length), 0, shape);
+            }
         });
 
         setShapes(restoredShapes);
