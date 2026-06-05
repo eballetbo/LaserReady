@@ -34,8 +34,8 @@ export const SVGImporter = {
             const opacity = (path.opacity !== undefined && path.opacity < 1) ? path.opacity : undefined;
 
             const shape = new PathShape(nodes, path.closed, 'imported-layer', 'path', {}, undefined, strokeColor, strokeWidth, fillColor);
-            if (dashArray) (shape as any).dashArray = dashArray;
-            if (opacity !== undefined) (shape as any).opacity = opacity;
+            if (dashArray) shape.dashArray = dashArray;
+            if (opacity !== undefined) shape.opacity = opacity;
             shapes.push(shape);
         };
 

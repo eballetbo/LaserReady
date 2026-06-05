@@ -18,6 +18,8 @@ export class PathShape {
     strokeColor?: string;
     strokeWidth?: number;
     fillColor?: string;
+    dashArray?: number[];
+    opacity?: number;
 
     constructor(
         nodes: PathNode[] = [],
