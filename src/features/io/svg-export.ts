@@ -1,14 +1,19 @@
 import paper from 'paper';
 import { BooleanOperations } from '../../core/math/boolean';
 import { PIXELS_PER_MM } from '../../config/constants';
+import { LASER_MODES } from '../../config/laser-modes';
 import { PathShape } from '../../features/shapes/models/path';
 import { IShape } from '../../features/shapes/types';
+import { LaserLayer } from '../../types/layer';
 
 // Initialize a headless PaperScope for SVG exporting
 const scope = new paper.PaperScope();
 scope.setup(new paper.Size(1000, 1000));
 
-export const exportToSVG = (shapes: IShape[], width: number, height: number): string => {
+export const exportToSVG = (shapes: IShape[], width: number, height: number, layers?: LaserLayer[]): string => {
+    const layerMap = new Map<string, LaserLayer>();
+    if (layers) layers.forEach(l => layerMap.set(l.id, l));
+
     // Clear project
     scope.project.clear();
     scope.view.viewSize = new paper.Size(width, height);
@@ -47,7 +52,14 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number): st
 
         if (!item) return;
 
-        if (shape.strokeColor) item.strokeColor = new paper.Color(shape.strokeColor);
+        if (shape.strokeColor) {
+            item.strokeColor = new paper.Color(shape.strokeColor);
+        } else if (shape.layerId && layerMap.has(shape.layerId)) {
+            const layer = layerMap.get(shape.layerId)!;
+            const modeColor = LASER_MODES[layer.mode]?.color;
+            if (modeColor) item.strokeColor = new paper.Color(modeColor);
+        }
+
         if (shape.strokeWidth) item.strokeWidth = shape.strokeWidth;
         if (shape.fillColor) item.fillColor = new paper.Color(shape.fillColor);
 
