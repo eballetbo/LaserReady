@@ -4,6 +4,7 @@ import ShortcutHelp from './features/ui/ShortcutHelp';
 import { Header } from './features/ui/Header';
 import { Canvas } from './features/editor';
 import { CanvasController } from './features/shapes';
+import { IShape } from './features/shapes/types';
 import { LASER_MODES } from './config/laser-modes';
 import { THEMES } from './config/themes';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
@@ -30,7 +31,7 @@ function AppContent() {
 
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
     const [editor, setEditor] = useState<CanvasController | null>(null);
-    const [selection, setSelection] = useState<any[]>([]);
+    const [selection, setSelection] = useState<IShape[]>([]);
     const [showShortcuts, setShowShortcuts] = useState(false);
 
     useEffect(() => {
@@ -85,12 +86,9 @@ function AppContent() {
                 <div className={`flex-1 relative overflow-hidden ${theme.canvasWrapper}`}>
                     <Canvas
                         material={material}
-                        setEditorInstance={(ed: CanvasController) => {
-                            setEditor(ed);
-                            ed.onSelectionChange = (sel: any[]) => setSelection([...sel]);
-                        }}
                         tool={tool}
-                        onInit={(ed: CanvasController) => setEditor(ed)}
+                        onInit={setEditor}
+                        onSelectionChange={setSelection}
                     />
                 </div>
 
