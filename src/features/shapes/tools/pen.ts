@@ -48,8 +48,8 @@ export class PenTool extends BaseTool {
 
         if (!this.editor.activePath) {
             // Check for path continuation (unless Ctrl/Cmd is held)
-            // Snap radius: 25px (default) or 100px (Alt)
             const snapRadius = e.altKey ? 100 : 25;
+            const snapRadiusSq = snapRadius * snapRadius;
             let pathToContinue: any = null;
             let continueFromEnd = true;
 
@@ -61,11 +61,11 @@ export class PenTool extends BaseTool {
                         const distToFirst = Geometry.getDistance({ x, y }, { x: firstNode.x, y: firstNode.y });
                         const distToLast = Geometry.getDistance({ x, y }, { x: lastNode.x, y: lastNode.y });
 
-                        if (distToFirst <= snapRadius) {
+                        if (distToFirst <= snapRadiusSq) {
                             pathToContinue = shape;
                             continueFromEnd = false; // Prepend
                             break;
-                        } else if (distToLast <= snapRadius) {
+                        } else if (distToLast <= snapRadiusSq) {
                             pathToContinue = shape;
                             continueFromEnd = true; // Append
                             break;
@@ -92,10 +92,10 @@ export class PenTool extends BaseTool {
             const startNode = this.editor.activePath.nodes[0];
             const distToStart = Geometry.getDistance({ x, y }, { x: startNode.x, y: startNode.y });
 
-            // Snap radius: 25px (default) or 100px (Alt)
             const snapRadius = e.altKey ? 100 : 25;
+            const snapRadiusSq = snapRadius * snapRadius;
 
-            if (this.editor.activePath.nodes.length > 2 && distToStart <= snapRadius) {
+            if (this.editor.activePath.nodes.length > 2 && distToStart <= snapRadiusSq) {
                 // Close path
                 this.editor.activePath.closed = true;
                 this.editor.activePath = null;
