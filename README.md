@@ -17,7 +17,7 @@ A live preview of the tool can be found [here](https://editor.klaab.cat).
 
 ### Prerequisites
 
--   Node.js (v16 or higher)
+-   Node.js (v20 or higher)
 -   npm or yarn
 
 ### Installation
@@ -48,7 +48,7 @@ The application will be available at `http://localhost:5173`.
 Start the application in Electron mode:
 
 ```bash
-npm run electron:dev
+npm run dev:electron
 ```
 
 This launches the standalone desktop window with hot-reloading enabled.
@@ -80,7 +80,7 @@ npm run build:linux
 
 ## License
 
-MIT
+GPL-3.0 — see [LICENSE](LICENSE) for details.
 
 ## Support
 
