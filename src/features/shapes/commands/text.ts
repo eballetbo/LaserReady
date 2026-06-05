@@ -7,6 +7,15 @@ export interface TextStyleProps {
     fontSize?: number;
     fontWeight?: string;
     fontStyle?: string;
+    hSpace?: number;
+    vSpace?: number;
+    alignX?: 'left' | 'center' | 'right';
+    alignY?: 'top' | 'middle' | 'bottom';
+    upperCase?: boolean;
+    bend?: number;
+    distort?: boolean;
+    weld?: boolean;
+    pathId?: string | null;
 }
 
 export class ChangeTextStyleCommand implements Command {
@@ -32,12 +41,10 @@ export class ChangeTextStyleCommand implements Command {
         const { shapes, setShapes } = useStore.getState();
         const shape = shapes.find(s => s.id === this.shapeId);
         if (!shape) return;
-        const t = shape as any;
-        if (props.text !== undefined) t.text = props.text;
-        if (props.fontFamily !== undefined) t.fontFamily = props.fontFamily;
-        if (props.fontSize !== undefined) t.fontSize = props.fontSize;
-        if (props.fontWeight !== undefined) t.fontWeight = props.fontWeight;
-        if (props.fontStyle !== undefined) t.fontStyle = props.fontStyle;
+        const t = shape as Record<string, unknown>;
+        for (const [key, value] of Object.entries(props)) {
+            if (value !== undefined) t[key] = value;
+        }
         setShapes([...shapes]);
     }
 }

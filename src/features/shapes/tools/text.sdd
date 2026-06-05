@@ -143,7 +143,7 @@ Tasks:
   [x] Distort toggle for bent text (warp vs. rigid characters).
   [x] Text on path — flow text along a selected PathShape.
   [x] Auto-weld overlapping characters (boolean union on rendered outlines).
-  [ ] TextOptionsBar UI component (font, size, spacing, alignment, toggles).
+  [x] TextOptionsBar UI component (font, size, spacing, alignment, toggles).
   [ ] Undo/redo for all text property changes via commands.
 
 Done when:

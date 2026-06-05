@@ -10,6 +10,7 @@ import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, Ico
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetPanel } from './OffsetPanel';
+import { TextOptionsBar } from './TextOptionsBar';
 import { ConvertToPathCommand, preloadConversionFont } from '../shapes/commands/convert-to-path';
 import { ChangeTextStyleCommand } from '../shapes/commands/text';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
@@ -236,121 +237,83 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                     )}
 
                     {selectedObject && selectedObject.type === 'text' && (
-                        <div>
-                            <SectionHeader>{t('textProperties')}</SectionHeader>
-                            <div className="space-y-2">
-                                <div>
-                                    <label className="text-[10px] text-gray-400 block mb-1">{t('content')}</label>
-                                    <textarea
-                                        value={selectedObject.text}
-                                        onChange={(e) => {
-                                            selectedObject.text = e.target.value;
-                                            editor?.render();
-                                        }}
-                                        onBlur={(e) => {
-                                            if (!editor) return;
-                                            const cmd = new ChangeTextStyleCommand(
-                                                selectedObject.id,
-                                                { text: selectedObject.text },
-                                                { text: e.target.value }
-                                            );
-                                            editor.history.execute(cmd);
-                                        }}
-                                        className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                        rows={3}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="text-[10px] text-gray-400 block mb-1">{t('fontFamily')}</label>
-                                        <select
-                                            value={selectedObject.fontFamily}
-                                            onChange={(e) => {
-                                                if (!editor) return;
-                                                const oldVal = selectedObject.fontFamily;
-                                                const cmd = new ChangeTextStyleCommand(
-                                                    selectedObject.id,
-                                                    { fontFamily: oldVal },
-                                                    { fontFamily: e.target.value }
-                                                );
-                                                editor.history.execute(cmd);
-                                                editor.render();
-                                            }}
-                                            className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                        >
-                                            <option value="Arial">Arial</option>
-                                            <option value="Times New Roman">Times New Roman</option>
-                                            <option value="Courier New">Courier New</option>
-                                            <option value="Georgia">Georgia</option>
-                                            <option value="Verdana">Verdana</option>
-                                        </select>
-                                    </div>
-                                    <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => {
+                        <div className="space-y-3">
+                            <div>
+                                <SectionHeader>{t('content')}</SectionHeader>
+                                <textarea
+                                    value={selectedObject.text}
+                                    onChange={(e) => {
+                                        selectedObject.text = e.target.value;
+                                        editor?.render();
+                                    }}
+                                    onBlur={(e) => {
                                         if (!editor) return;
-                                        const oldVal = selectedObject.fontSize;
-                                        const newVal = parseFloat(v);
-                                        if (isNaN(newVal) || newVal <= 0) return;
                                         const cmd = new ChangeTextStyleCommand(
                                             selectedObject.id,
-                                            { fontSize: oldVal },
-                                            { fontSize: newVal }
+                                            { text: selectedObject.text },
+                                            { text: e.target.value }
                                         );
                                         editor.history.execute(cmd);
-                                        editor.render();
-                                    }} theme={theme} />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
+                                    }}
+                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[10px] text-gray-400 block mb-1">{t('fontFamily')}</label>
+                                    <select
+                                        value={selectedObject.fontFamily}
+                                        onChange={(e) => {
                                             if (!editor) return;
-                                            const oldVal = selectedObject.fontWeight;
-                                            const newVal = oldVal === 'bold' ? 'normal' : 'bold';
+                                            const oldVal = selectedObject.fontFamily;
                                             const cmd = new ChangeTextStyleCommand(
                                                 selectedObject.id,
-                                                { fontWeight: oldVal },
-                                                { fontWeight: newVal }
+                                                { fontFamily: oldVal },
+                                                { fontFamily: e.target.value }
                                             );
                                             editor.history.execute(cmd);
                                             editor.render();
                                         }}
-                                        className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontWeight === 'bold' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                                        className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                     >
-                                        B
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (!editor) return;
-                                            const oldVal = selectedObject.fontStyle;
-                                            const newVal = oldVal === 'italic' ? 'normal' : 'italic';
-                                            const cmd = new ChangeTextStyleCommand(
-                                                selectedObject.id,
-                                                { fontStyle: oldVal },
-                                                { fontStyle: newVal }
-                                            );
-                                            editor.history.execute(cmd);
-                                            editor.render();
-                                        }}
-                                        className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontStyle === 'italic' ? 'bg-gray-200 dark:bg-gray-700' : ''} italic`}
-                                    >
-                                        I
-                                    </button>
+                                        <option value="Arial">Arial</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Courier New">Courier New</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Verdana">Verdana</option>
+                                    </select>
                                 </div>
-                                <div className="mt-4">
-                                    <Button
-                                        variant="primary"
-                                        onClick={async () => {
-                                            if (!editor) return;
-                                            const font = await preloadConversionFont();
-                                            if (!font) return;
-                                            const command = new ConvertToPathCommand(selectedObject, font);
-                                            editor.history.execute(command);
-                                        }}
-                                        icon={Combine}
-                                        label={t('convertToPath')}
-                                        theme={theme}
-                                        className="w-full"
-                                    />
-                                </div>
+                                <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => {
+                                    if (!editor) return;
+                                    const oldVal = selectedObject.fontSize;
+                                    const newVal = parseFloat(v);
+                                    if (isNaN(newVal) || newVal <= 0) return;
+                                    const cmd = new ChangeTextStyleCommand(
+                                        selectedObject.id,
+                                        { fontSize: oldVal },
+                                        { fontSize: newVal }
+                                    );
+                                    editor.history.execute(cmd);
+                                    editor.render();
+                                }} theme={theme} />
+                            </div>
+                            <TextOptionsBar selectedObject={selectedObject} editor={editor} theme={theme} />
+                            <div className="mt-2">
+                                <Button
+                                    variant="primary"
+                                    onClick={async () => {
+                                        if (!editor) return;
+                                        const font = await preloadConversionFont();
+                                        if (!font) return;
+                                        const command = new ConvertToPathCommand(selectedObject, font);
+                                        editor.history.execute(command);
+                                    }}
+                                    icon={Combine}
+                                    label={t('convertToPath')}
+                                    theme={theme}
+                                    className="w-full"
+                                />
                             </div>
                         </div>
                     )}
