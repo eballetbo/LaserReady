@@ -3,11 +3,13 @@ import { TextObject } from '../models/text';
 import { useStore } from '../../../store/useStore';
 import { ChangeTextCommand } from '../commands/text';
 import { CreateShapeCommand } from '../commands/create';
+import { IShape } from '../types';
 
 export class TextTool extends BaseTool {
-    activeText: any | null; // TextObject
+    activeText: TextObject | null;
     textarea: HTMLTextAreaElement | null;
     private originalText: string = '';
+    private abortController: AbortController | null = null;
 
     constructor(editor: IEditorContext) {
         super(editor);
@@ -23,7 +25,6 @@ export class TextTool extends BaseTool {
         e.preventDefault();
         const { x, y } = this.editor.getMousePos(e);
 
-        // Check if clicked on existing text
         const clickedShape = this.findClickedText(x, y);
 
         if (clickedShape) {
@@ -41,30 +42,28 @@ export class TextTool extends BaseTool {
         this.editor.render();
     }
 
-    findClickedText(x: number, y: number): any | null {
-        // Simple bounds check
+    findClickedText(x: number, y: number): TextObject | null {
         for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
             const shape = this.editor.shapes[i];
             if (shape.type === 'text') {
-                const bounds = shape.getBounds ? shape.getBounds() : { minX: shape.x, minY: shape.y, maxX: shape.x + 100, maxY: shape.y + 20 };
+                const bounds = shape.getBounds ? shape.getBounds() : { minX: shape.x!, minY: shape.y!, maxX: shape.x! + 100, maxY: shape.y! + 20 };
                 if (x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY) {
-                    return shape;
+                    return shape as unknown as TextObject;
                 }
             }
         }
         return null;
     }
 
-    startEditing(textObject: any) {
+    startEditing(textObject: TextObject) {
         if (this.activeText === textObject && this.textarea) return;
 
         this.finishEditing();
 
         this.activeText = textObject;
         this.originalText = textObject.text;
-        this.editor.selectedShapes = [textObject];
+        this.editor.selectedShapes = [textObject as unknown as IShape];
 
-        // Create hidden textarea
         this.textarea = document.createElement('textarea');
         this.textarea.style.position = 'absolute';
         this.textarea.style.top = '0';
@@ -72,7 +71,7 @@ export class TextTool extends BaseTool {
         this.textarea.style.width = '1px';
         this.textarea.style.height = '1px';
         this.textarea.style.overflow = 'hidden';
-        this.textarea.style.opacity = '0'; // Hidden but focused
+        this.textarea.style.opacity = '0';
         this.textarea.style.pointerEvents = 'none';
         this.textarea.style.zIndex = '-1';
         this.textarea.value = textObject.text;
@@ -80,40 +79,29 @@ export class TextTool extends BaseTool {
         document.body.appendChild(this.textarea);
         this.textarea.focus();
 
-        // Sync input
+        this.abortController = new AbortController();
+        const { signal } = this.abortController;
+
         this.textarea.addEventListener('input', (e: Event) => {
             if (this.activeText) {
                 this.activeText.text = (e.target as HTMLTextAreaElement).value;
                 this.editor.render();
             }
-        });
-
-        // Blur handler to finish editing
-        this.textarea.addEventListener('blur', () => {
-            // Delay slightly to allow click to register? 
-            // Actually, if we click canvas, we handle it.
-            // But if we click properties panel, we might want to keep editing?
-            // For now, let's finish editing on blur, but maybe we need to be careful.
-            // If user clicks Font dropdown, textarea loses focus.
-            // We should probably NOT destroy textarea on blur immediately if we want to keep editing while changing properties.
-            // But standard behavior is: click canvas -> finish.
-            // Click properties -> keep selected but maybe stop typing?
-
-            // Let's rely on tool change or click outside to finish.
-            // But we need to remove textarea eventually.
-            // Let's keep it simple: finish on tool change or new selection.
-        });
+        }, { signal });
     }
 
     finishEditing() {
-        if (this.textarea) {
-            document.body.removeChild(this.textarea);
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
+        if (this.textarea && this.textarea.parentNode) {
+            this.textarea.parentNode.removeChild(this.textarea);
             this.textarea = null;
         }
         if (this.activeText) {
             const currentText = this.activeText.text;
             if (currentText.trim() === '') {
-                // Empty text: undo the creation (removes from history + store)
                 this.editor.history.undo();
             } else if (currentText !== this.originalText) {
                 const command = new ChangeTextCommand(this.activeText.id, this.originalText, currentText);
@@ -125,8 +113,6 @@ export class TextTool extends BaseTool {
     }
 
     onKeyDown(e: KeyboardEvent) {
-        // If we are editing, textarea handles input.
-        // But we might want to handle Escape to cancel/finish.
         if (e.key === 'Escape') {
             this.finishEditing();
         }
