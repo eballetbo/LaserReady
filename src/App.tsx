@@ -132,6 +132,26 @@ function AppContent() {
                 e.preventDefault();
                 editor?.redo();
             }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                e.preventDefault();
+                editor?.copy();
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
+                e.preventDefault();
+                editor?.cut();
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                e.preventDefault();
+                editor?.paste();
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                editor?.duplicate();
+            }
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);

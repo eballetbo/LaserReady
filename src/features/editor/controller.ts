@@ -16,6 +16,7 @@ import { BooleanCommand } from '../shapes/commands/boolean';
 import { GroupCommand } from '../shapes/commands/group';
 import { UngroupCommand } from '../shapes/commands/ungroup';
 import { ImportShapesCommand } from '../shapes/commands/import';
+import { DuplicateCommand } from '../shapes/commands/duplicate';
 import { updateShapeGeometry } from './utils/geometry-updater';
 
 /**
@@ -313,6 +314,40 @@ export class CanvasController {
         const command = new UngroupCommand(groups as any);
         this.history.execute(command);
     }
+
+    // --- Clipboard ---
+
+    private clipboard: IShape[] = [];
+
+    copy() {
+        if (this.selectedShapes.length === 0) return;
+        this.clipboard = this.selectedShapes.map(s => s.clone!());
+    }
+
+    cut() {
+        this.copy();
+        this.deleteSelected();
+    }
+
+    paste() {
+        if (this.clipboard.length === 0) return;
+        const pasted = this.clipboard.map(s => {
+            const clone = s.clone!();
+            clone.id = crypto.randomUUID();
+            if (clone.move) clone.move(10, 10);
+            return clone;
+        });
+        const command = new ImportShapesCommand(pasted);
+        this.history.execute(command);
+        this.clipboard = pasted.map(s => s.clone!());
+    }
+
+    duplicate() {
+        if (this.selectedShapes.length === 0) return;
+        const command = new DuplicateCommand(this.selectedShapes);
+        this.history.execute(command);
+    }
+
     updateShape(shape: IShape) {
         updateShapeGeometry(shape);
         useStore.getState().updateShape(shape);
