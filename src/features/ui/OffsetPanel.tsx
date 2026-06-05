@@ -54,7 +54,7 @@ export const OffsetPanel = ({ theme }: OffsetPanelProps) => {
                     <label className={`text-[10px] text-gray-400 block mb-1`}>{t('joinStyle') || 'Corner Style'}</label>
                     <select
                         value={offsetJoin}
-                        onChange={(e) => useStore.getState().setOffsetJoin(e.target.value as any)}
+                        onChange={(e) => useStore.getState().setOffsetJoin(e.target.value as 'round' | 'miter' | 'bevel')}
                         className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                     >
                         <option value="round">{t('round') || 'Round'}</option>
