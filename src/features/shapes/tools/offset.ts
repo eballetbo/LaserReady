@@ -108,7 +108,8 @@ export class OffsetTool extends BaseTool {
             try {
                 results = offsetShape(this.hoveredShapeState, offsetDistance, { join: offsetJoin });
                 this.previewCache = { shapeId: this.hoveredShape.id, distance: offsetDistance, join: offsetJoin, results };
-            } catch {
+            } catch (e) {
+                if (import.meta.env.DEV) console.warn('Offset preview failed:', e);
                 return;
             }
         }
