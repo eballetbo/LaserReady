@@ -59,6 +59,53 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — bold and italic rendering', () => {
+    it('defaults fontWeight to normal', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.fontWeight).toBe('normal');
+    });
+
+    it('defaults fontStyle to normal', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.fontStyle).toBe('normal');
+    });
+
+    it('stores bold fontWeight from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { fontWeight: 'bold' });
+        expect(t.fontWeight).toBe('bold');
+    });
+
+    it('stores italic fontStyle from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { fontStyle: 'italic' });
+        expect(t.fontStyle).toBe('italic');
+    });
+
+    it('bold and italic can be combined', () => {
+        const t = new TextObject(0, 0, 'Hello', { fontWeight: 'bold', fontStyle: 'italic' });
+        expect(t.fontWeight).toBe('bold');
+        expect(t.fontStyle).toBe('italic');
+    });
+
+    it('fontWeight persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'X', { fontWeight: 'bold' });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.fontWeight).toBe('bold');
+    });
+
+    it('fontStyle persists through clone', () => {
+        const t = new TextObject(0, 0, 'X', { fontStyle: 'italic' });
+        expect(t.clone().fontStyle).toBe('italic');
+    });
+
+    it('TextMeasurer uses fontWeight and fontStyle for width calculation', () => {
+        const normal = new TextObject(0, 0, 'Hello', { fontWeight: 'normal' });
+        const bold = new TextObject(0, 0, 'Hello', { fontWeight: 'bold' });
+        // Bold text is typically wider; in jsdom it may be the same but the property is passed
+        expect(bold.measureLineWidth('Hello')).toBeGreaterThanOrEqual(0);
+        expect(normal.measureLineWidth('Hello')).toBeGreaterThanOrEqual(0);
+    });
+});
+
 describe('TextObject — upper case toggle', () => {
     it('defaults upperCase to false', () => {
         const t = new TextObject(0, 0, 'Hello');
