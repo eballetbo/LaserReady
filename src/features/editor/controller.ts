@@ -348,6 +348,18 @@ export class CanvasController {
         this.history.execute(command);
     }
 
+    selectAll() {
+        this.selectedShapes = [...this.shapes];
+        this.render();
+    }
+
+    nudge(dx: number, dy: number) {
+        if (this.selectedShapes.length === 0) return;
+        const command = new MoveShapeCommand(this, this.selectedShapes, dx, dy);
+        this.history.execute(command);
+        this.render();
+    }
+
     updateShape(shape: IShape) {
         updateShapeGeometry(shape);
         useStore.getState().updateShape(shape);
