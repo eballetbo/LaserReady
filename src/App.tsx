@@ -31,7 +31,7 @@ function AppContent() {
 
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
     const [editor, setEditor] = useState<CanvasController | null>(null);
-    const [selection, setSelection] = useState<IShape[]>([]);
+    const [selection, setSelection] = useState<IShape[]>([]); // kept for Canvas onSelectionChange callback
     const [showShortcuts, setShowShortcuts] = useState(false);
 
     useEffect(() => {
@@ -94,7 +94,6 @@ function AppContent() {
 
                 <RightSidebar
                     theme={theme}
-                    selection={selection}
                     editor={editor}
                     applyLaserMode={applyLaserMode}
                     deleteSelected={deleteSelected}

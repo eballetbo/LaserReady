@@ -29,14 +29,14 @@ type Theme = ThemeColors;
 
 interface PropertiesPanelProps {
     theme: Theme;
-    selection: any[]; // PathShape[] | TextObject[]
+    selection?: any[];
     editor: CanvasController | null;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;
     isEmbedded: boolean;
 }
 
-export default function PropertiesPanel({ theme, selection, editor, applyLaserMode, deleteSelected, isEmbedded }: PropertiesPanelProps) {
+export default function PropertiesPanel({ theme, editor, applyLaserMode, deleteSelected, isEmbedded }: PropertiesPanelProps) {
     const { t } = useLanguage();
     const [dimensions, setDimensions] = useState<{ x: number | string, y: number | string, w: number | string, h: number | string }>({ x: 0, y: 0, w: 0, h: 0 });
     const [sides, setSides] = useState(6);
@@ -46,19 +46,22 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
     const tool = useStore(state => state.tool);
     const filletRadius = useStore(state => state.filletRadius || 5);
+    const shapes = useStore(state => state.shapes);
+    const selectedIds = useStore(state => state.selectedShapes);
 
-    const selectedObject = selection.length === 1 ? selection[0] : null;
-    const hasSelection = selection.length > 0;
+    const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
+    const selectedObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
+    const hasSelection = selectedObjects.length > 0;
 
     useEffect(() => {
         if (hasSelection) {
             const updateDims = () => {
                 let bounds;
-                if (selection.length > 1) {
-                    bounds = Geometry.getCombinedBounds(selection);
+                if (selectedObjects.length > 1) {
+                    bounds = Geometry.getCombinedBounds(selectedObjects);
                 } else {
-                    const obj = selection[0];
-                    bounds = obj.getBounds ? obj.getBounds() : null;
+                    const obj = selectedObjects[0];
+                    bounds = obj?.getBounds ? obj.getBounds() : null;
                 }
 
                 if (!bounds) {
@@ -86,7 +89,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                 }
             }
         }
-    }, [selectedObject, selection, hasSelection]);
+    }, [selectedObject, selectedObjects, hasSelection]);
 
     const updateDimension = (key: string, value: string) => {
         setDimensions(prev => ({ ...prev, [key]: value }));
@@ -100,18 +103,18 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         if (isNaN(val)) return;
 
         let bounds;
-        if (selection.length > 1) {
-            bounds = Geometry.getCombinedBounds(selection);
+        if (selectedObjects.length > 1) {
+            bounds = Geometry.getCombinedBounds(selectedObjects);
         } else {
-            const obj = selection[0];
-            bounds = obj.getBounds ? obj.getBounds() : null;
+            const obj = selectedObjects[0];
+            bounds = obj?.getBounds ? obj.getBounds() : null;
         }
 
         if (!bounds) bounds = { minX: 0, minY: 0, width: 0, height: 0 };
 
         const valPx = val * PIXELS_PER_MM;
 
-        const command = new TransformCommand(selection, (shapes) => {
+        const command = new TransformCommand(selectedObjects, (shapes) => {
             if (key === 'x') {
                 const dx = valPx - bounds!.minX;
                 shapes.forEach(obj => obj.move?.(dx, 0));
@@ -533,8 +536,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignStartVertical}
                                         onClick={() => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 0) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new AlignCommand(ids, 'left', alignToPage ? 'page' : 'selection'));
                                                 editor.render();
                                             }
@@ -547,8 +550,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignCenterVertical}
                                         onClick={() => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 0) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new AlignCommand(ids, 'center-v', alignToPage ? 'page' : 'selection'));
                                                 editor.render();
                                             }
@@ -561,8 +564,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignEndVertical}
                                         onClick={() => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 0) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new AlignCommand(ids, 'right', alignToPage ? 'page' : 'selection'));
                                                 editor.render();
                                             }
@@ -575,14 +578,14 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignHorizontalDistributeCenter}
                                         onClick={() => {
-                                            if (editor && selection.length > 2) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 2) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new DistributeCommand(ids, 'horizontal'));
                                                 editor.render();
                                             }
                                         }}
                                         theme={theme}
-                                        disabled={selection.length < 3}
+                                        disabled={selectedObjects.length < 3}
                                         title="Distribute Horizontally"
                                         label=""
                                     />
@@ -591,8 +594,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignStartHorizontal}
                                         onClick={() => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 0) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new AlignCommand(ids, 'top', alignToPage ? 'page' : 'selection'));
                                                 editor.render();
                                             }
@@ -605,8 +608,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignCenterHorizontal}
                                         onClick={() => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 0) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new AlignCommand(ids, 'center-h', alignToPage ? 'page' : 'selection'));
                                                 editor.render();
                                             }
@@ -619,8 +622,8 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignEndHorizontal}
                                         onClick={() => {
-                                            if (editor && selection.length > 0) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 0) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new AlignCommand(ids, 'bottom', alignToPage ? 'page' : 'selection'));
                                                 editor.render();
                                             }
@@ -633,14 +636,14 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="icon"
                                         icon={AlignVerticalDistributeCenter}
                                         onClick={() => {
-                                            if (editor && selection.length > 2) {
-                                                const ids = selection.map(s => s.id);
+                                            if (editor && selectedObjects.length > 2) {
+                                                const ids = selectedObjects.map(s => s.id);
                                                 editor.history.execute(new DistributeCommand(ids, 'vertical'));
                                                 editor.render();
                                             }
                                         }}
                                         theme={theme}
-                                        disabled={selection.length < 3}
+                                        disabled={selectedObjects.length < 3}
                                         title="Distribute Vertically"
                                         label=""
                                     />
@@ -668,7 +671,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
 
                                 {/* Boolean Ops (Only if multiple) */}
-                                {selection.length > 1 && (
+                                {selectedObjects.length > 1 && (
                                     <div className="grid grid-cols-2 gap-2">
                                         <Button variant="iconText" onClick={() => editor?.performBooleanOperation('unite')} icon={Combine} label={t('unite')} theme={theme} />
                                         <Button variant="iconText" onClick={() => editor?.performBooleanOperation('subtract')} icon={Minus} label={t('subtract')} theme={theme} />
@@ -678,9 +681,9 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 )}
 
                                 {/* Grouping (Single or Multiple) */}
-                                {(selection.length > 1 || (selectedObject && selectedObject.type === 'group')) && (
+                                {(selectedObjects.length > 1 || (selectedObject && selectedObject.type === 'group')) && (
                                     <div className="grid grid-cols-2 gap-2">
-                                        {selection.length > 1 && (
+                                        {selectedObjects.length > 1 && (
                                             <Button variant="iconText" onClick={() => editor?.groupSelected()} icon={Link} label={t('Group') || 'Group'} theme={theme} />
                                         )}
                                         <Button variant="iconText" onClick={() => editor?.ungroupSelected()} icon={Unlink} label={t('Ungroup') || 'Ungroup'} theme={theme} />
@@ -692,7 +695,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         variant="iconText"
                                         onClick={deleteSelected}
                                         icon={Trash2}
-                                        label={`${t('delete')} (${selection.length})`}
+                                        label={`${t('delete')} (${selectedObjects.length})`}
                                         theme={{ ...theme, buttonHover: 'hover:bg-red-500/10 hover:border-red-500 hover:text-red-500', iconColor: 'text-red-500' }}
                                         className="w-full justify-center text-red-500 border-red-200 dark:border-red-900/30"
                                     />

@@ -10,13 +10,13 @@ type Theme = ThemeColors;
 
 interface RightSidebarProps {
     theme: Theme;
-    selection: any[];
+    selection?: any[];
     editor: CanvasController | null;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;
 }
 
-export default function RightSidebar({ theme, selection, editor, applyLaserMode, deleteSelected }: RightSidebarProps) {
+export default function RightSidebar({ theme, editor, applyLaserMode, deleteSelected }: RightSidebarProps) {
     const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState<'properties' | 'library'>('properties');
 
@@ -60,7 +60,7 @@ export default function RightSidebar({ theme, selection, editor, applyLaserMode,
                     <div id="panel-properties" role="tabpanel" className="flex-1 flex flex-col overflow-hidden">
                         <PropertiesPanel
                             theme={theme}
-                            selection={selection}
+
                             editor={editor}
                             applyLaserMode={applyLaserMode}
                             deleteSelected={deleteSelected}
