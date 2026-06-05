@@ -210,7 +210,8 @@ function AppContent() {
     // --- FILE I/O ---
     const handleExport = () => {
         if (!editor) return;
-        const svgString = exportToSVG(editor.shapes as PathShape[], material.width, material.height);
+        const layers = useStore.getState().layers;
+        const svgString = exportToSVG(editor.shapes as PathShape[], material.width, material.height, layers);
         downloadSVG(svgString, 'laser-design.svg');
     };
 
