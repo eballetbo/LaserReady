@@ -137,7 +137,7 @@ Tasks:
   [x] Vertical line spacing (vSpace property + rendering).
   [x] Text horizontal alignment (left / center / right).
   [x] Text vertical alignment (top / middle / bottom).
-  [ ] Upper case display toggle (non-destructive).
+  [x] Upper case display toggle (non-destructive).
   [ ] Bold and italic style rendering with font variant selection.
   [ ] Text bending — circular arc layout with drag handle.
   [ ] Distort toggle for bent text (warp vs. rigid characters).

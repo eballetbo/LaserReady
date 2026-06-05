@@ -59,6 +59,52 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — upper case toggle', () => {
+    it('defaults upperCase to false', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.upperCase).toBe(false);
+    });
+
+    it('getDisplayText returns original when upperCase is false', () => {
+        const t = new TextObject(0, 0, 'Hello World');
+        expect(t.getDisplayText()).toBe('Hello World');
+    });
+
+    it('getDisplayText returns uppercased when upperCase is true', () => {
+        const t = new TextObject(0, 0, 'Hello World', { upperCase: true });
+        expect(t.getDisplayText()).toBe('HELLO WORLD');
+    });
+
+    it('stored text is unchanged (non-destructive)', () => {
+        const t = new TextObject(0, 0, 'Hello World', { upperCase: true });
+        expect(t.text).toBe('Hello World');
+        expect(t.getDisplayText()).toBe('HELLO WORLD');
+    });
+
+    it('multi-line text is uppercased per line', () => {
+        const t = new TextObject(0, 0, 'line one\nline two', { upperCase: true });
+        expect(t.getDisplayText()).toBe('LINE ONE\nLINE TWO');
+    });
+
+    it('getBounds uses display text for width calculation', () => {
+        const lower = new TextObject(0, 0, 'abc');
+        const upper = new TextObject(0, 0, 'abc', { upperCase: true });
+        // Uppercase letters are typically wider
+        expect(upper.getBounds().width).toBeGreaterThanOrEqual(lower.getBounds().width);
+    });
+
+    it('upperCase persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'Test', { upperCase: true });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.upperCase).toBe(true);
+    });
+
+    it('upperCase persists through clone', () => {
+        const t = new TextObject(0, 0, 'Test', { upperCase: true });
+        expect(t.clone().upperCase).toBe(true);
+    });
+});
+
 describe('TextObject — vertical alignment (alignY)', () => {
     it('defaults alignY to top', () => {
         const t = new TextObject(100, 100, 'Hello');
