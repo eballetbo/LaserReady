@@ -628,13 +628,19 @@ export class CanvasRenderer {
         }
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0) - extraPerChar;
 
-        // bend is a curvature value: radius = totalArcLen / bend (in radians mapped from bend factor)
-        // Positive bend curves upward, negative curves downward
         const radius = Math.abs(totalArcLen / (bend * 0.01));
         const direction = bend > 0 ? -1 : 1;
 
         const totalAngle = totalArcLen / radius;
         let currentAngle = -totalAngle / 2;
+
+        // Compute the x position of the first character on the arc to determine
+        // the offset needed to keep text starting at x=0 (left-aligned)
+        const firstHalfAngle = ((charWidths[0] ?? 0) / 2) / radius;
+        const firstCharAngle = -totalAngle / 2 + firstHalfAngle;
+        const arcLeftX = Math.sin(firstCharAngle) * radius * direction * -1;
+        // Offset so the left edge of bent text aligns with x=0
+        const xShift = -arcLeftX + (charWidths[0] ?? 0) / 2;
 
         const chars = [...line];
         for (let i = 0; i < chars.length; i++) {
@@ -642,7 +648,7 @@ export class CanvasRenderer {
             const halfAngle = (charWidth / 2) / radius;
             currentAngle += halfAngle;
 
-            const cx = Math.sin(currentAngle) * radius * direction * -1;
+            const cx = Math.sin(currentAngle) * radius * direction * -1 + xShift;
             const cy = (Math.cos(currentAngle) - 1) * radius * direction;
 
             this.ctx.save();
