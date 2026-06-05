@@ -1,5 +1,6 @@
 import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { TextObject } from '../models/text';
+import { useStore } from '../../../store/useStore';
 
 export class TextTool extends BaseTool {
     activeText: any | null; // TextObject
@@ -26,7 +27,7 @@ export class TextTool extends BaseTool {
                 fontSize: 24,
                 fontFamily: 'Arial'
             }, this.editor.activeLayerId);
-            this.editor.shapes.push(newText);
+            useStore.getState().addShapes([newText]);
             this.editor.selectedShapes = [newText];
             this.startEditing(newText);
         }
@@ -103,9 +104,7 @@ export class TextTool extends BaseTool {
         }
         if (this.activeText) {
             if (this.activeText.text.trim() === '') {
-                // Remove empty text object
-                const index = this.editor.shapes.indexOf(this.activeText);
-                if (index > -1) this.editor.shapes.splice(index, 1);
+                useStore.getState().removeShapes([this.activeText.id]);
             }
             this.activeText = null;
             this.editor.render();

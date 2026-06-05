@@ -85,7 +85,7 @@ export class PenTool extends BaseTool {
                 // Start new path
                 const startNode = new PathNode(x, y);
                 this.editor.activePath = new PathShape([startNode], false, this.editor.activeLayerId);
-                this.editor.shapes.push(this.editor.activePath);
+                useStore.getState().addShapes([this.editor.activePath]);
                 this.draggingItem = { type: 'anchor', index: 0 };
                 this.continuingFromEnd = true; // New paths always append
             } else {
@@ -254,10 +254,7 @@ export class PenTool extends BaseTool {
                 this.editor.previewPoint = null;
                 this.editor.render();
             } else if (e.key === 'Escape') {
-                const index = this.editor.shapes.indexOf(this.editor.activePath);
-                if (index > -1) {
-                    this.editor.shapes.splice(index, 1);
-                }
+                useStore.getState().removeShapes([this.editor.activePath.id]);
                 this.editor.activePath = null;
                 this.editor.previewPoint = null;
                 this.editor.selectedShapes = [];
