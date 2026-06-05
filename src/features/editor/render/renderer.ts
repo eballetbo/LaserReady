@@ -595,8 +595,7 @@ export class CanvasRenderer {
                 this.ctx.stroke();
                 break;
 
-            case 'grid':
-                // Crosshair / Plus
+            case 'grid': {
                 const size = MARKER_SIZE / 2;
                 this.ctx.moveTo(x - size, y);
                 this.ctx.lineTo(x + size, y);
@@ -604,6 +603,7 @@ export class CanvasRenderer {
                 this.ctx.lineTo(x, y + size);
                 this.ctx.stroke();
                 break;
+            }
         }
 
         this.ctx.restore();

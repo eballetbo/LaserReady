@@ -23,7 +23,7 @@ export async function preloadConversionFont(): Promise<opentype.Font | null> {
         const font = await opentype.load(FONT_URL);
         cachedFont = font;
         return font;
-    } catch (err) {
+    } catch {
         notify('Failed to load font for text conversion. Please check your internet connection.', 'error');
         return null;
     }

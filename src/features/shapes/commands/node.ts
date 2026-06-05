@@ -242,7 +242,7 @@ export class ChangeNodeTypeCommand implements Command {
             return node;
         }
 
-        let targetAngle = angleOut;
+        const targetAngle = angleOut;
         let targetLenIn = lenIn;
         let targetLenOut = lenOut;
 

@@ -70,7 +70,7 @@ export class OffsetTool extends BaseTool {
         }
     }
 
-    onMouseDown(e: MouseEvent): void {
+    onMouseDown(_e: MouseEvent): void {
         if (!this.hoveredShape) return;
 
         const { offsetDistance, offsetJoin } = useStore.getState();
