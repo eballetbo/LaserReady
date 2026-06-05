@@ -107,7 +107,8 @@ export class OffsetTool extends BaseTool {
                 if (res.nodes.length > 0) {
                     const start = res.nodes[0];
                     ctx.moveTo(start.x, start.y);
-                    for (let i = 0; i < res.nodes.length; i++) {
+                    const limit = res.closed ? res.nodes.length : res.nodes.length - 1;
+                    for (let i = 0; i < limit; i++) {
                         const curr = res.nodes[i];
                         const next = res.nodes[(i + 1) % res.nodes.length];
                         ctx.bezierCurveTo(
@@ -117,7 +118,7 @@ export class OffsetTool extends BaseTool {
                         );
                     }
                 }
-                ctx.closePath();
+                if (res.closed) ctx.closePath();
                 ctx.stroke();
             });
 
