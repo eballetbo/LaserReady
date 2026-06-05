@@ -1,0 +1,70 @@
+Spec: Measure Tool
+
+Purpose:
+  Allow users to measure distances between two points on the canvas
+  without creating permanent geometry.
+
+Owns:
+  ./measure.ts
+  ./measure.test.ts
+
+Must:
+  Activate via toolbar button or keyboard shortcut (M).
+  First click sets the start point.
+  Mouse move shows a live measurement line with distance in mm.
+  Second click sets the end point and displays final measurement.
+  Display distance, delta X, and delta Y in mm.
+  Measurement overlay renders above all shapes.
+  Snapping applies to measurement endpoints when enabled.
+  Pressing Escape cancels the current measurement.
+  Measurements are temporary (not saved to project).
+
+Must not:
+  Create shapes or modify the document.
+  Persist measurements in the store or project file.
+  Block other tools from being selected (measurement clears on tool change).
+
+Depends on:
+  @BaseTool
+  @IEditorContext
+  @SnapManager
+  @PIXELS_PER_MM
+
+Exposes:
+  MeasureTool (extends BaseTool)
+
+Scenario: measure distance between two points
+  Given the Measure tool is active
+  When the user clicks at (100mm, 50mm) and then at (200mm, 50mm)
+  Then the overlay displays "100.00 mm"
+  And delta X shows "100.00 mm" and delta Y shows "0.00 mm"
+
+Scenario: snap to endpoint while measuring
+  Given snapping is enabled and a shape has an endpoint at (75mm, 30mm)
+  When the user moves the cursor near (75mm, 30mm)
+  Then the measurement start snaps to exactly (75mm, 30mm)
+  And a snap indicator appears
+
+Scenario: cancel measurement
+  Given the user has placed the start point
+  When the user presses Escape
+  Then the measurement overlay is cleared
+  And the tool returns to awaiting first click
+
+Tasks:
+  [ ] Create MeasureTool class extending BaseTool.
+  [ ] Implement two-click measurement flow.
+  [ ] Render measurement line overlay (dashed line with arrowheads).
+  [ ] Display distance label at midpoint of measurement line.
+  [ ] Display delta X and delta Y in a small tooltip.
+  [ ] Integrate with SnapManager for endpoint snapping.
+  [ ] Add "M" keyboard shortcut to shortcuts.ts.
+  [ ] Add Measure button to toolbar.
+  [ ] Add unit test for distance calculation.
+
+Done when:
+  Two-click measurement displays correct distance in mm.
+  Snap works on measurement endpoints.
+  Escape cancels cleanly.
+  No shapes are created or modified.
+  Shortcut "M" activates the tool.

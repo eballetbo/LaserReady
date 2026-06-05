@@ -1,0 +1,38 @@
+Spec: Shapes Module
+
+Purpose:
+  Shape models, creation tools, editing tools, and undoable commands
+  for all vector geometry in the editor.
+
+Structure:
+  ./models: Shape class implementations (PathShape, TextObject, GroupShape, PathNode)
+  ./tools: Interactive tools (select, pen, node-edit, text, fillet, offset)
+  ./commands: Undoable command classes for all shape operations
+  ./utils: Shared utilities (snapshot capture/restore)
+  ./types.ts: Core IShape interface and type definitions
+
+Owns:
+  ./models/**
+  ./tools/**
+  ./commands/**
+  ./utils/**
+  ./types.ts
+
+Must:
+  All shapes implement the IShape interface.
+  All shape modifications go through Command classes for undo/redo.
+  Shape models provide clone(), getBounds(), toJSON(), and fromJSON().
+  PathNode stores anchor position and two Bézier control handles.
+  Tools extend BaseTool and implement onMouseDown/Move/Up lifecycle.
+
+Must not:
+  Directly mutate the Zustand store without going through setShapes().
+  Skip the Command pattern for user-initiated changes.
+  Import from ../ui or ../persistence (dependency direction is inward).
+
+Depends on:
+  @IShape interface
+  @PathNode model
+  @HistoryManager
+  @useStore (Zustand)
+  paper.js (for boolean and offset operations)

@@ -1,0 +1,39 @@
+Spec: Offset Tool
+
+Purpose:
+  Create parallel offset copies of paths at a specified distance.
+
+Owns:
+  ./offset.ts
+  ./offset.test.ts
+
+Must:
+  Configurable distance in mm (positive = outward, negative = inward).
+  Configurable join style: Round, Miter, Bevel.
+  Hover preview shows green offset outline (cached, not recomputed every frame).
+  Click applies the offset, replacing the original shape.
+  Operation is fully undoable.
+
+Must not:
+  Recompute offset preview on every animation frame (use cache).
+  Operate on open paths without warning.
+  Crash on degenerate paths (catch Paper.js errors gracefully).
+
+Depends on:
+  @BaseTool
+  @paper.js (for offset geometry)
+  @OffsetCommand
+
+Scenario: outward offset
+  Given a 50mm square is on canvas and offset distance = 3mm
+  When the user hovers over the square
+  Then a green preview of a ~56mm square appears
+  When the user clicks
+  Then the original square is replaced by the offset result
+
+Tasks:
+  [x] Hover preview with caching.
+  [x] Click to apply offset.
+  [x] Distance and join configuration.
+  [x] Error handling for degenerate paths.
+  [x] Undoable via command.

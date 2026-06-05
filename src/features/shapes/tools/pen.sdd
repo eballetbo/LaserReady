@@ -1,0 +1,45 @@
+Spec: Pen Tool
+
+Purpose:
+  Create Bézier paths by placing anchor points with optional control handles.
+
+Owns:
+  ./pen.ts
+  ./pen.test.ts
+
+Must:
+  Click places a corner node (straight segment).
+  Click+drag places a smooth node (curved segment with tangent handles).
+  Shift constrains new segments to 45° increments.
+  Clicking the first node closes the path.
+  Enter or Escape finishes as an open path.
+  Preview line shows from last node to cursor during drawing.
+  Snap to existing endpoints/midpoints when enabled.
+  Created path is pushed to store via CreateShapeCommand.
+
+Must not:
+  Modify existing shapes.
+  Create zero-length paths (discard if only one node placed).
+  Leave the path in an uncommitted state after tool switch.
+
+Depends on:
+  @BaseTool
+  @PathShape
+  @PathNode
+  @CreateShapeCommand
+  @SnapManager
+
+Scenario: draw triangle
+  Given the Pen tool is active
+  When the user clicks at 3 positions and closes the path
+  Then a closed PathShape with 3 corner nodes exists
+  And it is the selected shape
+
+Tasks:
+  [x] Click to place corner nodes.
+  [x] Click+drag for smooth nodes.
+  [x] Close path by clicking first node.
+  [x] Finish open path with Enter/Escape.
+  [x] Preview line rendering.
+  [x] Shift constraint for 45° angles.
+  [x] Integration with snap system.

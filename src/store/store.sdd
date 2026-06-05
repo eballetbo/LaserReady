@@ -1,0 +1,34 @@
+Spec: Store
+
+Purpose:
+  Centralized application state using Zustand with slices pattern.
+
+Structure:
+  ./useStore.ts: Zustand store creation and subscription
+  ./slices/shapes.ts: Shapes array, layers, material, selection state
+  ./slices/ui.ts: Active tool, snap toggle, language, theme preferences
+
+Owns:
+  ./useStore.ts
+  ./slices/**
+
+Must:
+  Use slices pattern for separation of concerns.
+  Shapes slice holds shapes[], layers[], activeLayerId, material dimensions.
+  UI slice holds tool (typed as ToolType), snap enabled, language, theme.
+  setShapes() is the only way to update the shapes array.
+  Store is not exposed on window in production (only DEV).
+  Subscriptions trigger render only on canvas-relevant changes.
+
+Must not:
+  Expose store globally in production builds.
+  Allow direct array mutation (always spread to new array).
+  Store derived state (compute from shapes array when needed).
+
+Depends on:
+  zustand
+
+Exposes:
+  useStore (hook)
+  useStore.getState()
+  useStore.subscribe()

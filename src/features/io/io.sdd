@@ -1,0 +1,37 @@
+Spec: IO Module
+
+Purpose:
+  Import and export vector data between LaserReady and external formats.
+
+Structure:
+  ./svg-import.ts: Parse SVG files into IShape instances
+  ./svg-export.ts: Convert shapes to SVG with mm dimensions
+  ./svg-parser.ts: Low-level SVG unit conversion utilities
+
+Owns:
+  ./svg-import.ts
+  ./svg-export.ts
+  ./svg-parser.ts
+
+Must:
+  Sanitize all imported SVG with DOMPurify before parsing.
+  Preserve physical dimensions (mm, cm, in, px) during import.
+  Export SVG with width/height in mm and a viewBox in pixels.
+  Apply laser mode colors as stroke in exported SVG.
+  Support paths, circles, ellipses, rectangles, polygons, and compound paths.
+
+Must not:
+  Import raster images (png, jpg, bmp).
+  Execute scripts embedded in SVG files.
+  Modify the Zustand store directly — return shapes for the caller to store.
+
+Depends on:
+  DOMPurify
+  paper.js (for path conversion)
+  @PathShape
+  @IShape
+
+Done when:
+  SVG round-trip preserves shape geometry within 0.1mm tolerance.
+  Malicious SVG content is stripped without crashing.
+  Physical units (mm, cm, in) are correctly converted on import.

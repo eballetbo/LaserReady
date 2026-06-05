@@ -1,0 +1,44 @@
+Spec: Node Edit Tool
+
+Purpose:
+  Direct manipulation of individual anchor points and control handles on paths.
+
+Owns:
+  ./node-edit.ts
+  ./node-edit.test.ts
+
+Must:
+  Click selects a single node.
+  Shift+click adds/removes from node selection.
+  Drag moves selected nodes.
+  Arrow keys nudge nodes by 1px (Shift+Arrow for 10px).
+  C key sets node type to Corner.
+  S key sets node type to Smooth (colinear handles, independent lengths).
+  Y key sets node type to Symmetric (colinear handles, equal lengths).
+  Delete removes selected nodes from path.
+  Double-click on segment inserts a new node.
+  All node edits are undoable.
+
+Must not:
+  Allow editing nodes of grouped shapes without entering the group.
+  Move nodes of locked shapes (future).
+  Create new shapes.
+
+Depends on:
+  @BaseTool
+  @IEditorContext
+  @MoveNodeCommand
+  @DeleteNodeCommand
+  @ChangeNodeTypeCommand
+  @InsertNodeCommand
+
+Tasks:
+  [x] Click to select node.
+  [x] Multi-select with Shift.
+  [x] Drag to move nodes.
+  [x] Arrow nudge.
+  [x] Node type switching (C/S/Y).
+  [x] Delete node.
+  [x] Insert node on segment.
+  [x] Segment to Line / Curve conversion.
+  [x] Break path at node.

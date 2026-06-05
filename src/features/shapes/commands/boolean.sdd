@@ -1,0 +1,48 @@
+Spec: Boolean Operations
+
+Purpose:
+  Combine two or more shapes using set operations (unite, subtract, intersect, exclude).
+
+Owns:
+  ./boolean.ts
+
+Can read:
+  ../../core/math/boolean.ts
+
+Must:
+  Support four operations: unite, subtract, intersect, exclude.
+  Require at least 2 selected shapes.
+  Preserve z-order position (insert result at lowest original index).
+  Remove original shapes and replace with result.
+  Notify user when operation produces no result.
+  Be fully undoable (restore originals on undo).
+
+Must not:
+  Modify shapes that are not selected.
+  Silently fail without user feedback.
+  Operate on text or group shapes directly (must be paths).
+
+Depends on:
+  paper.js (via @BooleanOperations)
+  @useStore
+  @notify
+
+Scenario: unite two overlapping rectangles
+  Given two overlapping rectangles are selected
+  When the user clicks "Unite"
+  Then a single merged shape replaces both rectangles
+  And the result is selected
+
+Scenario: no overlap produces warning
+  Given two non-overlapping shapes are selected
+  When the user clicks "Subtract"
+  Then a warning notification appears
+  And original shapes are preserved
+
+Tasks:
+  [x] Unite operation.
+  [x] Subtract operation.
+  [x] Intersect operation.
+  [x] Exclude operation.
+  [x] User notification on empty result.
+  [x] Undo restores original shapes.

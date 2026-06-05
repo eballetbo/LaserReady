@@ -26,3 +26,6 @@ dist-ssr
 # Electron
 dist-electron
 release
+
+# SpecDD local overrides
+.specdd/bootstrap.local.md

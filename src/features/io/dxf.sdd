@@ -1,0 +1,65 @@
+Spec: DXF Import/Export
+
+Purpose:
+  Support DXF file format for interoperability with CAD software
+  and laser control programs that prefer DXF over SVG.
+
+Owns:
+  ./dxf-import.ts
+  ./dxf-export.ts
+  ./dxf-import.test.ts
+  ./dxf-export.test.ts
+
+Must:
+  Import DXF R12/R14 format (most compatible with laser software).
+  Support LINE, ARC, CIRCLE, LWPOLYLINE, POLYLINE, SPLINE entities.
+  Convert DXF entities to PathShape instances.
+  Respect DXF units (assume mm unless INSUNITS header says otherwise).
+  Export all shapes as DXF polylines with mm coordinates.
+  Preserve layer assignment as DXF layers.
+
+Must not:
+  Support 3D DXF entities (only 2D).
+  Support DXF blocks/inserts in initial implementation.
+  Import hatches or dimensions.
+  Depend on a heavy DXF parsing library (keep bundle small).
+
+Depends on:
+  @PathShape
+  @IShape
+  @useStore
+
+Accepts:
+  DXF file content (string)
+
+Returns:
+  IShape[] (imported shapes)
+  string (exported DXF content)
+
+Scenario: import simple DXF with polylines
+  Given a DXF file containing 2 closed LWPOLYLINE entities
+  When the user imports the file
+  Then 2 closed PathShape instances appear on canvas
+  And their coordinates match the DXF values in mm
+
+Scenario: export shapes to DXF
+  Given the canvas has 3 shapes (rect, circle, polygon)
+  When the user exports as DXF
+  Then a valid DXF R12 file is produced
+  And it contains 3 entities with correct mm coordinates
+
+Tasks:
+  [ ] Research lightweight DXF parsing approach (custom parser vs dxf-parser lib).
+  [ ] Implement DXF import for LINE entities.
+  [ ] Implement DXF import for CIRCLE and ARC entities.
+  [ ] Implement DXF import for LWPOLYLINE entities.
+  [ ] Implement DXF export (shapes → LWPOLYLINE entities).
+  [ ] Add DXF to the import file picker filter.
+  [ ] Add "Export DXF" option in header.
+  [ ] Add unit tests for import.
+  [ ] Add unit tests for export round-trip.
+
+Done when:
+  DXF files from common laser software import correctly.
+  Exported DXF opens in LightBurn/AutoCAD without errors.
+  Round-trip preserves geometry within 0.01mm.
