@@ -15,6 +15,7 @@ import { UpdateStyleCommand } from '../shapes/commands/style';
 import { BooleanCommand } from '../shapes/commands/boolean';
 import { GroupCommand } from '../shapes/commands/group';
 import { UngroupCommand } from '../shapes/commands/ungroup';
+import { ImportShapesCommand } from '../shapes/commands/import';
 import { updateShapeGeometry } from './utils/geometry-updater';
 
 /**
@@ -262,17 +263,14 @@ export class CanvasController {
 
     importSVGString(svgString: string, position: { x: number; y: number } | null = null) {
         try {
-            this.startAction();
-
             const shapes = SVGImportService.import(svgString, {
                 position,
                 layerId: useStore.getState().activeLayerId
             });
 
-            useStore.getState().addShapes(shapes);
-            this.selectedShapes = shapes;
+            const command = new ImportShapesCommand(shapes);
+            this.history.execute(command);
             this.render();
-            this.endAction();
         } catch (e: any) {
             console.error("SVG Import Error:", e);
             alert(e.message || "Error importing SVG");
