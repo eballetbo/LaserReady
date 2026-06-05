@@ -12,6 +12,10 @@ export class TextTool extends BaseTool {
         this.textarea = null;
     }
 
+    onDeactivate(): void {
+        this.finishEditing();
+    }
+
     onMouseDown(e: MouseEvent) {
         e.preventDefault();
         const { x, y } = this.editor.getMousePos(e);
