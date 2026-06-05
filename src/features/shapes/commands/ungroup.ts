@@ -30,7 +30,8 @@ export class UngroupCommand implements Command {
 
         this.groupsToUngroup.forEach((group, gi) => {
             if (group.children) {
-                const insertIdx = this.originalGroupIndices[gi];
+                const idx = this.originalGroupIndices[gi];
+                const insertIdx = idx !== -1 ? Math.min(idx, newShapes.length) : newShapes.length;
                 newShapes.splice(insertIdx, 0, ...group.children);
                 allChildren.push(...group.children);
             }

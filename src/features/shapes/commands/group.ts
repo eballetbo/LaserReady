@@ -23,7 +23,8 @@ export class GroupCommand implements Command {
         }
 
         this.originalIndices = this.originalIds.map(id => shapes.findIndex(s => s.id === id));
-        const insertIdx = Math.min(...this.originalIndices);
+        const validIndices = this.originalIndices.filter(i => i !== -1);
+        const insertIdx = validIndices.length > 0 ? Math.min(...validIndices) : 0;
 
         const newShapes = shapes.filter(s => !this.originalIds.includes(s.id));
         newShapes.splice(insertIdx, 0, this.groupShape);
