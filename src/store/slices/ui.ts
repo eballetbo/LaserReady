@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { PIXELS_PER_MM } from '../../config/constants';
+import { PIXELS_PER_MM, MIN_ZOOM, MAX_ZOOM } from '../../config/constants';
 
 export interface UiSlice {
     tool: string;
@@ -48,7 +48,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     setOffsetJoin: (offsetJoin) => set({ offsetJoin }),
     zoomAtPoint: (delta, mouseX, mouseY) => {
         const { zoom, pan } = get();
-        const newZoom = Math.min(Math.max(zoom * delta, 0.1), 50);
+        const newZoom = Math.min(Math.max(zoom * delta, MIN_ZOOM), MAX_ZOOM);
 
         // Calculate world point under mouse before zoom
         const worldX = (mouseX - pan.x) / zoom;
