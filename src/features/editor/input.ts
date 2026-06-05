@@ -158,6 +158,7 @@ export class InputManager {
     private handleWheel(e: WheelEvent) {
         e.preventDefault();
         const delta = e.deltaY < 0 ? 1.1 : 0.9;
-        useStore.getState().zoomAtPoint(delta, e.clientX, e.clientY);
+        const rect = this.canvas.getBoundingClientRect();
+        useStore.getState().zoomAtPoint(delta, e.clientX - rect.left, e.clientY - rect.top);
     }
 }
