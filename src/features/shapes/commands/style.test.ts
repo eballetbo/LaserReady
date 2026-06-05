@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PathShape } from '../models/path';
+import { PathNode } from '../models/node';
 import { CanvasRenderer } from '../../editor/render/renderer';
 import { useStore } from '../../../store/useStore';
 import { UpdateStyleCommand } from './style';
+import { OperationMode } from '../../../types/layer';
 
 describe('Shape Styling Logic', () => {
     beforeEach(() => {
@@ -42,13 +44,13 @@ describe('Shape Styling Logic', () => {
             scale: vi.fn(),
             setLineDash: vi.fn(),
             clearRect: vi.fn(),
-        } as any;
+        } as unknown as CanvasRenderingContext2D;
 
         const canvas = {
             getContext: () => mockCtx,
             width: 800,
             height: 600
-        } as any;
+        } as unknown as HTMLCanvasElement;
 
         const renderer = new CanvasRenderer(canvas);
 
@@ -65,10 +67,12 @@ describe('Shape Styling Logic', () => {
             colorHandleLine: '#ccc',
             colorStroke: '#333'
         };
-        const layers = [{ id: 'layer-1', name: 'Layer 1', color: '#000000', mode: 'CUT' as any }]; // Default Black
+        const layers = [{ id: 'layer-1', name: 'Layer 1', color: '#000000', mode: 'CUT' as OperationMode }];
 
-        // We need nodes to draw
-        defaultShape.nodes = [{ x: 0, y: 0, cpIn: { x: 0, y: 0 }, cpOut: { x: 0, y: 0 } } as any, { x: 10, y: 10, cpIn: { x: 10, y: 10 }, cpOut: { x: 10, y: 10 } } as any];
+        defaultShape.nodes = [
+            new PathNode(0, 0),
+            new PathNode(10, 10)
+        ];
 
         renderer.drawScene(
             [defaultShape],
