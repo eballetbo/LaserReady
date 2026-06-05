@@ -75,23 +75,29 @@ export class CanvasController {
         this.pan = { x: 0, y: 0 };
 
 
-        // Subscribe to store changes to re-render
-        this.unsubscribe = useStore.subscribe((state, _) => {
-            // Sync selection from store to local property
-            // This fixes the stale node insertion issue while keeping compatibility with tools that write to selectedShapes
-            // Sync zoom and pan if changed externally (e.g. from toolbar or input)
-            if (state.zoom !== this.zoom || state.pan !== this.pan) {
+        // Subscribe to canvas-relevant store slices only
+        let prevState = useStore.getState();
+        this.unsubscribe = useStore.subscribe((state) => {
+            const zoomPanChanged = state.zoom !== this.zoom || state.pan !== this.pan;
+            const canvasChanged =
+                state.shapes !== prevState.shapes ||
+                state.selectedShapes !== prevState.selectedShapes ||
+                state.tool !== prevState.tool ||
+                state.layers !== prevState.layers ||
+                state.selectedNodeIndices !== prevState.selectedNodeIndices ||
+                state.material !== prevState.material ||
+                zoomPanChanged;
+
+            if (zoomPanChanged) {
                 this.zoom = state.zoom;
                 this.pan = state.pan;
                 this.inputManager.setTransform(this.zoom, this.pan);
             }
 
-            // Sync Snap Settings
             if (state.isSnappingEnabled !== this.snapManager.settings.enabled) {
                 this.snapManager.settings.enabled = state.isSnappingEnabled;
             }
 
-            // Manage animation based on selection state
             const hasSelection = state.selectedShapes.length > 0 && state.tool === 'select';
             if (hasSelection && !this.animationFrameId) {
                 this.startSelectionAnimation();
@@ -99,7 +105,11 @@ export class CanvasController {
                 this.stopSelectionAnimation();
             }
 
-            this.render();
+            prevState = state;
+
+            if (canvasChanged) {
+                this.render();
+            }
         });
 
         // Init input manager transform
