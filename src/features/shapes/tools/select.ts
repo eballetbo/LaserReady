@@ -160,8 +160,9 @@ export class SelectTool extends BaseTool {
         this.editor.canvas.style.cursor = 'default';
 
         if (this.isRotating && this.editor.selectedShapes.length > 0 && this.rotationCenter) {
-            const currentAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
-            const deltaAngle = currentAngle - this.rotateStartAngle;
+            const rawAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
+            const snappedAngle = this.editor.snapManager.snapAngle(rawAngle - this.rotateStartAngle, e.shiftKey);
+            const deltaAngle = e.shiftKey ? snappedAngle : rawAngle - this.rotateStartAngle;
 
             // Rotate preview: restore original, then apply rotation in-place
             this.editor.selectedShapes.forEach((shape, i) => {
@@ -375,8 +376,9 @@ export class SelectTool extends BaseTool {
             });
 
             // Calculate final rotation angle
-            const currentAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
-            const deltaAngle = currentAngle - this.rotateStartAngle;
+            const finalRawAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
+            const finalSnapped = this.editor.snapManager.snapAngle(finalRawAngle - this.rotateStartAngle, e.shiftKey);
+            const deltaAngle = e.shiftKey ? finalSnapped : finalRawAngle - this.rotateStartAngle;
 
             // Only create command if there was actual rotation
             if (Math.abs(deltaAngle) > 0.001) {

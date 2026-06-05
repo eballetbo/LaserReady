@@ -1,10 +1,11 @@
 import { CanvasController } from './controller';
 import { Geometry, Point } from '../../core/math/geometry';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
+import { useStore } from '../../store/useStore';
 
 export interface SnapResult {
     point: Point;
-    type: 'none' | 'grid' | 'endpoint' | 'midpoint' | 'center';
+    type: 'none' | 'grid' | 'endpoint' | 'midpoint' | 'center' | 'material';
     sourceShapeId?: string;
 }
 
@@ -12,6 +13,7 @@ export interface SnapSettings {
     enabled: boolean;
     grid: boolean;
     objects: boolean;
+    material: boolean;
     threshold: number; // In screen pixels
 }
 
@@ -22,6 +24,7 @@ export class SnapManager {
         enabled: true,
         grid: true,
         objects: true,
+        material: true,
         threshold: 10
     };
 
@@ -137,13 +140,47 @@ export class SnapManager {
         }
 
         // If Object Snap found, return it immediately (Strict Priority)
-        // This ensures endpoints/midpoints always win over grid
         if (bestObjectSnap) {
             this.activeSnap = bestObjectSnap;
             return bestObjectSnap;
         }
 
-        // 2. Grid Snap (Low Priority)
+        // 2. Material Edge/Center Snap (Medium Priority)
+        if (this.settings.material) {
+            const { width: matW, height: matH } = useStore.getState().material;
+            const matCenterX = matW / 2;
+            const matCenterY = matH / 2;
+
+            const materialPoints: Point[] = [
+                { x: 0, y: 0 },
+                { x: matW, y: 0 },
+                { x: matW, y: matH },
+                { x: 0, y: matH },
+                { x: matCenterX, y: matCenterY },
+                { x: matCenterX, y: 0 },
+                { x: matW, y: matCenterY },
+                { x: matCenterX, y: matH },
+                { x: 0, y: matCenterY },
+            ];
+
+            let bestMatSnap: SnapResult | null = null;
+            let matMinDistSq = Infinity;
+
+            for (const pt of materialPoints) {
+                const distSq = Geometry.getDistance(candidate, pt);
+                if (distSq < worldThresholdSq && distSq < matMinDistSq) {
+                    bestMatSnap = { point: pt, type: 'material' };
+                    matMinDistSq = distSq;
+                }
+            }
+
+            if (bestMatSnap) {
+                this.activeSnap = bestMatSnap;
+                return bestMatSnap;
+            }
+        }
+
+        // 3. Grid Snap (Low Priority)
         if (this.settings.grid) {
             const spacing = this.controller.config.gridSpacing || DEFAULT_GRID_SPACING;
             const snapX = Math.round(candidate.x / spacing) * spacing;
@@ -164,5 +201,14 @@ export class SnapManager {
         // No snap
         this.activeSnap = null;
         return { point: candidate, type: 'none' };
+    }
+
+    /**
+     * Snaps an angle (radians) to the nearest 15-degree increment when enabled.
+     */
+    snapAngle(angle: number, constrain: boolean): number {
+        if (!constrain) return angle;
+        const step = Math.PI / 12; // 15 degrees
+        return Math.round(angle / step) * step;
     }
 }
