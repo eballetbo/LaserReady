@@ -21,6 +21,7 @@ export interface TextStyle {
     upperCase?: boolean;
     bend?: number;
     distort?: boolean;
+    pathId?: string | null;
 }
 
 export interface Bounds {
@@ -54,6 +55,7 @@ export class TextObject implements IShape {
     upperCase: boolean;
     bend: number;
     distort: boolean;
+    pathId: string | null;
     type: string;
     closed: boolean = false;
     fillColor?: string;
@@ -80,6 +82,7 @@ export class TextObject implements IShape {
         this.upperCase = style.upperCase || false;
         this.bend = style.bend || 0;
         this.distort = style.distort || false;
+        this.pathId = style.pathId || null;
         this.type = 'text';
     }
 
@@ -225,7 +228,8 @@ export class TextObject implements IShape {
             alignY: this.alignY,
             upperCase: this.upperCase,
             bend: this.bend,
-            distort: this.distort
+            distort: this.distort,
+            pathId: this.pathId
         }, this.layerId);
     }
 
@@ -253,7 +257,8 @@ export class TextObject implements IShape {
             alignY: this.alignY,
             upperCase: this.upperCase,
             bend: this.bend,
-            distort: this.distort
+            distort: this.distort,
+            pathId: this.pathId
         };
     }
 
@@ -275,7 +280,8 @@ export class TextObject implements IShape {
             alignY: json.alignY as 'top' | 'middle' | 'bottom' | undefined,
             upperCase: json.upperCase as boolean | undefined,
             bend: json.bend as number | undefined,
-            distort: json.distort as boolean | undefined
+            distort: json.distort as boolean | undefined,
+            pathId: json.pathId as string | null | undefined
         }, (json.layerId as string) || 'layer-1');
     }
 }
