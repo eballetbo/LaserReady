@@ -1,11 +1,11 @@
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
-import { PathShape } from '../models/path';
+import { IShape } from '../types';
 
 export class CreateShapeCommand implements Command {
-    private shape: PathShape;
+    private shape: IShape;
 
-    constructor(shape: PathShape) {
+    constructor(shape: IShape) {
         this.shape = shape;
     }
 

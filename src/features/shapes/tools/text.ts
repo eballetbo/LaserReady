@@ -2,6 +2,7 @@ import { BaseTool, IEditorContext } from '../../../core/tools/base';
 import { TextObject } from '../models/text';
 import { useStore } from '../../../store/useStore';
 import { ChangeTextCommand } from '../commands/text';
+import { CreateShapeCommand } from '../commands/create';
 
 export class TextTool extends BaseTool {
     activeText: any | null; // TextObject
@@ -28,13 +29,13 @@ export class TextTool extends BaseTool {
         if (clickedShape) {
             this.startEditing(clickedShape);
         } else {
-            // Create new text
             const newText = new TextObject(x, y, '', {
                 fontSize: 24,
                 fontFamily: 'Arial'
             }, this.editor.activeLayerId);
-            useStore.getState().addShapes([newText]);
-            this.editor.selectedShapes = [newText];
+            const command = new CreateShapeCommand(newText);
+            this.editor.history.execute(command);
+            useStore.getState().setSelectedShapes([newText.id]);
             this.startEditing(newText);
         }
         this.editor.render();
@@ -112,7 +113,8 @@ export class TextTool extends BaseTool {
         if (this.activeText) {
             const currentText = this.activeText.text;
             if (currentText.trim() === '') {
-                useStore.getState().removeShapes([this.activeText.id]);
+                // Empty text: undo the creation (removes from history + store)
+                this.editor.history.undo();
             } else if (currentText !== this.originalText) {
                 const command = new ChangeTextCommand(this.activeText.id, this.originalText, currentText);
                 this.editor.history.execute(command);
