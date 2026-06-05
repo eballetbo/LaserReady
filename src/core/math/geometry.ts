@@ -1,5 +1,12 @@
 import { IShape } from '../../types/core';
 
+export interface BezierNode {
+    x: number;
+    y: number;
+    cpIn: Point;
+    cpOut: Point;
+}
+
 export interface Point {
     x: number;
     y: number;
@@ -250,7 +257,7 @@ export const Geometry = {
         };
     },
 
-    calculateBezierBoundingBox(nodes: any[], closed: boolean = false): Rect {
+    calculateBezierBoundingBox(nodes: BezierNode[], closed: boolean = false): Rect {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
         const len = nodes.length;
@@ -340,7 +347,7 @@ export const Geometry = {
     },
 
     // Legacy/Simple wrapper
-    calculateBoundingBox(nodes: any[]): Rect {
+    calculateBoundingBox(nodes: BezierNode[]): Rect {
         // Fallback to simple point bounds if no control points apparent or handled
         // BUT we want to use the new logic. 
         // We will default to calling `calculateBezierBoundingBox` with closed=true 
@@ -396,7 +403,7 @@ export const Geometry = {
             r1.maxY <= r2.maxY;
     },
 
-    isShapeInRect(shape: any, rect: Rect): boolean {
+    isShapeInRect(shape: IShape, rect: Rect): boolean {
         let bounds: Rect;
         if (shape.getBounds) {
             bounds = shape.getBounds();
@@ -406,7 +413,7 @@ export const Geometry = {
         return this.isRectInRect(bounds, rect);
     },
 
-    isShapeIntersectingRect(shape: any, rect: Rect): boolean {
+    isShapeIntersectingRect(shape: IShape, rect: Rect): boolean {
         let bounds: Rect;
         if (shape.getBounds) {
             bounds = shape.getBounds();
@@ -424,7 +431,7 @@ export const Geometry = {
      * @param shapes Array of shapes (must implement getBounds or have nodes)
      * @returns combined Rect or null if empty
      */
-    getCombinedBounds(shapes: any[]): Rect | null {
+    getCombinedBounds(shapes: IShape[]): Rect | null {
         if (!shapes || shapes.length === 0) return null;
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;

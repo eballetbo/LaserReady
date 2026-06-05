@@ -95,7 +95,7 @@ export class InsertNodeCommand implements Command {
         this.segmentIndex = segmentIndex;
         this.t = t;
 
-        const shape = useStore.getState().shapes.find((s: any) => s.id === shapeId);
+        const shape = useStore.getState().shapes.find(s => s.id === shapeId);
         if (!shape || !shape.nodes) {
             throw new Error('Shape or nodes not found');
         }
@@ -148,7 +148,7 @@ export class InsertNodeCommand implements Command {
 
     execute() {
         const shapes = useStore.getState().shapes;
-        const shapeIndex = shapes.findIndex((s: any) => s.id === this.shapeId);
+        const shapeIndex = shapes.findIndex(s => s.id === this.shapeId);
         if (shapeIndex === -1) return;
 
         const shape = shapes[shapeIndex];
@@ -166,7 +166,7 @@ export class InsertNodeCommand implements Command {
 
     undo() {
         const shapes = useStore.getState().shapes;
-        const shapeIndex = shapes.findIndex((s: any) => s.id === this.shapeId);
+        const shapeIndex = shapes.findIndex(s => s.id === this.shapeId);
         if (shapeIndex === -1) return;
 
         const shape = shapes[shapeIndex];
@@ -197,7 +197,7 @@ export class ChangeNodeTypeCommand implements Command {
         this.nodeIndex = nodeIndex;
         this.newType = newType;
 
-        const shape = useStore.getState().shapes.find((s: any) => s.id === shapeId);
+        const shape = useStore.getState().shapes.find(s => s.id === shapeId);
         if (!shape || !shape.nodes) {
             throw new Error('Shape or nodes not found');
         }
@@ -316,7 +316,7 @@ export class DeleteNodeCommand implements Command {
         this.shapeId = shapeId;
         this.indices = Array.isArray(indices) ? indices : [indices];
 
-        const shape = useStore.getState().shapes.find((s: any) => s.id === shapeId);
+        const shape = useStore.getState().shapes.find(s => s.id === shapeId);
         if (!shape || !shape.nodes) {
             throw new Error('Shape or nodes not found');
         }
@@ -330,7 +330,7 @@ export class DeleteNodeCommand implements Command {
 
     execute() {
         const shapes = useStore.getState().shapes;
-        const shapeIndex = shapes.findIndex((s: any) => s.id === this.shapeId);
+        const shapeIndex = shapes.findIndex(s => s.id === this.shapeId);
         if (shapeIndex === -1) return;
 
         const newShapes = [...shapes];
@@ -349,7 +349,7 @@ export class DeleteNodeCommand implements Command {
 
     undo() {
         const shapes = useStore.getState().shapes;
-        const shapeIndex = shapes.findIndex((s: any) => s.id === this.shapeId);
+        const shapeIndex = shapes.findIndex(s => s.id === this.shapeId);
         if (shapeIndex === -1) return;
 
         const newShapes = [...shapes];
