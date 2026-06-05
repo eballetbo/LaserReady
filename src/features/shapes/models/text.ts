@@ -119,29 +119,11 @@ export class TextObject implements IShape {
         const w = maxWidth * Math.abs(this.scaleX);
         const h = height * Math.abs(this.scaleY);
 
-        let left: number, right: number;
-        if (this.alignX === 'center') {
-            left = -w / 2;
-            right = w / 2;
-        } else if (this.alignX === 'right') {
-            left = -w;
-            right = 0;
-        } else {
-            left = 0;
-            right = w;
-        }
+        const left = 0;
+        const right = w;
 
-        let top: number, bottom: number;
-        if (this.alignY === 'middle') {
-            top = -h / 2;
-            bottom = h / 2;
-        } else if (this.alignY === 'bottom') {
-            top = -h;
-            bottom = 0;
-        } else {
-            top = -this.fontSize * this.scaleY;
-            bottom = -this.fontSize * this.scaleY + h;
-        }
+        const top = -this.fontSize * this.scaleY;
+        const bottom = -this.fontSize * this.scaleY + h;
 
         const corners = [
             { x: left, y: top },
