@@ -79,8 +79,6 @@ describe('SVGImportService (Unit & Physical Dimensions)', () => {
 
         const bounds = shape.getBounds();
 
-        // Detailed check
-        console.log(`1in Test - Width: ${bounds.width}, Height: ${bounds.height}`);
 
         // Strict check: if it comes back as 1 (ignoring units), this will fail.
         expect(bounds.width).toBeCloseTo(DPI, 0.1);
@@ -99,8 +97,6 @@ describe('SVGImportService (Unit & Physical Dimensions)', () => {
         if (!shape) throw new Error('Shape not found');
 
         const bounds = shape.getBounds();
-
-        console.log(`25.4mm Test - Width: ${bounds.width}, Height: ${bounds.height}`);
 
         expect(bounds.width).toBeCloseTo(DPI, 0.1);
         expect(bounds.height).toBeCloseTo(DPI, 0.1);

@@ -18,6 +18,7 @@ import { BreakPathCommand } from '../shapes/commands/break-path';
 import { AlignCommand } from '../shapes/commands/align';
 import { DistributeCommand } from '../shapes/commands/distribute';
 import { TransformCommand } from '../shapes/commands/transform';
+import { notify } from './Toast';
 import { UpdateParamsCommand } from '../shapes/commands/update-params';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
@@ -405,10 +406,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 {/* 1. INSERT / DELETE NODES (Topology) */}
                                 <Button
                                     variant="icon"
-                                    onClick={() => {
-                                        // TODO: Implement InsertNodeCommand logic via button
-                                        console.log('Insert Node implementation pending');
-                                    }}
+                                    onClick={() => notify('Insert Node: double-click a segment on the canvas', 'info')}
                                     icon={IconNodeAdd}
                                     label={t('Add') || 'Add'}
                                     theme={theme}
@@ -437,7 +435,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 {/* 2. JOIN / BREAK (Connectivity) */}
                                 <Button
                                     variant="icon"
-                                    onClick={() => console.log('Join Nodes pending')}
+                                    onClick={() => notify('Join Nodes is not yet implemented', 'info')}
                                     icon={IconNodeJoin}
                                     label={t('Join') || 'Join'}
                                     theme={theme}
@@ -465,7 +463,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 {/* 3. SEGMENT MODIFICATION (Join/Delete Segment) */}
                                 <Button
                                     variant="icon"
-                                    onClick={() => console.log('Join Segment pending')}
+                                    onClick={() => notify('Join Segment is not yet implemented', 'info')}
                                     icon={IconJoinSegment}
                                     label={t('Join Seg') || 'Join Seg'}
                                     theme={theme}
@@ -473,7 +471,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 />
                                 <Button
                                     variant="icon"
-                                    onClick={() => console.log('Delete Segment pending')}
+                                    onClick={() => notify('Delete Segment is not yet implemented', 'info')}
                                     icon={IconDeleteSegment}
                                     label={t('Del Seg') || 'Del Seg'}
                                     theme={theme}

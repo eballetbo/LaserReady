@@ -57,9 +57,6 @@ describe('SVG Export', () => {
         // Assert
         // We expect width="100.00mm" and height="50.00mm"
 
-        // Log for debugging
-        console.log('Exported SVG:', svgString);
-
         expect(svgString).toContain('width="100.00mm"');
         expect(svgString).toContain('height="50.00mm"');
         expect(svgString).toContain(`viewBox="0 0 ${widthPixels} ${heightPixels}"`);
