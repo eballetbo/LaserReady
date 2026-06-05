@@ -136,3 +136,30 @@ describe('SVGImportService (Unit & Physical Dimensions)', () => {
         expect(bounds.height).toBeCloseTo(50, 0.1);
     });
 });
+
+describe('SVGImporter.fromPaperItem (style mapping)', () => {
+    it('should store imported styles on shape properties, not in params', () => {
+        const scope = new paper.PaperScope();
+        scope.setup(new paper.Size(100, 100));
+
+        const path = new scope.Path({
+            segments: [
+                new scope.Segment(new scope.Point(0, 0)),
+                new scope.Segment(new scope.Point(100, 0)),
+                new scope.Segment(new scope.Point(100, 100))
+            ],
+            closed: true,
+            strokeColor: new paper.Color('red'),
+            strokeWidth: 3,
+            fillColor: new paper.Color('blue')
+        });
+
+        const shapes = SVGImporter.fromPaperItem(path);
+
+        expect(shapes.length).toBe(1);
+        expect(shapes[0].strokeColor).toBeDefined();
+        expect(shapes[0].strokeWidth).toBe(3);
+        expect(shapes[0].fillColor).toBeDefined();
+        expect(shapes[0].params).toEqual({});
+    });
+});
