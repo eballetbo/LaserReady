@@ -43,6 +43,8 @@ export class CanvasController {
     selectedShape?: IShape; // Temporary selection for creation tools
     private animationFrameId: number | null = null;
     private lastFrameTime: number = 0;
+    private renderPending: boolean = false;
+    private renderFrameId: number | null = null;
 
     constructor(canvasElement: HTMLCanvasElement, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
         this.canvas = canvasElement;
@@ -151,6 +153,7 @@ export class CanvasController {
 
     dispose() {
         this.stopSelectionAnimation();
+        if (this.renderFrameId) cancelAnimationFrame(this.renderFrameId);
         this.inputManager.dispose();
         if (this.unsubscribe) this.unsubscribe();
     }
@@ -162,7 +165,7 @@ export class CanvasController {
             const deltaTime = currentTime - this.lastFrameTime;
             this.lastFrameTime = currentTime;
             this.renderer.updateDashAnimation(deltaTime);
-            this.render();
+            this.renderImmediate();
             this.animationFrameId = requestAnimationFrame(animate);
         };
         this.animationFrameId = requestAnimationFrame(animate);
@@ -204,7 +207,15 @@ export class CanvasController {
 
 
     render() {
-        // Read state from Store
+        if (this.renderPending) return;
+        this.renderPending = true;
+        this.renderFrameId = requestAnimationFrame(() => {
+            this.renderPending = false;
+            this.renderImmediate();
+        });
+    }
+
+    renderImmediate() {
         const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndices } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
@@ -216,12 +227,12 @@ export class CanvasController {
             tool,
             this.activePath,
             this.previewPoint,
-            this.selectionBox, // Pass selection box from SelectTool
+            this.selectionBox,
             zoom,
-            pan, // Use pan directly from store state (destructured above)
+            pan,
             selectedNodeIndices,
             this.previewOrigin,
-            useStore.getState().material // Pass material bounds to renderer
+            useStore.getState().material
         );
 
         if (this.snapManager && this.snapManager.activeSnap) {
@@ -230,7 +241,6 @@ export class CanvasController {
 
         this.onSelectionChange(selectedObjects);
 
-        // Allow active tool to draw overlay (previews)
         if (this.toolManager.activeTool && 'drawOverlay' in this.toolManager.activeTool) {
             (this.toolManager.activeTool as any).drawOverlay(this.ctx);
         }
