@@ -19,6 +19,8 @@ export interface TextStyle {
     alignX?: 'left' | 'center' | 'right';
     alignY?: 'top' | 'middle' | 'bottom';
     upperCase?: boolean;
+    bend?: number;
+    distort?: boolean;
 }
 
 export interface Bounds {
@@ -50,6 +52,8 @@ export class TextObject implements IShape {
     alignX: 'left' | 'center' | 'right';
     alignY: 'top' | 'middle' | 'bottom';
     upperCase: boolean;
+    bend: number;
+    distort: boolean;
     type: string;
     closed: boolean = false;
     fillColor?: string;
@@ -74,6 +78,8 @@ export class TextObject implements IShape {
         this.alignX = style.alignX || 'left';
         this.alignY = style.alignY || 'top';
         this.upperCase = style.upperCase || false;
+        this.bend = style.bend || 0;
+        this.distort = style.distort || false;
         this.type = 'text';
     }
 
@@ -217,7 +223,9 @@ export class TextObject implements IShape {
             vSpace: this.vSpace,
             alignX: this.alignX,
             alignY: this.alignY,
-            upperCase: this.upperCase
+            upperCase: this.upperCase,
+            bend: this.bend,
+            distort: this.distort
         }, this.layerId);
     }
 
@@ -243,7 +251,9 @@ export class TextObject implements IShape {
             vSpace: this.vSpace,
             alignX: this.alignX,
             alignY: this.alignY,
-            upperCase: this.upperCase
+            upperCase: this.upperCase,
+            bend: this.bend,
+            distort: this.distort
         };
     }
 
@@ -263,7 +273,9 @@ export class TextObject implements IShape {
             vSpace: json.vSpace as number | undefined,
             alignX: json.alignX as 'left' | 'center' | 'right' | undefined,
             alignY: json.alignY as 'top' | 'middle' | 'bottom' | undefined,
-            upperCase: json.upperCase as boolean | undefined
+            upperCase: json.upperCase as boolean | undefined,
+            bend: json.bend as number | undefined,
+            distort: json.distort as boolean | undefined
         }, (json.layerId as string) || 'layer-1');
     }
 }

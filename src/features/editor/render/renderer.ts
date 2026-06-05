@@ -20,6 +20,8 @@ interface TextRenderData {
     alignX?: 'left' | 'center' | 'right';
     alignY?: 'top' | 'middle' | 'bottom';
     upperCase?: boolean;
+    bend?: number;
+    distort?: boolean;
     getBounds?(): Rect;
     getDisplayText?(): string;
     getLineHeight?(): number;
@@ -545,58 +547,63 @@ export class CanvasRenderer {
             : fontSize * TEXT_LINE_HEIGHT_MULTIPLIER * (1 + (textObject.vSpace || 0) / 100);
         const hSpace = textObject.hSpace || 0;
         const alignX = textObject.alignX || 'left';
+        const bend = textObject.bend || 0;
 
-        const totalWidth = textObject.measureLineWidth
-            ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
-            : undefined;
+        if (bend !== 0) {
+            this.drawBentText(lines, fontSize, hSpace, bend, textObject.distort || false, layerColor, layerMode);
+        } else {
+            const totalWidth = textObject.measureLineWidth
+                ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
+                : undefined;
 
-        let blockXOffset = 0;
-        if (alignX !== 'left' && totalWidth !== undefined) {
-            if (alignX === 'center') blockXOffset = -totalWidth / 2;
-            else if (alignX === 'right') blockXOffset = -totalWidth;
-        }
-
-        const alignY = textObject.alignY || 'top';
-        let blockYOffset = 0;
-        const totalHeight = lines.length * lineHeight;
-        if (alignY === 'middle') blockYOffset = -totalHeight / 2;
-        else if (alignY === 'bottom') blockYOffset = -totalHeight;
-
-        lines.forEach((line: string, i: number) => {
-            let xOffset = blockXOffset;
-            if (totalWidth !== undefined) {
-                const lineW = textObject.measureLineWidth!(line);
-                if (alignX === 'center') xOffset = blockXOffset + (totalWidth - lineW) / 2;
-                else if (alignX === 'right') xOffset = blockXOffset + (totalWidth - lineW);
+            let blockXOffset = 0;
+            if (alignX !== 'left' && totalWidth !== undefined) {
+                if (alignX === 'center') blockXOffset = -totalWidth / 2;
+                else if (alignX === 'right') blockXOffset = -totalWidth;
             }
 
-            const y = blockYOffset + i * lineHeight;
+            const alignY = textObject.alignY || 'top';
+            let blockYOffset = 0;
+            const totalHeight = lines.length * lineHeight;
+            if (alignY === 'middle') blockYOffset = -totalHeight / 2;
+            else if (alignY === 'bottom') blockYOffset = -totalHeight;
 
-            if (hSpace === 0) {
-                if (layerMode === 'ENGRAVE') {
-                    this.ctx.fillStyle = layerColor;
-                    this.ctx.fillText(line, xOffset, y);
-                } else {
-                    this.ctx.strokeStyle = layerColor;
-                    this.ctx.lineWidth = TEXT_STROKE_WIDTH;
-                    this.ctx.strokeText(line, xOffset, y);
+            lines.forEach((line: string, i: number) => {
+                let xOffset = blockXOffset;
+                if (totalWidth !== undefined) {
+                    const lineW = textObject.measureLineWidth!(line);
+                    if (alignX === 'center') xOffset = blockXOffset + (totalWidth - lineW) / 2;
+                    else if (alignX === 'right') xOffset = blockXOffset + (totalWidth - lineW);
                 }
-            } else {
-                const extraPerChar = fontSize * (hSpace / 100);
-                let cx = xOffset;
-                for (const char of line) {
+
+                const y = blockYOffset + i * lineHeight;
+
+                if (hSpace === 0) {
                     if (layerMode === 'ENGRAVE') {
                         this.ctx.fillStyle = layerColor;
-                        this.ctx.fillText(char, cx, y);
+                        this.ctx.fillText(line, xOffset, y);
                     } else {
                         this.ctx.strokeStyle = layerColor;
                         this.ctx.lineWidth = TEXT_STROKE_WIDTH;
-                        this.ctx.strokeText(char, cx, y);
+                        this.ctx.strokeText(line, xOffset, y);
                     }
-                    cx += this.ctx.measureText(char).width + extraPerChar;
+                } else {
+                    const extraPerChar = fontSize * (hSpace / 100);
+                    let cx = xOffset;
+                    for (const char of line) {
+                        if (layerMode === 'ENGRAVE') {
+                            this.ctx.fillStyle = layerColor;
+                            this.ctx.fillText(char, cx, y);
+                        } else {
+                            this.ctx.strokeStyle = layerColor;
+                            this.ctx.lineWidth = TEXT_STROKE_WIDTH;
+                            this.ctx.strokeText(char, cx, y);
+                        }
+                        cx += this.ctx.measureText(char).width + extraPerChar;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         this.ctx.restore();
 
@@ -605,6 +612,60 @@ export class CanvasRenderer {
             this.setSelectionStyle(zoom, config.colorSelection);
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
             this.ctx.setLineDash([]);
+        }
+    }
+
+    private drawBentText(
+        lines: string[],
+        fontSize: number,
+        hSpace: number,
+        bend: number,
+        _distort: boolean,
+        layerColor: string,
+        layerMode: OperationMode
+    ): void {
+        const line = lines.join(' ');
+        if (line.length === 0) return;
+
+        const extraPerChar = fontSize * (hSpace / 100);
+        const charWidths: number[] = [];
+        for (const char of line) {
+            charWidths.push(this.ctx.measureText(char).width + extraPerChar);
+        }
+        const totalArcLen = charWidths.reduce((a, b) => a + b, 0) - extraPerChar;
+
+        // bend is a curvature value: radius = totalArcLen / bend (in radians mapped from bend factor)
+        // Positive bend curves upward, negative curves downward
+        const radius = Math.abs(totalArcLen / (bend * 0.01));
+        const direction = bend > 0 ? -1 : 1;
+
+        const totalAngle = totalArcLen / radius;
+        let currentAngle = -totalAngle / 2;
+
+        const chars = [...line];
+        for (let i = 0; i < chars.length; i++) {
+            const charWidth = charWidths[i] ?? 0;
+            const halfAngle = (charWidth / 2) / radius;
+            currentAngle += halfAngle;
+
+            const cx = Math.sin(currentAngle) * radius * direction * -1;
+            const cy = (Math.cos(currentAngle) - 1) * radius * direction;
+
+            this.ctx.save();
+            this.ctx.translate(cx, cy);
+            this.ctx.rotate(currentAngle * direction * -1);
+
+            if (layerMode === 'ENGRAVE') {
+                this.ctx.fillStyle = layerColor;
+                this.ctx.fillText(chars[i]!, -charWidth / 2, 0);
+            } else {
+                this.ctx.strokeStyle = layerColor;
+                this.ctx.lineWidth = TEXT_STROKE_WIDTH;
+                this.ctx.strokeText(chars[i]!, -charWidth / 2, 0);
+            }
+
+            this.ctx.restore();
+            currentAngle += halfAngle;
         }
     }
 

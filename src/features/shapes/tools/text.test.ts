@@ -59,6 +59,47 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — text bending', () => {
+    it('defaults bend to 0', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.bend).toBe(0);
+    });
+
+    it('stores bend value from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { bend: 45 });
+        expect(t.bend).toBe(45);
+    });
+
+    it('supports negative bend (curve downward)', () => {
+        const t = new TextObject(0, 0, 'Hello', { bend: -30 });
+        expect(t.bend).toBe(-30);
+    });
+
+    it('defaults distort to false', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.distort).toBe(false);
+    });
+
+    it('stores distort value from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { distort: true });
+        expect(t.distort).toBe(true);
+    });
+
+    it('bend persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'Test', { bend: 60, distort: true });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.bend).toBe(60);
+        expect(restored.distort).toBe(true);
+    });
+
+    it('bend persists through clone', () => {
+        const t = new TextObject(0, 0, 'Test', { bend: -20, distort: true });
+        const cloned = t.clone();
+        expect(cloned.bend).toBe(-20);
+        expect(cloned.distort).toBe(true);
+    });
+});
+
 describe('TextObject — bold and italic rendering', () => {
     it('defaults fontWeight to normal', () => {
         const t = new TextObject(0, 0, 'Hello');
