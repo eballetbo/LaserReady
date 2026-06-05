@@ -59,6 +59,34 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — auto-weld property', () => {
+    it('defaults weld to false', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.weld).toBe(false);
+    });
+
+    it('stores weld value from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { weld: true });
+        expect(t.weld).toBe(true);
+    });
+
+    it('weld persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'Test', { weld: true });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.weld).toBe(true);
+    });
+
+    it('weld persists through clone', () => {
+        const t = new TextObject(0, 0, 'Test', { weld: true });
+        expect(t.clone().weld).toBe(true);
+    });
+
+    it('weld=false does not affect getDisplayText', () => {
+        const t = new TextObject(0, 0, 'Script Font', { weld: false });
+        expect(t.getDisplayText()).toBe('Script Font');
+    });
+});
+
 describe('TextObject — text on path (pathId)', () => {
     it('defaults pathId to null', () => {
         const t = new TextObject(0, 0, 'Hello');
