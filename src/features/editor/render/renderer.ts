@@ -1,7 +1,22 @@
-import { Geometry } from '../../../core/math/geometry';
+import { Geometry, Point, Rect } from '../../../core/math/geometry';
 import { IShape, ILayer, OperationMode } from '../../../types/core';
 import { SnapResult } from '../snapping';
 import { SelectionBox } from '../../../core/tools/base';
+import { PathNode } from '../../shapes/models/node';
+
+interface TextRenderData {
+    x: number;
+    y: number;
+    text: string;
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    rotation?: number;
+    scaleX?: number;
+    scaleY?: number;
+    getBounds?(): Rect;
+}
 import {
     DEFAULT_GRID_COLOR,
     DEFAULT_GRID_LINE_WIDTH,
@@ -114,7 +129,7 @@ export class CanvasRenderer {
         toolType: string,
         activePath: IShape | null,
         previewPoint: { x: number; y: number } | null,
-        selectionBox: any | null,
+        selectionBox: SelectionBox | null,
         zoom: number = 1,
         pan: { x: number; y: number } = { x: 0, y: 0 },
         selectedNodeIndices: number[] = [],
@@ -190,7 +205,7 @@ export class CanvasRenderer {
     }
 
     drawGroup(
-        group: any,
+        group: IShape & { children?: IShape[] },
         isSelected: boolean,
         selectedShapes: IShape[],
         layers: ILayer[],
@@ -200,9 +215,7 @@ export class CanvasRenderer {
     ) {
         if (!group.children) return;
 
-        // Draw children inheriting selection state from group
-
-        group.children.forEach((child: any) => {
+        group.children.forEach((child: IShape) => {
             // Pass isSelected (inheriting from group) so children render with selection color (blue)
             // This ensures visual feedback that the group contents are selected
             this.renderShape(child, isSelected, selectedShapes, layers, config, toolType, zoom);
@@ -228,7 +241,7 @@ export class CanvasRenderer {
         }
     }
 
-    drawPath(shape: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
+    drawPath(shape: IShape, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
         if (!shape.nodes || shape.nodes.length < 2) return;
 
         this.ctx.beginPath();
@@ -322,10 +335,9 @@ export class CanvasRenderer {
             // Draw for all selected nodes
             const indicesSet = new Set(selectedNodeIndices);
 
-            shape.nodes.forEach((n: any, i: number) => {
+            shape.nodes.forEach((n: PathNode, i: number) => {
                 if (indicesSet.has(i)) {
-                    // Only draw handles if they are not at anchor pos (collapsed)
-                    const isAtAnchor = (p: any) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
+                    const isAtAnchor = (p: Point) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
 
                     this.ctx.strokeStyle = NODE_HANDLE_LINE_COLOR;
                     this.ctx.lineWidth = lineWidth;
@@ -350,8 +362,7 @@ export class CanvasRenderer {
                 }
             });
 
-            // 3. Draw Nodes
-            shape.nodes.forEach((n: any, i: number) => {
+            shape.nodes.forEach((n: PathNode, i: number) => {
                 const isSelected = indicesSet.has(i);
 
                 // Color Logic
@@ -422,7 +433,7 @@ export class CanvasRenderer {
         }
     }
 
-    drawSelectionBounds(bounds: any, config: RendererConfig, zoom: number): void {
+    drawSelectionBounds(bounds: Rect, config: RendererConfig, zoom: number): void {
         const anchorSize = config.anchorSize / zoom;
         const handleRadius = config.handleRadius / zoom;
         const lineWidth = DEFAULT_STROKE_WIDTH / zoom;
@@ -472,7 +483,7 @@ export class CanvasRenderer {
         this.ctx.fill();
     }
 
-    drawPenPreview(activePath: any, previewPoint: { x: number; y: number }, zoom: number, origin: { x: number; y: number } | null = null): void {
+    drawPenPreview(activePath: IShape, previewPoint: { x: number; y: number }, zoom: number, origin: { x: number; y: number } | null = null): void {
         if (!activePath.nodes || activePath.nodes.length === 0) return;
 
         let startPoint = origin;
@@ -498,7 +509,7 @@ export class CanvasRenderer {
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
     }
 
-    drawText(textObject: any, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
+    drawText(textObject: TextRenderData, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
         this.ctx.save();
 
         // Font settings
