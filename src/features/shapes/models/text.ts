@@ -161,41 +161,53 @@ export class TextObject implements IShape {
         };
     }
 
-    private computeBentCorners(w: number, h: number): { x: number; y: number }[] {
+    private computeBentCorners(w: number, _h: number): { x: number; y: number }[] {
         const totalArcLen = w;
         const radius = Math.abs(totalArcLen / (this.bend * 0.01));
         const sign = this.bend > 0 ? 1 : -1;
         const totalAngle = totalArcLen / radius;
         const xShift = totalArcLen / 2;
 
-        // Sample character positions along the arc to find extremes
-        const numSamples = 10;
-        let arcMinX = Infinity, arcMaxX = -Infinity;
-        let arcMinY = Infinity, arcMaxY = -Infinity;
+        const ascent = this.fontSize * 0.8;
+        const descent = this.fontSize * 0.2;
+        const avgCharWidth = totalArcLen / Math.max(this.getDisplayText().replace(/\n/g, '').length, 1);
 
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+
+        const numSamples = 12;
         for (let i = 0; i <= numSamples; i++) {
             const t = i / numSamples;
             const angle = -totalAngle / 2 + t * totalAngle;
             const cx = radius * Math.sin(angle) + xShift;
             const cy = sign * radius * (Math.cos(angle) - 1);
+            const charRotation = -sign * angle;
 
-            arcMinX = Math.min(arcMinX, cx);
-            arcMaxX = Math.max(arcMaxX, cx);
-            arcMinY = Math.min(arcMinY, cy);
-            arcMaxY = Math.max(arcMaxY, cy);
+            // Compute rotated corners of the character glyph at this position
+            const cosR = Math.cos(charRotation);
+            const sinR = Math.sin(charRotation);
+            const hw = avgCharWidth / 2;
+            const localCorners = [
+                { x: -hw, y: -ascent },
+                { x: hw, y: -ascent },
+                { x: hw, y: descent },
+                { x: -hw, y: descent }
+            ];
+            for (const lc of localCorners) {
+                const rx = cx + lc.x * cosR - lc.y * sinR;
+                const ry = cy + lc.x * sinR + lc.y * cosR;
+                minX = Math.min(minX, rx);
+                maxX = Math.max(maxX, rx);
+                minY = Math.min(minY, ry);
+                maxY = Math.max(maxY, ry);
+            }
         }
 
-        // Add font ascent/descent padding
-        const ascent = this.fontSize * 0.8;
-        const descent = this.fontSize * 0.2;
-        const top = arcMinY - ascent;
-        const bottom = arcMaxY + descent;
-
         return [
-            { x: arcMinX, y: top },
-            { x: arcMaxX, y: top },
-            { x: arcMaxX, y: bottom },
-            { x: arcMinX, y: bottom }
+            { x: minX, y: minY },
+            { x: maxX, y: minY },
+            { x: maxX, y: maxY },
+            { x: minX, y: maxY }
         ];
     }
 

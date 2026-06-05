@@ -161,6 +161,29 @@ describe('TextObject — text bending', () => {
         expect(bent.getBounds().height).toBeGreaterThan(straight.getBounds().height);
     });
 
+    it('getBounds for negative bend accounts for rotated characters', () => {
+        const bent = new TextObject(100, 100, 'asdfgh test', { bend: -180 });
+        const bounds = bent.getBounds();
+
+        // For negative bend, text curves down so minY is near font top,
+        // maxY must extend below to cover rotated edge characters
+        expect(bounds.maxY).toBeGreaterThan(100);
+        // Bounds should be symmetric around the horizontal center
+        const horizCenter = (bounds.minX + bounds.maxX) / 2;
+        const straightCenter = new TextObject(100, 100, 'asdfgh test', { bend: 0 }).getBounds().cx;
+        expect(Math.abs(horizCenter - straightCenter)).toBeLessThan(5);
+    });
+
+    it('getBounds height is similar for positive and negative bends', () => {
+        const bentUp = new TextObject(100, 100, 'asdfgh test', { bend: 180 });
+        const bentDown = new TextObject(100, 100, 'asdfgh test', { bend: -180 });
+
+        // Both should have similar height (symmetric arc)
+        const ratio = bentUp.getBounds().height / bentDown.getBounds().height;
+        expect(ratio).toBeGreaterThan(0.8);
+        expect(ratio).toBeLessThan(1.2);
+    });
+
     it('getBounds center stays near original for small bends', () => {
         const straight = new TextObject(100, 100, 'asdfgh', { bend: 0 });
         const bentUp = new TextObject(100, 100, 'asdfgh', { bend: 10 });
