@@ -118,42 +118,57 @@ describe('TextObject — text on path (pathId)', () => {
 });
 
 describe('TextObject — text bending', () => {
-    it('bent text arc offset keeps left edge near x=0 (positive bend)', () => {
+    it('bent text center stays at text midpoint (center-pivot)', () => {
         const text = 'asdfgh';
         const fontSize = 24;
         const charWidths = [...text].map(() => fontSize * 0.6);
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
-        const bend = 5;
+        const bend = 30;
         const radius = Math.abs(totalArcLen / (bend * 0.01));
-        const totalAngle = totalArcLen / radius;
+        const xShift = totalArcLen / 2;
 
-        const firstHalfAngle = (charWidths[0]! / 2) / radius;
-        const firstAngle = -totalAngle / 2 + firstHalfAngle;
-        const firstX = radius * Math.sin(firstAngle);
-        const xShift = -firstX + charWidths[0]! / 2;
-
-        // First char cx should be near charWidth/2 (left edge at ~0)
-        const firstCx = radius * Math.sin(firstAngle) + xShift;
-        expect(Math.abs(firstCx - charWidths[0]! / 2)).toBeLessThan(1);
+        // Middle of arc (angle=0) should be at totalArcLen/2
+        const middleCx = radius * Math.sin(0) + xShift;
+        expect(middleCx).toBeCloseTo(totalArcLen / 2, 5);
     });
 
-    it('bent text arc offset keeps left edge near x=0 (negative bend)', () => {
+    it('center stays same for positive and negative bend', () => {
         const text = 'asdfgh';
         const fontSize = 24;
         const charWidths = [...text].map(() => fontSize * 0.6);
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
-        const bend = -5;
-        const radius = Math.abs(totalArcLen / (bend * 0.01));
-        const totalAngle = totalArcLen / radius;
 
-        const firstHalfAngle = (charWidths[0]! / 2) / radius;
-        const firstAngle = -totalAngle / 2 + firstHalfAngle;
-        const firstX = radius * Math.sin(firstAngle);
-        const xShift = -firstX + charWidths[0]! / 2;
+        // Both should have center at totalArcLen/2
+        const xShiftPos = totalArcLen / 2;
+        const xShiftNeg = totalArcLen / 2;
 
-        // Same offset logic works for negative bend (x positions are identical)
-        const firstCx = radius * Math.sin(firstAngle) + xShift;
-        expect(Math.abs(firstCx - charWidths[0]! / 2)).toBeLessThan(1);
+        expect(xShiftPos).toBe(xShiftNeg);
+        expect(xShiftPos).toBeCloseTo(totalArcLen / 2, 5);
+    });
+
+    it('getBounds adapts height when text is bent upward', () => {
+        const straight = new TextObject(100, 100, 'asdfgh test', { bend: 0 });
+        const bent = new TextObject(100, 100, 'asdfgh test', { bend: 150 });
+
+        // Bent text should have taller bounds due to significant arc displacement
+        expect(bent.getBounds().height).toBeGreaterThan(straight.getBounds().height);
+    });
+
+    it('getBounds adapts height when text is bent downward', () => {
+        const straight = new TextObject(100, 100, 'asdfgh test', { bend: 0 });
+        const bent = new TextObject(100, 100, 'asdfgh test', { bend: -150 });
+
+        expect(bent.getBounds().height).toBeGreaterThan(straight.getBounds().height);
+    });
+
+    it('getBounds center stays near original for small bends', () => {
+        const straight = new TextObject(100, 100, 'asdfgh', { bend: 0 });
+        const bentUp = new TextObject(100, 100, 'asdfgh', { bend: 10 });
+        const bentDown = new TextObject(100, 100, 'asdfgh', { bend: -10 });
+
+        // Horizontal center should be approximately the same
+        expect(Math.abs(bentUp.getBounds().cx - straight.getBounds().cx)).toBeLessThan(5);
+        expect(Math.abs(bentDown.getBounds().cx - straight.getBounds().cx)).toBeLessThan(5);
     });
 
     it('positive bend curves text upward (negative cy)', () => {

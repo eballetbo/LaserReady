@@ -635,11 +635,8 @@ export class CanvasRenderer {
         const totalAngle = totalArcLen / radius;
         let currentAngle = -totalAngle / 2;
 
-        // Pre-compute first character position to determine left-align offset
-        const firstHalfAngle = ((charWidths[0] ?? 0) / 2) / radius;
-        const firstAngle = -totalAngle / 2 + firstHalfAngle;
-        const firstX = radius * Math.sin(firstAngle);
-        const xShift = -firstX + (charWidths[0] ?? 0) / 2;
+        // Center-pivot: arc center (angle=0) aligns with straight text center
+        const xShift = totalArcLen / 2;
 
         const chars = [...line];
         for (let i = 0; i < chars.length; i++) {

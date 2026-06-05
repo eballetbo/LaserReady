@@ -119,27 +119,27 @@ export class TextObject implements IShape {
         const w = maxWidth * Math.abs(this.scaleX);
         const h = height * Math.abs(this.scaleY);
 
-        const left = 0;
-        const right = w;
+        let corners: { x: number; y: number }[];
 
-        const top = -this.fontSize * this.scaleY;
-        const bottom = -this.fontSize * this.scaleY + h;
-
-        const corners = [
-            { x: left, y: top },
-            { x: right, y: top },
-            { x: right, y: bottom },
-            { x: left, y: bottom }
-        ];
+        if (this.bend !== 0) {
+            corners = this.computeBentCorners(w, h);
+        } else {
+            const left = 0;
+            const right = w;
+            const top = -this.fontSize * this.scaleY;
+            const bottom = -this.fontSize * this.scaleY + h;
+            corners = [
+                { x: left, y: top },
+                { x: right, y: top },
+                { x: right, y: bottom },
+                { x: left, y: bottom }
+            ];
+        }
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
         corners.forEach(p => {
-            // Corners are relative to anchor (0,0) before rotation.
-            // But TextObject position (this.x, this.y) is the anchor in world space.
-            // Rotated point relative to anchor:
             const rotated = Geometry.rotatePoint(p, { x: 0, y: 0 }, this.rotation);
-            // Translate to world
             const wx = this.x + rotated.x;
             const wy = this.y + rotated.y;
 
@@ -159,6 +159,44 @@ export class TextObject implements IShape {
             cx: (minX + maxX) / 2,
             cy: (minY + maxY) / 2
         };
+    }
+
+    private computeBentCorners(w: number, h: number): { x: number; y: number }[] {
+        const totalArcLen = w;
+        const radius = Math.abs(totalArcLen / (this.bend * 0.01));
+        const sign = this.bend > 0 ? 1 : -1;
+        const totalAngle = totalArcLen / radius;
+        const xShift = totalArcLen / 2;
+
+        // Sample character positions along the arc to find extremes
+        const numSamples = 10;
+        let arcMinX = Infinity, arcMaxX = -Infinity;
+        let arcMinY = Infinity, arcMaxY = -Infinity;
+
+        for (let i = 0; i <= numSamples; i++) {
+            const t = i / numSamples;
+            const angle = -totalAngle / 2 + t * totalAngle;
+            const cx = radius * Math.sin(angle) + xShift;
+            const cy = sign * radius * (Math.cos(angle) - 1);
+
+            arcMinX = Math.min(arcMinX, cx);
+            arcMaxX = Math.max(arcMaxX, cx);
+            arcMinY = Math.min(arcMinY, cy);
+            arcMaxY = Math.max(arcMaxY, cy);
+        }
+
+        // Add font ascent/descent padding
+        const ascent = this.fontSize * 0.8;
+        const descent = this.fontSize * 0.2;
+        const top = arcMinY - ascent;
+        const bottom = arcMaxY + descent;
+
+        return [
+            { x: arcMinX, y: top },
+            { x: arcMaxX, y: top },
+            { x: arcMaxX, y: bottom },
+            { x: arcMinX, y: bottom }
+        ];
     }
 
     move(dx: number, dy: number): void {
