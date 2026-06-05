@@ -10,12 +10,14 @@ export class DuplicateCommand implements Command {
 
     constructor(sourceShapes: IShape[]) {
         this.sourceIds = sourceShapes.map(s => s.id);
-        this.duplicatedShapes = sourceShapes.map(shape => {
-            const clone = shape.clone!();
-            clone.id = crypto.randomUUID();
-            if (clone.move) clone.move(DUPLICATE_OFFSET, DUPLICATE_OFFSET);
-            return clone;
-        });
+        this.duplicatedShapes = sourceShapes
+            .filter(shape => typeof shape.clone === 'function')
+            .map(shape => {
+                const clone = shape.clone!();
+                clone.id = crypto.randomUUID();
+                if (clone.move) clone.move(DUPLICATE_OFFSET, DUPLICATE_OFFSET);
+                return clone;
+            });
     }
 
     execute(): void {

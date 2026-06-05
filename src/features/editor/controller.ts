@@ -347,7 +347,9 @@ export class CanvasController {
 
     copy() {
         if (this.selectedShapes.length === 0) return;
-        this.clipboard = this.selectedShapes.map(s => s.clone!());
+        this.clipboard = this.selectedShapes
+            .filter(s => typeof s.clone === 'function')
+            .map(s => s.clone!());
     }
 
     cut() {
@@ -357,15 +359,18 @@ export class CanvasController {
 
     paste() {
         if (this.clipboard.length === 0) return;
-        const pasted = this.clipboard.map(s => {
-            const clone = s.clone!();
-            clone.id = crypto.randomUUID();
-            if (clone.move) clone.move(10, 10);
-            return clone;
-        });
+        const pasted = this.clipboard
+            .filter(s => typeof s.clone === 'function')
+            .map(s => {
+                const clone = s.clone!();
+                clone.id = crypto.randomUUID();
+                if (clone.move) clone.move(10, 10);
+                return clone;
+            });
+        if (pasted.length === 0) return;
         const command = new ImportShapesCommand(pasted);
         this.history.execute(command);
-        this.clipboard = pasted.map(s => s.clone!());
+        this.clipboard = pasted.filter(s => typeof s.clone === 'function').map(s => s.clone!());
     }
 
     duplicate() {
