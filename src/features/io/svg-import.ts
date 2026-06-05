@@ -15,11 +15,10 @@ export const SVGImporter = {
         const shapes: PathShape[] = [];
 
         const processPath = (path: paper.Path) => {
-            if (!path.segments) return; // Guard against unexpected objects
+            if (!path.segments || path.segments.length === 0) return;
             const nodes = path.segments.map(seg => {
                 const x = seg.point.x;
                 const y = seg.point.y;
-                // Convert relative handles back to absolute control points
                 const cpInX = x + seg.handleIn.x;
                 const cpInY = y + seg.handleIn.y;
                 const cpOutX = x + seg.handleOut.x;
@@ -31,35 +30,45 @@ export const SVGImporter = {
             const strokeColor = path.strokeColor ? path.strokeColor.toCSS(true) : undefined;
             const strokeWidth = path.strokeWidth || undefined;
             const fillColor = path.fillColor ? path.fillColor.toCSS(true) : undefined;
+            const dashArray = path.dashArray && path.dashArray.length > 0 ? [...path.dashArray] : undefined;
+            const opacity = (path.opacity !== undefined && path.opacity < 1) ? path.opacity : undefined;
 
-            shapes.push(new PathShape(nodes, path.closed, 'imported-layer', 'path', {}, undefined, strokeColor, strokeWidth, fillColor));
+            const shape = new PathShape(nodes, path.closed, 'imported-layer', 'path', {}, undefined, strokeColor, strokeWidth, fillColor);
+            if (dashArray) (shape as any).dashArray = dashArray;
+            if (opacity !== undefined) (shape as any).opacity = opacity;
+            shapes.push(shape);
         };
 
         const traverse = (node: paper.Item) => {
-            if (node instanceof scope.CompoundPath) {
-                // CompoundPath children usually share the style of the parent
-                // Need to cast to CompoundPath to access children typed correctly or use generic Item children
-                const compound = node as paper.CompoundPath;
-                const parentStyle = {
-                    strokeColor: compound.strokeColor,
-                    strokeWidth: compound.strokeWidth,
-                    fillColor: compound.fillColor
-                };
+            try {
+                if (node instanceof scope.CompoundPath) {
+                    const compound = node as paper.CompoundPath;
+                    const parentStyle = {
+                        strokeColor: compound.strokeColor,
+                        strokeWidth: compound.strokeWidth,
+                        fillColor: compound.fillColor,
+                        dashArray: compound.dashArray
+                    };
 
-                if (compound.children) {
-                    compound.children.forEach(child => {
-                        const pathChild = child as paper.Path; // Check strictly if needed but CompoundPath children are usually paths
-                        // Apply parent style if child lacks it
-                        if (!pathChild.strokeColor && parentStyle.strokeColor) pathChild.strokeColor = parentStyle.strokeColor;
-                        if (!pathChild.strokeWidth && parentStyle.strokeWidth) pathChild.strokeWidth = parentStyle.strokeWidth;
-                        if (!pathChild.fillColor && parentStyle.fillColor) pathChild.fillColor = parentStyle.fillColor;
-                        processPath(pathChild);
-                    });
+                    if (compound.children) {
+                        compound.children.forEach(child => {
+                            const pathChild = child as paper.Path;
+                            if (!pathChild.strokeColor && parentStyle.strokeColor) pathChild.strokeColor = parentStyle.strokeColor;
+                            if (!pathChild.strokeWidth && parentStyle.strokeWidth) pathChild.strokeWidth = parentStyle.strokeWidth;
+                            if (!pathChild.fillColor && parentStyle.fillColor) pathChild.fillColor = parentStyle.fillColor;
+                            if ((!pathChild.dashArray || pathChild.dashArray.length === 0) && parentStyle.dashArray) {
+                                pathChild.dashArray = parentStyle.dashArray;
+                            }
+                            processPath(pathChild);
+                        });
+                    }
+                } else if (node instanceof scope.Path) {
+                    processPath(node);
+                } else if (node.children) {
+                    node.children.forEach(child => traverse(child));
                 }
-            } else if (node instanceof scope.Path) {
-                processPath(node);
-            } else if (node.children) {
-                node.children.forEach(child => traverse(child));
+            } catch (e) {
+                console.warn('SVG import: skipping unprocessable element', e);
             }
         };
 

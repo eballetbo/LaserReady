@@ -138,15 +138,19 @@ describe('SVGImportService (Unit & Physical Dimensions)', () => {
 });
 
 describe('SVGImporter.fromPaperItem (style mapping)', () => {
-    it('should store imported styles on shape properties, not in params', () => {
-        const scope = new paper.PaperScope();
-        scope.setup(new paper.Size(100, 100));
+    let testScope: paper.PaperScope;
 
-        const path = new scope.Path({
+    beforeEach(() => {
+        testScope = new paper.PaperScope();
+        testScope.setup(new paper.Size(100, 100));
+    });
+
+    it('should store imported styles on shape properties, not in params', () => {
+        const path = new testScope.Path({
             segments: [
-                new scope.Segment(new scope.Point(0, 0)),
-                new scope.Segment(new scope.Point(100, 0)),
-                new scope.Segment(new scope.Point(100, 100))
+                new testScope.Segment(new testScope.Point(0, 0)),
+                new testScope.Segment(new testScope.Point(100, 0)),
+                new testScope.Segment(new testScope.Point(100, 100))
             ],
             closed: true,
             strokeColor: new paper.Color('red'),
@@ -161,5 +165,128 @@ describe('SVGImporter.fromPaperItem (style mapping)', () => {
         expect(shapes[0].strokeWidth).toBe(3);
         expect(shapes[0].fillColor).toBeDefined();
         expect(shapes[0].params).toEqual({});
+    });
+
+    it('should preserve dash arrays from paths', () => {
+        const path = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(0, 0)),
+                new testScope.Segment(new testScope.Point(100, 0))
+            ],
+            closed: false,
+            strokeColor: new paper.Color('black'),
+            dashArray: [5, 3]
+        });
+
+        const shapes = SVGImporter.fromPaperItem(path);
+
+        expect(shapes.length).toBe(1);
+        expect((shapes[0] as any).dashArray).toEqual([5, 3]);
+    });
+
+    it('should handle open paths (polyline-style)', () => {
+        const path = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(0, 0)),
+                new testScope.Segment(new testScope.Point(50, 50)),
+                new testScope.Segment(new testScope.Point(100, 0))
+            ],
+            closed: false,
+            strokeColor: new paper.Color('green')
+        });
+
+        const shapes = SVGImporter.fromPaperItem(path);
+
+        expect(shapes.length).toBe(1);
+        expect(shapes[0].closed).toBe(false);
+        expect(shapes[0].nodes.length).toBe(3);
+    });
+
+    it('should handle closed paths (polygon-style)', () => {
+        const path = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(0, 0)),
+                new testScope.Segment(new testScope.Point(100, 0)),
+                new testScope.Segment(new testScope.Point(50, 86))
+            ],
+            closed: true,
+            strokeColor: new paper.Color('blue')
+        });
+
+        const shapes = SVGImporter.fromPaperItem(path);
+
+        expect(shapes.length).toBe(1);
+        expect(shapes[0].closed).toBe(true);
+        expect(shapes[0].nodes.length).toBe(3);
+    });
+
+    it('should handle line elements (2-point open path)', () => {
+        const path = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(10, 20)),
+                new testScope.Segment(new testScope.Point(80, 90))
+            ],
+            closed: false,
+            strokeColor: new paper.Color('red')
+        });
+
+        const shapes = SVGImporter.fromPaperItem(path);
+
+        expect(shapes.length).toBe(1);
+        expect(shapes[0].closed).toBe(false);
+        expect(shapes[0].nodes.length).toBe(2);
+        expect(shapes[0].nodes[0].x).toBeCloseTo(10);
+        expect(shapes[0].nodes[0].y).toBeCloseTo(20);
+        expect(shapes[0].nodes[1].x).toBeCloseTo(80);
+        expect(shapes[0].nodes[1].y).toBeCloseTo(90);
+    });
+
+    it('should handle CompoundPath with inherited styles', () => {
+        const path1 = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(0, 0)),
+                new testScope.Segment(new testScope.Point(50, 0)),
+                new testScope.Segment(new testScope.Point(50, 50)),
+                new testScope.Segment(new testScope.Point(0, 50))
+            ],
+            closed: true
+        });
+        const path2 = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(10, 10)),
+                new testScope.Segment(new testScope.Point(40, 10)),
+                new testScope.Segment(new testScope.Point(40, 40)),
+                new testScope.Segment(new testScope.Point(10, 40))
+            ],
+            closed: true
+        });
+
+        const compound = new testScope.CompoundPath({
+            children: [path1, path2],
+            strokeColor: new paper.Color('red'),
+            strokeWidth: 2
+        });
+
+        const shapes = SVGImporter.fromPaperItem(compound);
+
+        expect(shapes.length).toBe(2);
+        expect(shapes[0].strokeColor).toBeDefined();
+        expect(shapes[1].strokeColor).toBeDefined();
+    });
+
+    it('should skip paths with no segments', () => {
+        const emptyPath = new testScope.Path({ closed: false });
+        const validPath = new testScope.Path({
+            segments: [
+                new testScope.Segment(new testScope.Point(0, 0)),
+                new testScope.Segment(new testScope.Point(10, 10))
+            ],
+            closed: false
+        });
+
+        const group = new testScope.Group([emptyPath, validPath]);
+        const shapes = SVGImporter.fromPaperItem(group);
+
+        expect(shapes.length).toBe(1);
     });
 });
