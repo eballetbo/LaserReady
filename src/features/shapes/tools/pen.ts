@@ -76,45 +76,17 @@ export class PenTool extends BaseTool {
                 if (pathToContinue) {
                     this.editor.activePath = pathToContinue;
                     this.continuingFromEnd = continueFromEnd;
-                    // Don't add a node yet - just activate the path for continuation
-                    // The next click will add the node
                     this.editor.render();
                     return;
                 }
-
-                // Start new path
-                const startNode = new PathNode(x, y);
-                this.editor.activePath = new PathShape([startNode], false, this.editor.activeLayerId);
-                useStore.getState().addShapes([this.editor.activePath]);
-                this.draggingItem = { type: 'anchor', index: 0 };
-                this.continuingFromEnd = true; // New paths always append
-            } else {
-                // Continue path
-                const startNode = this.editor.activePath.nodes[0];
-                const distToStart = Geometry.getDistance({ x, y }, { x: startNode.x, y: startNode.y });
-
-                // Snap radius: 25px for easier closing
-                const snapRadius = 25;
-
-                if (this.editor.activePath.nodes.length > 2 && distToStart <= snapRadius) {
-                    // Close path
-                    this.editor.activePath.closed = true;
-                    this.editor.activePath = null;
-                    this.editor.previewPoint = null;
-                } else {
-
-                    // Add new node
-                    const newNode = new PathNode(x, y);
-
-                    if (this.continuingFromEnd) {
-                        this.editor.activePath.nodes.push(newNode);
-                        this.draggingItem = { type: 'anchor', index: this.editor.activePath.nodes.length - 1 };
-                    } else {
-                        this.editor.activePath.nodes.unshift(newNode);
-                        this.draggingItem = { type: 'anchor', index: 0 };
-                    }
-                }
             }
+
+            // Start new path (Ctrl held skips continuation search above)
+            const startNode = new PathNode(x, y);
+            this.editor.activePath = new PathShape([startNode], false, this.editor.activeLayerId);
+            useStore.getState().addShapes([this.editor.activePath]);
+            this.draggingItem = { type: 'anchor', index: 0 };
+            this.continuingFromEnd = true;
         } else {
             // Continue path
             const startNode = this.editor.activePath.nodes[0];
