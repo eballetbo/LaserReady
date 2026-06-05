@@ -1,0 +1,45 @@
+Spec: Persistence Module
+
+Purpose:
+  Save and restore project state across sessions using IndexedDB auto-save
+  and manual .laser project file export/import.
+
+Structure:
+  ./auto-save.ts: IndexedDB auto-save, session restore, project file I/O
+  ./project-format.ts: Serialization, deserialization, validation
+
+Owns:
+  ./auto-save.ts
+  ./project-format.ts
+
+Must:
+  Auto-save triggers 500ms after any history change.
+  Validate project files on import (version, shape count, file size).
+  Deserialize shapes back to proper class instances (PathShape, TextObject, GroupShape).
+  Notify user on save/restore failures via Toast.
+  Support .laser JSON format with version, shapes, layers, material, metadata.
+
+Must not:
+  Silently discard corrupted data without notifying the user.
+  Allow importing projects that exceed MAX_SHAPES (10000) or MAX_FILE_SIZE (50MB).
+  Store sensitive data in IndexedDB or project files.
+
+Depends on:
+  IndexedDB (browser API)
+  @useStore
+  @PathShape.fromJSON
+  @TextObject.fromJSON
+  @GroupShape.fromJSON
+  @notify (Toast)
+
+Scenario: auto-save triggers after shape creation
+  Given the canvas has 3 shapes
+  When a new rectangle is created
+  Then IndexedDB is updated within 500ms
+  And the saved project contains 4 shapes
+
+Scenario: corrupted project rejected on import
+  Given a .laser file with version field missing
+  When the user imports the file
+  Then a validation error notification is shown
+  And the canvas state is unchanged

@@ -1,0 +1,45 @@
+Spec: Text Tool
+
+Purpose:
+  Create and edit text objects on the canvas.
+
+Owns:
+  ./text.ts
+  ./text.test.ts
+
+Must:
+  Click places a text insertion point.
+  A hidden textarea captures keyboard input.
+  Text renders on canvas in real-time as user types.
+  Click elsewhere or tool switch commits the text.
+  Double-click existing text enters edit mode.
+  Empty text is discarded (no empty TextObject in store).
+  Text creation uses CreateShapeCommand.
+  Event listeners are cleaned up with AbortController (no leaks).
+
+Must not:
+  Leave orphan textareas in the DOM.
+  Commit empty text objects to the store.
+  Block global shortcuts while editing (only capture when textarea is focused).
+
+Depends on:
+  @BaseTool
+  @TextObject
+  @CreateShapeCommand
+  @opentype.js (for text-to-path conversion)
+
+Scenario: create text
+  Given the Text tool is active
+  When the user clicks at (200, 150) and types "Hello"
+  Then "Hello" appears on canvas at that position
+  When the user switches to Select tool
+  Then a TextObject with text "Hello" is committed to store
+
+Tasks:
+  [x] Click to place text insertion point.
+  [x] Hidden textarea for input capture.
+  [x] Real-time canvas rendering of typed text.
+  [x] Commit on tool switch / click elsewhere.
+  [x] Edit existing text on double-click.
+  [x] Discard empty text.
+  [x] AbortController for listener cleanup.

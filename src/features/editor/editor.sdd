@@ -1,0 +1,44 @@
+Spec: Editor Module
+
+Purpose:
+  Canvas orchestration layer — connects tools, rendering, input, history,
+  and snapping into a cohesive editing experience.
+
+Structure:
+  ./controller.ts: Central CanvasController class
+  ./tool-manager.ts: Tool switching and delegation
+  ./input.ts: Mouse, keyboard, wheel, pan input handling
+  ./history.ts: Undo/redo stack with auto-save trigger
+  ./snapping.ts: Snap point detection (endpoints, midpoints, grid, material)
+  ./render/renderer.ts: Canvas 2D rendering (grid, shapes, selection, nodes, snap markers)
+  ./Canvas.tsx: React component wrapping the HTML canvas
+
+Owns:
+  ./controller.ts
+  ./tool-manager.ts
+  ./input.ts
+  ./history.ts
+  ./snapping.ts
+  ./render/**
+  ./Canvas.tsx
+
+Must:
+  Render at most once per animation frame (rAF batching).
+  Only trigger React re-renders when selectedIds actually change.
+  Dispose all event listeners on unmount (no memory leaks).
+  InputManager supports zoom-at-point via mouse wheel.
+  SnapManager detects endpoints, midpoints, centers, material edges, and grid.
+  History stack is limited to 50 entries.
+
+Must not:
+  Directly modify shape data — always delegate to commands.
+  Re-render the canvas on every Zustand state change (only canvas-relevant changes).
+  Use requestAnimationFrame polling loops (use on-demand rendering).
+
+Depends on:
+  @CanvasRenderer
+  @ToolManager
+  @InputManager
+  @HistoryManager
+  @SnapManager
+  @useStore

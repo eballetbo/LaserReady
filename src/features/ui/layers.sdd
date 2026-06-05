@@ -1,0 +1,75 @@
+Spec: Layer Panel
+
+Purpose:
+  Allow users to manage multiple laser layers — create, rename, reorder,
+  toggle visibility, and assign shapes to layers.
+
+Owns:
+  ./LayersPanel.tsx
+  ./LayersPanel.test.tsx
+
+Can modify:
+  ../../store/slices/shapes.ts
+  ../../types/layer.ts
+
+Must:
+  Display all layers in a scrollable list.
+  Show layer color swatch, name, and visibility toggle.
+  Active layer is visually highlighted.
+  Clicking a layer makes it the active layer (new shapes go here).
+  Double-click layer name to rename inline.
+  Drag-and-drop reorders layers.
+  Eye icon toggles layer visibility (hidden layers don't render).
+  Add Layer button creates a new layer with unique name and color.
+  Delete layer moves its shapes to the default layer (cannot delete last layer).
+  Shapes inherit the active layer's color when created.
+
+Must not:
+  Allow deleting the last remaining layer.
+  Allow two layers with the same ID.
+  Modify shape geometry when changing layer assignment.
+  Import laser power/speed settings (out of scope).
+
+Depends on:
+  @useStore (layers, activeLayerId, setLayers, setActiveLayerId)
+  @LaserLayer type
+  @CanvasRenderer (respects layer visibility)
+
+Scenario: create a new layer
+  Given 1 default layer exists
+  When the user clicks "Add Layer"
+  Then a second layer appears in the list
+  And it becomes the active layer
+  And new shapes are assigned to this layer
+
+Scenario: hide a layer
+  Given Layer 2 has 3 shapes visible on canvas
+  When the user clicks the visibility toggle on Layer 2
+  Then those 3 shapes disappear from the canvas
+  And they are preserved in the store (not deleted)
+
+Scenario: delete layer redistributes shapes
+  Given Layer 2 has 2 shapes and Layer 1 is the default
+  When the user deletes Layer 2
+  Then the 2 shapes move to Layer 1
+  And Layer 2 is removed from the list
+
+Tasks:
+  [ ] Create LayersPanel React component.
+  [ ] Implement layer list with color swatch and name.
+  [ ] Add active layer highlighting and click-to-activate.
+  [ ] Add inline rename on double-click.
+  [ ] Add visibility toggle (eye icon).
+  [ ] Add "Add Layer" button with unique color generation.
+  [ ] Add "Delete Layer" with shape redistribution.
+  [ ] Update CanvasRenderer to skip hidden layers.
+  [ ] Update shape creation to use activeLayerId.
+  [ ] Add drag-and-drop reordering.
+  [ ] Add unit tests for layer CRUD operations.
+  [ ] Integrate into RightSidebar as a tab.
+
+Done when:
+  Users can create, rename, reorder, hide, and delete layers.
+  Shapes render only when their layer is visible.
+  Layer state persists in .laser project files.
+  Cannot delete the last layer.

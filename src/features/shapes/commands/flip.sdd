@@ -1,0 +1,67 @@
+Spec: Flip and Mirror
+
+Purpose:
+  Flip selected shapes horizontally or vertically around their collective center.
+
+Owns:
+  ./flip.ts
+  ./flip.test.ts
+
+Must:
+  Flip horizontal mirrors shapes across the vertical axis of their bounding box center.
+  Flip vertical mirrors shapes across the horizontal axis of their bounding box center.
+  Work on single shapes and multi-selections.
+  Work on all shape types (path, text, group).
+  Preserve shape prototypes after flip (use clone pattern).
+  Be fully undoable (FlipCommand implements Command interface).
+
+Must not:
+  Modify unselected shapes.
+  Change the collective bounding box center position.
+  Flip around the material center (flip around selection center).
+
+Depends on:
+  @IShape
+  @useStore
+  @Geometry.getCombinedBounds
+
+Exposes:
+  FlipCommand(shapes, axis)
+
+Accepts:
+  shapes: IShape[] (selected shapes)
+  axis: 'horizontal' | 'vertical'
+
+Scenario: flip horizontal
+  Given a triangle at x=50, y=50 with width 100
+  When the user flips horizontally
+  Then the triangle's nodes are mirrored across x=100 (center of bounds)
+  And the bounding box center remains at the same position
+
+Scenario: flip vertical on group
+  Given a group containing 3 shapes
+  When the user flips vertically
+  Then all children are mirrored across the group's vertical center
+  And the group bounds remain in the same position
+
+Scenario: undo flip
+  Given a shape was flipped horizontally
+  When the user presses Ctrl+Z
+  Then the shape returns to its original orientation
+
+Tasks:
+  [ ] Create FlipCommand class implementing Command interface.
+  [ ] Implement horizontal flip (negate X relative to center).
+  [ ] Implement vertical flip (negate Y relative to center).
+  [ ] Handle PathShape nodes (mirror anchor + control points).
+  [ ] Handle GroupShape (mirror all children recursively).
+  [ ] Handle TextObject (mirror position and set scaleX/scaleY).
+  [ ] Add unit tests for all shape types.
+  [ ] Add keyboard shortcuts (Ctrl+Shift+H / Ctrl+Shift+V or toolbar buttons).
+  [ ] Add UI buttons in Properties panel.
+
+Done when:
+  FlipCommand passes unit tests for path, text, and group shapes.
+  Undo restores original geometry exactly.
+  UI buttons appear in the Properties panel operations section.
+  Keyboard shortcuts are registered and documented.

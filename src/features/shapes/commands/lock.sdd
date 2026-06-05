@@ -1,0 +1,72 @@
+Spec: Lock Shapes
+
+Purpose:
+  Prevent accidental modification of finalized shapes by locking them.
+  Locked shapes cannot be moved, resized, rotated, or deleted until unlocked.
+
+Owns:
+  ./lock.ts
+  ./lock.test.ts
+
+Must:
+  Locked shapes display a visual indicator (lock icon or dimmed appearance).
+  Locked shapes cannot be moved, resized, rotated, or deleted.
+  Locked shapes can still be selected (to unlock them).
+  Lock/unlock is undoable via LockCommand.
+  Lock state persists in project file (IShape.locked field).
+  Multiple shapes can be locked/unlocked in one operation.
+  Keyboard shortcut Ctrl+L toggles lock on selection.
+
+Must not:
+  Prevent locked shapes from being exported.
+  Prevent locked shapes from appearing in the canvas.
+  Allow other commands (move, resize, delete) to operate on locked shapes.
+
+Depends on:
+  @IShape (add locked?: boolean field)
+  @useStore
+  @SelectTool (must check lock before transform)
+
+Exposes:
+  LockCommand(shapeIds, locked)
+
+Accepts:
+  shapeIds: string[] (shapes to lock/unlock)
+  locked: boolean (true = lock, false = unlock)
+
+Scenario: lock a shape
+  Given shape A is selected and unlocked
+  When the user presses Ctrl+L
+  Then shape A displays a lock indicator
+  And dragging shape A does nothing
+
+Scenario: unlock a shape
+  Given shape A is locked
+  When the user selects shape A and presses Ctrl+L
+  Then the lock indicator disappears
+  And shape A can be moved again
+
+Scenario: delete blocked by lock
+  Given shape A is locked and selected
+  When the user presses Delete
+  Then shape A is not deleted
+  And a notification says "Cannot delete locked shapes"
+
+Tasks:
+  [ ] Add locked?: boolean to IShape interface.
+  [ ] Create LockCommand class.
+  [ ] Add lock check to SelectTool (block move/resize/rotate).
+  [ ] Add lock check to DeleteShapeCommand.
+  [ ] Add visual lock indicator in renderer.
+  [ ] Add Ctrl+L shortcut to useGlobalShortcuts.
+  [ ] Add Lock/Unlock button to Properties panel.
+  [ ] Serialize lock state in project format.
+  [ ] Add unit tests for lock/unlock command.
+  [ ] Add unit tests for blocked operations on locked shapes.
+
+Done when:
+  Locked shapes cannot be transformed or deleted.
+  Lock state persists across save/load.
+  Ctrl+L toggles lock.
+  Visual indicator is visible on locked shapes.
+  All blocked operations show user notification.

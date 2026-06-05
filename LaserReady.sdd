@@ -1,0 +1,39 @@
+Spec: LaserReady
+
+Platform: TypeScript/React/Vite/Electron
+
+Purpose:
+  Free, open-source vector design editor for laser cutting workflows.
+  Handles the design side — creating, editing, and arranging vector shapes —
+  then exports industry-standard SVG files ready for laser control software.
+
+Structure:
+  ./src/features/shapes: Shape models, tools, and commands
+  ./src/features/editor: Canvas controller, rendering, input, history, snapping
+  ./src/features/ui: UI components, panels, toolbar, header
+  ./src/features/io: SVG import and export
+  ./src/features/persistence: Project files and auto-save
+  ./src/store: Zustand store (shapes and UI slices)
+  ./src/core: Math utilities, command interface, base tool class
+  ./src/config: Constants, shortcuts, themes, laser modes
+  ./src/i18n: Translation files (en, es, ca)
+  ./src/hooks: Custom React hooks
+  ./electron: Electron desktop wrapper
+
+Must:
+  All shape manipulation is undoable via the Command pattern.
+  The application works entirely client-side with no backend.
+  SVG export produces laser-software-compatible output with mm dimensions.
+  UI is accessible (ARIA labels, keyboard navigation).
+  State is persisted automatically via IndexedDB.
+  The coordinate system uses pixels internally (96 DPI) and displays mm to users.
+  All tools are activated via single-key shortcuts.
+  Shapes support three laser modes: Cut (red), Score (blue), Engrave (black).
+
+Must not:
+  Implement machine control, GCode generation, or device communication.
+  Implement image/raster processing or bitmap tracing.
+  Introduce a backend server or network dependency for core features.
+  Use native alert() or confirm() dialogs.
+  Store secrets or sensitive data.
+  Break existing tests when adding features.

@@ -1,0 +1,62 @@
+Spec: Select Tool
+
+Purpose:
+  Primary interaction tool for selecting, moving, resizing, and rotating shapes.
+
+Owns:
+  ./select.ts
+  ./select.test.ts
+
+Must:
+  Click selects the topmost shape under cursor.
+  Click on empty area deselects all.
+  Shift+click adds/removes from multi-selection.
+  Drag from empty area starts rubber-band selection.
+  Right-to-left drag uses crossing selection (partial overlap).
+  Left-to-right drag uses enclosing selection (fully inside).
+  Drag on selected shape moves all selected shapes.
+  Drag resize handles scales selected shapes.
+  Drag rotation handle rotates selected shapes around center.
+  Snap to grid/endpoints/midpoints when snapping is enabled.
+  All moves/resizes/rotations are undoable via commands.
+
+Must not:
+  Modify shape data directly — must use MoveShapeCommand, ResizeShapeCommand, RotateShapeCommand.
+  Create new shapes.
+  Trigger unnecessary re-renders during drag (use restore-from-snapshot pattern).
+
+Depends on:
+  @MoveShapeCommand
+  @ResizeShapeCommand
+  @RotateShapeCommand
+  @captureSnapshot
+  @restoreSnapshot
+  @SnapManager
+
+Scenario: click to select
+  Given 2 shapes on canvas and nothing selected
+  When the user clicks on shape A
+  Then shape A is selected
+  And shape B is not selected
+
+Scenario: rubber-band enclosing selection
+  Given 3 shapes on canvas
+  When the user drags left-to-right enclosing shapes A and B
+  Then shapes A and B are selected
+  And shape C (outside the rectangle) is not selected
+
+Scenario: move with undo
+  Given shape A is selected at position (100, 100)
+  When the user drags shape A to (150, 120)
+  Then shape A is at (150, 120)
+  When the user presses Ctrl+Z
+  Then shape A is back at (100, 100)
+
+Tasks:
+  [x] Click selection.
+  [x] Multi-selection with shift.
+  [x] Rubber-band selection (enclosing and crossing).
+  [x] Move shapes with snap.
+  [x] Resize via 8 handles.
+  [x] Rotate via rotation handle.
+  [x] Undo/redo for all transforms.

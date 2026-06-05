@@ -1,0 +1,41 @@
+Spec: UI Module
+
+Purpose:
+  React components for the application interface — toolbar, header,
+  properties panel, sidebar, rulers, toast notifications, and dialogs.
+
+Structure:
+  ./Header.tsx: Top bar with global actions
+  ./Toolbar.tsx: Left vertical tool palette
+  ./RightSidebar.tsx: Properties and Library tabs
+  ./PropertiesPanel.tsx: Context-sensitive shape properties
+  ./OffsetPanel.tsx: Offset tool configuration
+  ./Ruler.tsx: Horizontal and vertical mm rulers
+  ./ShortcutHelp.tsx: Keyboard shortcut overlay
+  ./Toast.tsx: Notification and confirmation dialog system
+  ./components/: Reusable UI primitives (Button, NumberInput)
+
+Owns:
+  ./*.tsx
+  ./components/**
+
+Must:
+  All interactive elements have aria-label attributes.
+  Buttons with icon-only content have accessible names.
+  Toast notifications used for all user feedback (not alert/confirm).
+  Properties panel is context-sensitive (changes based on selection/tool).
+  All inputs accept mm values and convert to pixels internally.
+  Theme colors come from centralized ThemeColors (no duplicated interfaces).
+  Ruler dynamically adjusts tick spacing based on zoom level.
+
+Must not:
+  Contain business logic — delegate to commands/store.
+  Use native alert() or confirm() dialogs.
+  Duplicate ThemeColors interface (import from config/themes.ts).
+  Call setShapes() directly (use commands for undoable changes).
+
+Depends on:
+  @useStore
+  @ThemeColors
+  @CanvasController (for tool switching and command execution)
+  @notify / @confirmDialog (from Toast.tsx)

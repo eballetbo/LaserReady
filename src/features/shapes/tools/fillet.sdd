@@ -1,0 +1,40 @@
+Spec: Fillet Tool
+
+Purpose:
+  Round sharp corners on paths by replacing corner nodes with smooth arcs.
+
+Owns:
+  ./fillet.ts
+  ./fillet.test.ts
+
+Must:
+  Configurable radius in mm (via UI panel).
+  Click on a corner node applies fillet to that corner.
+  Only works on nodes with straight (line) segments on both sides.
+  Replaces the corner node with a smooth arc approximation.
+  Fillet operation is fully undoable.
+  Preview shows expected arc before clicking.
+
+Must not:
+  Apply fillet to nodes that are already smooth.
+  Apply fillet when radius exceeds available segment length.
+  Modify nodes other than the clicked one.
+
+Depends on:
+  @BaseTool
+  @PathShape
+  @FilletCommand
+  @SnapManager
+
+Scenario: fillet a rectangle corner
+  Given a rectangle with 4 corner nodes and fillet radius = 5mm
+  When the user clicks the top-left corner
+  Then the corner is replaced with a 5mm radius arc
+  And the path now has 5 nodes (3 corners + 2 new smooth nodes for the arc)
+
+Tasks:
+  [x] Click to apply fillet.
+  [x] Configurable radius.
+  [x] Preview arc on hover.
+  [x] Validation (straight segments required).
+  [x] Undoable via command.
