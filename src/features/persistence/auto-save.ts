@@ -1,5 +1,5 @@
 import { useStore } from '../../store/useStore';
-import { serializeProject, deserializeShapes, LaserProject, PROJECT_VERSION } from './project-format';
+import { serializeProject, deserializeShapes, LaserProject, validateProject } from './project-format';
 
 const DB_NAME = 'LaserReady';
 const DB_VERSION = 1;
@@ -77,6 +77,12 @@ export async function restoreSession(): Promise<boolean> {
     const project = await loadFromIndexedDB();
     if (!project || !project.shapes || project.shapes.length === 0) return false;
 
+    const validation = validateProject(project);
+    if (!validation.valid) {
+        console.warn('Saved session validation failed:', validation.errors);
+        return false;
+    }
+
     try {
         const shapes = deserializeShapes(project.shapes);
         const state = useStore.getState();
@@ -109,12 +115,14 @@ export function exportProjectFile(): string {
 
 export function importProjectFile(json: string): boolean {
     try {
-        const project: LaserProject = JSON.parse(json);
-        if (!project.version || project.version > PROJECT_VERSION) {
-            console.warn('Unsupported project version:', project.version);
+        const parsed = JSON.parse(json);
+        const validation = validateProject(parsed, json.length);
+        if (!validation.valid) {
+            console.warn('Project validation failed:', validation.errors);
             return false;
         }
 
+        const project = parsed as LaserProject;
         const shapes = deserializeShapes(project.shapes);
         const state = useStore.getState();
         state.setShapes(shapes);
