@@ -132,7 +132,7 @@ Tasks:
   [x] Edit existing text on double-click.
   [x] Discard empty text.
   [x] AbortController for listener cleanup.
-  [ ] Multi-line text support (Enter key inserts newline).
+  [x] Multi-line text support (Enter key inserts newline).
   [ ] Horizontal character spacing (hSpace property + rendering).
   [ ] Vertical line spacing (vSpace property + rendering).
   [ ] Text horizontal alignment (left / center / right).
