@@ -3,7 +3,20 @@
  * Tool shortcuts use single keys (no modifier).
  */
 
-export const TOOL_SHORTCUTS: Record<string, string> = {
+export type ToolType =
+    | 'select'
+    | 'node-edit'
+    | 'pen'
+    | 'rect'
+    | 'circle'
+    | 'text'
+    | 'offset'
+    | 'fillet'
+    | 'star'
+    | 'hand'
+    | 'polygon';
+
+export const TOOL_SHORTCUTS: Record<string, ToolType> = {
     'v': 'select',
     'n': 'node-edit',
     'p': 'pen',

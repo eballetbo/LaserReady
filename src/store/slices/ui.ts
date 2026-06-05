@@ -1,8 +1,9 @@
 import { StateCreator } from 'zustand';
 import { PIXELS_PER_MM, MIN_ZOOM, MAX_ZOOM } from '../../config/constants';
+import { ToolType } from '../../config/shortcuts';
 
 export interface UiSlice {
-    tool: string;
+    tool: ToolType;
     zoom: number;
     pan: { x: number; y: number };
     isDarkMode: boolean;
@@ -10,7 +11,7 @@ export interface UiSlice {
     selectedNodeIndices: number[];
     isSnappingEnabled: boolean;
     filletRadius: number;
-    setTool: (tool: string) => void;
+    setTool: (tool: ToolType) => void;
     setZoom: (zoom: number) => void;
     setPan: (pan: { x: number; y: number }) => void;
     setDarkMode: (isDarkMode: boolean) => void;
