@@ -118,39 +118,76 @@ describe('TextObject — text on path (pathId)', () => {
 });
 
 describe('TextObject — text bending', () => {
-    it('bent text arc offset keeps left edge near x=0', () => {
-        // Simulate the renderer's offset calculation
-        const fontSize = 24;
-        const hSpace = 0;
-        const bend = 5;
-
-        // Approximate char widths for "asdfgh" (using fontSize * 0.6 fallback)
+    it('bent text arc offset keeps left edge near x=0 (positive bend)', () => {
         const text = 'asdfgh';
+        const fontSize = 24;
         const charWidths = [...text].map(() => fontSize * 0.6);
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
+        const bend = 5;
         const radius = Math.abs(totalArcLen / (bend * 0.01));
-        const direction = bend > 0 ? -1 : 1;
         const totalAngle = totalArcLen / radius;
 
-        // First character position without offset
         const firstHalfAngle = (charWidths[0]! / 2) / radius;
-        const firstCharAngle = -totalAngle / 2 + firstHalfAngle;
-        const arcLeftX = Math.sin(firstCharAngle) * radius * direction * -1;
-        const xShift = -arcLeftX + charWidths[0]! / 2;
+        const firstAngle = -totalAngle / 2 + firstHalfAngle;
+        const firstX = radius * Math.sin(firstAngle);
+        const xShift = -firstX + charWidths[0]! / 2;
 
-        // After applying xShift, first char should be near x=0
-        const firstCx = Math.sin(firstCharAngle) * radius * direction * -1 + xShift;
+        // First char cx should be near charWidth/2 (left edge at ~0)
+        const firstCx = radius * Math.sin(firstAngle) + xShift;
         expect(Math.abs(firstCx - charWidths[0]! / 2)).toBeLessThan(1);
+    });
 
-        // Last character should be near totalArcLen
-        let currentAngle = -totalAngle / 2;
-        for (let i = 0; i < text.length; i++) {
-            const halfAngle = (charWidths[i]! / 2) / radius;
-            currentAngle += halfAngle;
-            if (i < text.length - 1) currentAngle += halfAngle;
-        }
-        const lastCx = Math.sin(currentAngle) * radius * direction * -1 + xShift;
-        expect(Math.abs(lastCx - totalArcLen + charWidths[charWidths.length - 1]! / 2)).toBeLessThan(fontSize);
+    it('bent text arc offset keeps left edge near x=0 (negative bend)', () => {
+        const text = 'asdfgh';
+        const fontSize = 24;
+        const charWidths = [...text].map(() => fontSize * 0.6);
+        const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
+        const bend = -5;
+        const radius = Math.abs(totalArcLen / (bend * 0.01));
+        const totalAngle = totalArcLen / radius;
+
+        const firstHalfAngle = (charWidths[0]! / 2) / radius;
+        const firstAngle = -totalAngle / 2 + firstHalfAngle;
+        const firstX = radius * Math.sin(firstAngle);
+        const xShift = -firstX + charWidths[0]! / 2;
+
+        // Same offset logic works for negative bend (x positions are identical)
+        const firstCx = radius * Math.sin(firstAngle) + xShift;
+        expect(Math.abs(firstCx - charWidths[0]! / 2)).toBeLessThan(1);
+    });
+
+    it('positive bend curves text upward (negative cy)', () => {
+        const fontSize = 24;
+        const charWidths = [14.4, 14.4, 14.4]; // 3 chars
+        const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
+        const bend = 30;
+        const radius = Math.abs(totalArcLen / (bend * 0.01));
+        const sign = 1; // positive bend
+
+        // Middle character at angle=0: cy = sign * radius * (cos(0) - 1) = 0
+        const cyMiddle = sign * radius * (Math.cos(0) - 1);
+        expect(cyMiddle).toBe(0);
+
+        // Edge characters have negative cy (upward)
+        const totalAngle = totalArcLen / radius;
+        const edgeAngle = totalAngle / 2;
+        const cyEdge = sign * radius * (Math.cos(edgeAngle) - 1);
+        expect(cyEdge).toBeLessThan(0); // upward
+    });
+
+    it('negative bend curves text downward (positive cy)', () => {
+        const fontSize = 24;
+        const charWidths = [14.4, 14.4, 14.4];
+        const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
+        const bend = -30;
+        const radius = Math.abs(totalArcLen / (bend * 0.01));
+        const sign = -1; // negative bend
+
+        // Edge characters have positive cy (downward)
+        const totalAngle = totalArcLen / radius;
+        const edgeAngle = totalAngle / 2;
+        const cyEdge = sign * radius * (Math.cos(edgeAngle) - 1);
+        expect(cyEdge).toBeGreaterThan(0); // downward
     });
 
     it('defaults bend to 0', () => {

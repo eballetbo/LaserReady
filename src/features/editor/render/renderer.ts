@@ -629,18 +629,17 @@ export class CanvasRenderer {
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0) - extraPerChar;
 
         const radius = Math.abs(totalArcLen / (bend * 0.01));
-        const direction = bend > 0 ? -1 : 1;
+        // sign: +1 = curves upward (center above), -1 = curves downward (center below)
+        const sign = bend > 0 ? 1 : -1;
 
         const totalAngle = totalArcLen / radius;
         let currentAngle = -totalAngle / 2;
 
-        // Compute the x position of the first character on the arc to determine
-        // the offset needed to keep text starting at x=0 (left-aligned)
+        // Pre-compute first character position to determine left-align offset
         const firstHalfAngle = ((charWidths[0] ?? 0) / 2) / radius;
-        const firstCharAngle = -totalAngle / 2 + firstHalfAngle;
-        const arcLeftX = Math.sin(firstCharAngle) * radius * direction * -1;
-        // Offset so the left edge of bent text aligns with x=0
-        const xShift = -arcLeftX + (charWidths[0] ?? 0) / 2;
+        const firstAngle = -totalAngle / 2 + firstHalfAngle;
+        const firstX = radius * Math.sin(firstAngle);
+        const xShift = -firstX + (charWidths[0] ?? 0) / 2;
 
         const chars = [...line];
         for (let i = 0; i < chars.length; i++) {
@@ -648,12 +647,15 @@ export class CanvasRenderer {
             const halfAngle = (charWidth / 2) / radius;
             currentAngle += halfAngle;
 
-            const cx = Math.sin(currentAngle) * radius * direction * -1 + xShift;
-            const cy = (Math.cos(currentAngle) - 1) * radius * direction;
+            // Position on arc: x is always sin-based, y depends on bend direction
+            const cx = radius * Math.sin(currentAngle) + xShift;
+            const cy = sign * radius * (Math.cos(currentAngle) - 1);
+            // Rotation: characters tilt tangent to the arc
+            const charRotation = -sign * currentAngle;
 
             this.ctx.save();
             this.ctx.translate(cx, cy);
-            this.ctx.rotate(currentAngle * direction * -1);
+            this.ctx.rotate(charRotation);
 
             if (layerMode === 'ENGRAVE') {
                 this.ctx.fillStyle = layerColor;
