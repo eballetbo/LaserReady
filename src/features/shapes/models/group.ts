@@ -125,4 +125,24 @@ export class GroupShape implements IShape {
             fillColor: this.fillColor
         };
     }
+
+    static fromJSON(json: any): GroupShape {
+        const { PathShape } = require('./path');
+        const { TextObject } = require('./text');
+
+        const children = (json.children || []).map((c: any) => {
+            if (c.type === 'text') return TextObject.fromJSON(c);
+            if (c.type === 'group') return GroupShape.fromJSON(c);
+            return PathShape.fromJSON(c);
+        });
+
+        const group = new GroupShape(children);
+        group.id = json.id;
+        group.layerId = json.layerId || 'layer-1';
+        group.rotation = json.rotation || 0;
+        group.strokeColor = json.strokeColor;
+        group.strokeWidth = json.strokeWidth;
+        group.fillColor = json.fillColor;
+        return group;
+    }
 }

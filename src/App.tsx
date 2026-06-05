@@ -9,6 +9,7 @@ import { exportToSVG, downloadSVG } from './features/io/svg-export';
 import { PIXELS_PER_MM, ZOOM_STEP } from './config/constants';
 import { TOOL_SHORTCUTS } from './config/shortcuts';
 import { LanguageProvider, useLanguage } from './contexts/language';
+import { restoreSession, exportProjectFile, importProjectFile } from './features/persistence/auto-save';
 
 
 
@@ -91,6 +92,12 @@ function AppContent() {
     const { language, setLanguage, t } = useLanguage();
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
+    useEffect(() => {
+        restoreSession().then(restored => {
+            if (restored) editor?.render();
+        });
+    }, [editor]);
+
     // --- ACTIONS ---
 
     const applyLaserMode = (modeKey: string) => {
@@ -159,6 +166,11 @@ function AppContent() {
                 editor?.selectAll();
             }
 
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                handleSaveProject();
+            }
+
             if ((e.ctrlKey || e.metaKey) && e.key === ']') {
                 e.preventDefault();
                 if (e.shiftKey) editor?.bringToFront();
@@ -208,6 +220,19 @@ function AppContent() {
     }, [editor, tool]);
 
     // --- FILE I/O ---
+    const handleSaveProject = () => {
+        const json = exportProjectFile();
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'design.laser';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const handleExport = () => {
         if (!editor) return;
         const layers = useStore.getState().layers;
@@ -228,7 +253,12 @@ function AppContent() {
         reader.onload = (f) => {
             const result = f.target?.result;
             if (typeof result === 'string') {
-                editor?.importSVGString(result);
+                if (file.name.endsWith('.laser')) {
+                    importProjectFile(result);
+                    editor?.render();
+                } else {
+                    editor?.importSVGString(result);
+                }
             }
         };
         reader.readAsText(file);
@@ -347,7 +377,7 @@ function AppContent() {
                             type="file"
                             ref={fileInputRef}
                             onChange={handleFileChange}
-                            accept=".svg"
+                            accept=".svg,.laser"
                             className="hidden"
                         />
                         <button onClick={handleImportClick} className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded ${theme.buttonHover} border ${theme.border}`}>

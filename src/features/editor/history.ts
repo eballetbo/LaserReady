@@ -1,4 +1,5 @@
 import { Command } from '../../core/commands/command';
+import { triggerAutoSave } from '../persistence/auto-save';
 
 /**
  * Manages the history stack for undo/redo operations.
@@ -22,15 +23,14 @@ export class HistoryManager {
     execute(command: Command): void {
         command.execute();
 
-        // Add command to undo stack
         this.undoStack.push(command);
 
         if (this.undoStack.length > this.limit) {
             this.undoStack.shift();
         }
 
-        // Clear redo stack on new action
         this.redoStack = [];
+        triggerAutoSave();
     }
 
     /**
@@ -43,12 +43,10 @@ export class HistoryManager {
         if (command) {
             command.undo();
             this.redoStack.push(command);
+            triggerAutoSave();
         }
     }
 
-    /**
-     * Redo the last undone command.
-     */
     redo(): void {
         if (this.redoStack.length === 0) return;
 
@@ -56,6 +54,7 @@ export class HistoryManager {
         if (command) {
             command.execute();
             this.undoStack.push(command);
+            triggerAutoSave();
         }
     }
 

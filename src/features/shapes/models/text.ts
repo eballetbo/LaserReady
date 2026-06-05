@@ -171,6 +171,27 @@ export class TextObject implements IShape {
         }, this.layerId);
     }
 
+    toJSON(): Record<string, any> {
+        return {
+            id: this.id,
+            type: this.type,
+            x: this.x,
+            y: this.y,
+            text: this.text,
+            layerId: this.layerId,
+            fontSize: this.fontSize,
+            fontFamily: this.fontFamily,
+            fontWeight: this.fontWeight,
+            fontStyle: this.fontStyle,
+            fillColor: this.fillColor,
+            strokeColor: this.strokeColor,
+            strokeWidth: this.strokeWidth,
+            rotation: this.rotation,
+            scaleX: this.scaleX,
+            scaleY: this.scaleY
+        };
+    }
+
     static fromJSON(json: any): TextObject {
         return new TextObject(json.x, json.y, json.text, {
             fontSize: json.fontSize,
