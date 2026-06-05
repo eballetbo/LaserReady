@@ -118,6 +118,41 @@ describe('TextObject — text on path (pathId)', () => {
 });
 
 describe('TextObject — text bending', () => {
+    it('bent text arc offset keeps left edge near x=0', () => {
+        // Simulate the renderer's offset calculation
+        const fontSize = 24;
+        const hSpace = 0;
+        const bend = 5;
+
+        // Approximate char widths for "asdfgh" (using fontSize * 0.6 fallback)
+        const text = 'asdfgh';
+        const charWidths = [...text].map(() => fontSize * 0.6);
+        const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
+        const radius = Math.abs(totalArcLen / (bend * 0.01));
+        const direction = bend > 0 ? -1 : 1;
+        const totalAngle = totalArcLen / radius;
+
+        // First character position without offset
+        const firstHalfAngle = (charWidths[0]! / 2) / radius;
+        const firstCharAngle = -totalAngle / 2 + firstHalfAngle;
+        const arcLeftX = Math.sin(firstCharAngle) * radius * direction * -1;
+        const xShift = -arcLeftX + charWidths[0]! / 2;
+
+        // After applying xShift, first char should be near x=0
+        const firstCx = Math.sin(firstCharAngle) * radius * direction * -1 + xShift;
+        expect(Math.abs(firstCx - charWidths[0]! / 2)).toBeLessThan(1);
+
+        // Last character should be near totalArcLen
+        let currentAngle = -totalAngle / 2;
+        for (let i = 0; i < text.length; i++) {
+            const halfAngle = (charWidths[i]! / 2) / radius;
+            currentAngle += halfAngle;
+            if (i < text.length - 1) currentAngle += halfAngle;
+        }
+        const lastCx = Math.sin(currentAngle) * radius * direction * -1 + xShift;
+        expect(Math.abs(lastCx - totalArcLen + charWidths[charWidths.length - 1]! / 2)).toBeLessThan(fontSize);
+    });
+
     it('defaults bend to 0', () => {
         const t = new TextObject(0, 0, 'Hello');
         expect(t.bend).toBe(0);
