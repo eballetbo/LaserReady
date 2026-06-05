@@ -2,85 +2,35 @@ import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { IShape } from '../types';
 import { Point } from '../../../core/math/geometry';
+import { captureSnapshot, restoreSnapshot, ShapeSnapshot } from '../utils/snapshot';
 
-/**
- * Command to rotate shapes with undo/redo support.
- * Stores original nodes state for restoration.
- */
 export class RotateShapeCommand implements Command {
     private shapesToRotate: IShape[];
     private angle: number;
     private center: Point;
-    private originalStates: any[];
+    private snapshots: ShapeSnapshot[];
 
     constructor(shapesToRotate: IShape[], angle: number, center: Point) {
         this.shapesToRotate = shapesToRotate;
         this.angle = angle;
         this.center = center;
-
-        // Store original state for undo
-        this.originalStates = shapesToRotate.map(shape => {
-            if (shape.type === 'group') {
-                const g = shape as any;
-                return {
-                    type: 'group',
-                    children: g.children ? g.children.map((c: any) => {
-                        const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
-                        clone.id = c.id; // Preserve ID
-                        return clone;
-                    }) : [],
-                    x: g.x,
-                    y: g.y,
-                    rotation: g.rotation
-                };
-            } else if (shape.nodes) {
-                return {
-                    type: 'path',
-                    nodes: shape.nodes.map((n: any) => n.clone()),
-                    rotation: (shape as any).rotation
-                };
-            }
-            return { ...shape, type: 'other' };
-        });
+        this.snapshots = shapesToRotate.map(captureSnapshot);
     }
 
     execute(): void {
-        // Apply rotation to each shape
         this.shapesToRotate.forEach(shape => {
-            if (typeof (shape as any).rotate === 'function') {
-                (shape as any).rotate(this.angle, this.center);
+            if (shape.rotate) {
+                shape.rotate(this.angle, this.center);
             }
         });
 
-        // Trigger store update to re-render
         const { shapes, setShapes } = useStore.getState();
         setShapes([...shapes]);
     }
 
     undo(): void {
         this.shapesToRotate.forEach((shape, i) => {
-            const original = this.originalStates[i];
-
-            if (shape.type === 'group' && original.type === 'group') {
-                const g = shape as any;
-                g.children = original.children.map((c: any) => {
-                    const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
-                    clone.id = c.id;
-                    return clone;
-                });
-                g.x = original.x;
-                g.y = original.y;
-                g.rotation = original.rotation;
-            } else if (original.type === 'path' && original.nodes && shape.nodes) {
-                shape.nodes = original.nodes.map((n: any) => n.clone());
-                if (original.rotation !== undefined) {
-                    (shape as any).rotation = original.rotation;
-                }
-            } else if (original.type === 'other') {
-                (shape as any).x = original.x;
-                (shape as any).y = original.y;
-                (shape as any).rotation = original.rotation;
-            }
+            restoreSnapshot(shape, this.snapshots[i]);
         });
 
         const { shapes, setShapes } = useStore.getState();

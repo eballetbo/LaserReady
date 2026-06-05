@@ -25,6 +25,8 @@ export interface IShape {
     strokeColor?: string;
     strokeWidth?: number;
     fillColor?: string;
+    dashArray?: number[];
+    opacity?: number;
 
     move?(dx: number, dy: number): void;
     getBounds?(): Rect;
