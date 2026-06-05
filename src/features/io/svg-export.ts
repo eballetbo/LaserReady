@@ -13,15 +13,19 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number): st
     scope.project.clear();
     scope.view.viewSize = new paper.Size(width, height);
 
-    // Convert shapes to paper items
-    shapes.forEach(shape => {
+    const addShapeToProject = (shape: IShape): void => {
+        if (shape.type === 'group') {
+            const group = shape as any;
+            if (group.children) {
+                group.children.forEach((child: IShape) => addShapeToProject(child));
+            }
+            return;
+        }
+
         let item: paper.Item | null = null;
 
         if (shape.type === 'text') {
-            // Vectorize Text
-            const textShape = shape as any; // Cast to access text props
-
-            // Create PointText in headless scope
+            const textShape = shape as any;
             const textItem = new scope.PointText({
                 point: new paper.Point(textShape.x, textShape.y),
                 content: textShape.text,
@@ -29,40 +33,31 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number): st
                 fontSize: textShape.fontSize,
                 fontWeight: textShape.fontWeight,
                 fontStyle: textShape.fontStyle,
-                fillColor: textShape.fillColor || 'black' // Text usually has fill
+                fillColor: textShape.fillColor || 'black'
             });
 
-            // Apply transforms
             if (textShape.rotation) textItem.rotate(textShape.rotation);
             if (textShape.scaleX && textShape.scaleY) textItem.scale(textShape.scaleX, textShape.scaleY);
 
-            // Convert to Vector Path
-            // toPath() returns the new PathItem and removes the text item if successful? 
-            // Paper.js docs: "Converts the text item into a Path item..."
-            // It might return Path or CompoundPath
             item = (textItem as any).toPath();
-            textItem.remove(); // Cleanup original text if toPath didn't replace it (it usually returns a new item)
-
-        } else {
-            // Assume PathShape
+            textItem.remove();
+        } else if ((shape as any).nodes) {
             item = BooleanOperations.toPaperPath(shape as PathShape) as paper.PathItem;
         }
 
         if (!item) return;
 
-        // Apply styles
-        const style = shape.params as any;
+        if (shape.strokeColor) item.strokeColor = new paper.Color(shape.strokeColor);
+        if (shape.strokeWidth) item.strokeWidth = shape.strokeWidth;
+        if (shape.fillColor) item.fillColor = new paper.Color(shape.fillColor);
 
-        if (style?.strokeColor) item.strokeColor = new paper.Color(style.strokeColor);
-        if (style?.strokeWidth) item.strokeWidth = style.strokeWidth;
-        if (style?.fillColor) item.fillColor = new paper.Color(style.fillColor);
-
-        // Default styles for paths if not set
         if (!item.strokeColor && !item.fillColor && shape.type !== 'text') {
             item.strokeColor = new paper.Color('black');
             item.strokeWidth = 1;
         }
-    });
+    };
+
+    shapes.forEach(addShapeToProject);
 
     // Calculate physical dimensions in Millimeters
     const widthMM = (width / PIXELS_PER_MM).toFixed(2);
