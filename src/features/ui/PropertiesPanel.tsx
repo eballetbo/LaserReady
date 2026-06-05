@@ -598,8 +598,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         onClick={() => {
                                             if (editor && selection.length > 2) {
                                                 const ids = selection.map(s => s.id);
-                                                /* To distribute horizontal we need to use vertical axis */
-                                                editor.history.execute(new DistributeCommand(ids, 'vertical'));
+                                                editor.history.execute(new DistributeCommand(ids, 'horizontal'));
                                                 editor.render();
                                             }
                                         }}
@@ -657,7 +656,6 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         onClick={() => {
                                             if (editor && selection.length > 2) {
                                                 const ids = selection.map(s => s.id);
-                                                /* To distribute vertically we need to use vertical axis */
                                                 editor.history.execute(new DistributeCommand(ids, 'vertical'));
                                                 editor.render();
                                             }
