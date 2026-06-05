@@ -1,5 +1,7 @@
 import { IShape } from '../types';
 import { Geometry, Rect } from '../../../core/math/geometry';
+import { PathShape } from './path';
+import { TextObject } from './text';
 
 export class GroupShape implements IShape {
     id: string;
@@ -116,10 +118,6 @@ export class GroupShape implements IShape {
     }
 
     static fromJSON(json: Record<string, unknown>): GroupShape {
-        // Lazy imports to avoid circular dependency
-        const { PathShape } = require('./path');
-        const { TextObject } = require('./text');
-
         const childrenData = (json.children as Record<string, unknown>[]) || [];
         const children: IShape[] = childrenData.map(c => {
             if (c.type === 'text') return TextObject.fromJSON(c);
