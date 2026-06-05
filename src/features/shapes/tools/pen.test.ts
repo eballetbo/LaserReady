@@ -39,6 +39,18 @@ describe('PenTool', () => {
         tool = new PenTool(mockEditor);
     });
 
+    it('should not crash on Ctrl+click when no active path exists', () => {
+        expect(mockEditor.activePath).toBeNull();
+
+        const ctrlClick = new MouseEvent('mousedown', {
+            clientX: 50, clientY: 50, button: 0, ctrlKey: true
+        });
+        expect(() => tool.onMouseDown(ctrlClick)).not.toThrow();
+
+        expect(mockEditor.activePath).not.toBeNull();
+        expect(mockEditor.activePath.nodes.length).toBe(1);
+    });
+
     it('should NOT add a node on right click (contextmenu trigger)', () => {
         // 1. Start path with left click
         tool.onMouseDown(new MouseEvent('mousedown', { clientX: 0, clientY: 0, button: 0 }));
