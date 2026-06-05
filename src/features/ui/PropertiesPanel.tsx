@@ -11,6 +11,7 @@ import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetPanel } from './OffsetPanel';
 import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
+import { ChangeTextStyleCommand } from '../shapes/commands/text';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
 import { BreakPathCommand } from '../shapes/commands/break-path';
@@ -245,6 +246,15 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                             selectedObject.text = e.target.value;
                                             editor?.render();
                                         }}
+                                        onBlur={(e) => {
+                                            if (!editor) return;
+                                            const cmd = new ChangeTextStyleCommand(
+                                                selectedObject.id,
+                                                { text: selectedObject.text },
+                                                { text: e.target.value }
+                                            );
+                                            editor.history.execute(cmd);
+                                        }}
                                         className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                         rows={3}
                                     />
@@ -255,8 +265,15 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                         <select
                                             value={selectedObject.fontFamily}
                                             onChange={(e) => {
-                                                selectedObject.fontFamily = e.target.value;
-                                                editor?.render();
+                                                if (!editor) return;
+                                                const oldVal = selectedObject.fontFamily;
+                                                const cmd = new ChangeTextStyleCommand(
+                                                    selectedObject.id,
+                                                    { fontFamily: oldVal },
+                                                    { fontFamily: e.target.value }
+                                                );
+                                                editor.history.execute(cmd);
+                                                editor.render();
                                             }}
                                             className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                         >
@@ -267,13 +284,33 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                             <option value="Verdana">Verdana</option>
                                         </select>
                                     </div>
-                                    <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => { selectedObject.fontSize = parseFloat(v); editor?.render(); }} theme={theme} />
+                                    <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => {
+                                        if (!editor) return;
+                                        const oldVal = selectedObject.fontSize;
+                                        const newVal = parseFloat(v);
+                                        if (isNaN(newVal) || newVal <= 0) return;
+                                        const cmd = new ChangeTextStyleCommand(
+                                            selectedObject.id,
+                                            { fontSize: oldVal },
+                                            { fontSize: newVal }
+                                        );
+                                        editor.history.execute(cmd);
+                                        editor.render();
+                                    }} theme={theme} />
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => {
-                                            selectedObject.fontWeight = selectedObject.fontWeight === 'bold' ? 'normal' : 'bold';
-                                            editor?.render();
+                                            if (!editor) return;
+                                            const oldVal = selectedObject.fontWeight;
+                                            const newVal = oldVal === 'bold' ? 'normal' : 'bold';
+                                            const cmd = new ChangeTextStyleCommand(
+                                                selectedObject.id,
+                                                { fontWeight: oldVal },
+                                                { fontWeight: newVal }
+                                            );
+                                            editor.history.execute(cmd);
+                                            editor.render();
                                         }}
                                         className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontWeight === 'bold' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
                                     >
@@ -281,8 +318,16 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                     </button>
                                     <button
                                         onClick={() => {
-                                            selectedObject.fontStyle = selectedObject.fontStyle === 'italic' ? 'normal' : 'italic';
-                                            editor?.render();
+                                            if (!editor) return;
+                                            const oldVal = selectedObject.fontStyle;
+                                            const newVal = oldVal === 'italic' ? 'normal' : 'italic';
+                                            const cmd = new ChangeTextStyleCommand(
+                                                selectedObject.id,
+                                                { fontStyle: oldVal },
+                                                { fontStyle: newVal }
+                                            );
+                                            editor.history.execute(cmd);
+                                            editor.render();
                                         }}
                                         className={`flex-1 p-1.5 rounded border ${theme.border} ${selectedObject.fontStyle === 'italic' ? 'bg-gray-200 dark:bg-gray-700' : ''} italic`}
                                     >
