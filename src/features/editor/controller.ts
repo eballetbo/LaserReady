@@ -246,22 +246,18 @@ export class CanvasController {
 
     deleteSelected() {
         if (this.selectedShapes.length > 0) {
-            this.startAction();
-
             const command = new DeleteShapeCommand(this.selectedShapes);
-            command.execute();
-
+            this.history.execute(command);
             this.render();
-            this.endAction();
         }
     }
 
     clear() {
-        this.startAction();
-        useStore.getState().clearShapes();
-        this.selectedShapes = [];
+        const allShapes = this.shapes;
+        if (allShapes.length === 0) return;
+        const command = new DeleteShapeCommand(allShapes);
+        this.history.execute(command);
         this.render();
-        this.endAction();
     }
 
     importSVGString(svgString: string, position: { x: number; y: number } | null = null) {
