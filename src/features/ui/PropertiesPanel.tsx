@@ -10,7 +10,7 @@ import { IconNodeCorner, IconNodeSmooth, IconNodeSymmetric, IconSegmentLine, Ico
 import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetPanel } from './OffsetPanel';
-import { ConvertToPathCommand } from '../shapes/commands/convert-to-path';
+import { ConvertToPathCommand, preloadConversionFont } from '../shapes/commands/convert-to-path';
 import { ChangeTextStyleCommand } from '../shapes/commands/text';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
@@ -337,11 +337,12 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
                                 <div className="mt-4">
                                     <Button
                                         variant="primary"
-                                        onClick={() => {
-                                            if (editor) {
-                                                const command = new ConvertToPathCommand(selectedObject);
-                                                editor.history.execute(command);
-                                            }
+                                        onClick={async () => {
+                                            if (!editor) return;
+                                            const font = await preloadConversionFont();
+                                            if (!font) return;
+                                            const command = new ConvertToPathCommand(selectedObject, font);
+                                            editor.history.execute(command);
                                         }}
                                         icon={Combine}
                                         label={t('convertToPath')}
