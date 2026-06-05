@@ -1,4 +1,5 @@
 import { IShape } from '../types';
+import { PathNode } from '../models/node';
 
 /**
  * Opaque snapshot of a shape's geometry state (nodes, position, rotation,
@@ -6,8 +7,8 @@ import { IShape } from '../types';
  */
 export interface ShapeSnapshot {
     type: 'group' | 'path' | 'text' | 'other';
-    nodes?: any[];
-    children?: any[];
+    nodes?: PathNode[];
+    children?: IShape[];
     x?: number;
     y?: number;
     rotation?: number;
@@ -18,22 +19,21 @@ export interface ShapeSnapshot {
 
 export function captureSnapshot(shape: IShape): ShapeSnapshot {
     if (shape.type === 'group') {
-        const g = shape as any;
         return {
             type: 'group',
-            children: g.children ? g.children.map((c: any) => {
+            children: shape.children ? shape.children.map(c => {
                 const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
                 clone.id = c.id;
                 return clone;
             }) : [],
-            x: g.x,
-            y: g.y,
-            rotation: g.rotation,
+            x: shape.x,
+            y: shape.y,
+            rotation: shape.rotation,
         };
     }
 
     if (shape.type === 'text') {
-        const t = shape as any;
+        const t = shape as IShape & { fontSize?: number; scaleX?: number; scaleY?: number };
         return {
             type: 'text',
             x: t.x,
@@ -51,26 +51,25 @@ export function captureSnapshot(shape: IShape): ShapeSnapshot {
             nodes: shape.nodes.map(n => n.clone()),
             x: shape.x,
             y: shape.y,
-            rotation: (shape as any).rotation,
+            rotation: shape.rotation,
         };
     }
 
-    return { type: 'other', x: shape.x, y: shape.y, rotation: (shape as any).rotation };
+    return { type: 'other', x: shape.x, y: shape.y, rotation: shape.rotation };
 }
 
 export function restoreSnapshot(shape: IShape, snapshot: ShapeSnapshot): void {
     if (snapshot.type === 'group' && shape.type === 'group') {
-        const g = shape as any;
-        g.children = snapshot.children!.map((c: any) => {
+        shape.children = snapshot.children!.map(c => {
             const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
             clone.id = c.id;
             return clone;
         });
-        g.x = snapshot.x;
-        g.y = snapshot.y;
-        g.rotation = snapshot.rotation;
+        shape.x = snapshot.x;
+        shape.y = snapshot.y;
+        shape.rotation = snapshot.rotation;
     } else if (snapshot.type === 'text') {
-        const t = shape as any;
+        const t = shape as IShape & { fontSize?: number; scaleX?: number; scaleY?: number };
         t.x = snapshot.x;
         t.y = snapshot.y;
         t.rotation = snapshot.rotation;
@@ -78,13 +77,13 @@ export function restoreSnapshot(shape: IShape, snapshot: ShapeSnapshot): void {
         t.scaleX = snapshot.scaleX;
         t.scaleY = snapshot.scaleY;
     } else if (snapshot.type === 'path' && snapshot.nodes && shape.nodes) {
-        shape.nodes = snapshot.nodes.map((n: any) => n.clone());
+        shape.nodes = snapshot.nodes.map(n => n.clone());
         shape.x = snapshot.x;
         shape.y = snapshot.y;
-        (shape as any).rotation = snapshot.rotation;
+        shape.rotation = snapshot.rotation;
     } else {
         shape.x = snapshot.x;
         shape.y = snapshot.y;
-        (shape as any).rotation = snapshot.rotation;
+        shape.rotation = snapshot.rotation;
     }
 }
