@@ -116,4 +116,29 @@ describe('SnapManager', () => {
             expect(result.type).toBe('none');
         });
     });
+
+    describe('Angle Snapping', () => {
+        it('should snap to nearest 15-degree increment when constrained', () => {
+            expect(snapManager.snapAngle(14 * Math.PI / 180, true)).toBeCloseTo(15 * Math.PI / 180);
+            expect(snapManager.snapAngle(16 * Math.PI / 180, true)).toBeCloseTo(15 * Math.PI / 180);
+        });
+
+        it('should snap 0 to 0', () => {
+            expect(snapManager.snapAngle(2 * Math.PI / 180, true)).toBeCloseTo(0);
+        });
+
+        it('should snap to 90 degrees', () => {
+            expect(snapManager.snapAngle(89 * Math.PI / 180, true)).toBeCloseTo(90 * Math.PI / 180);
+            expect(snapManager.snapAngle(91 * Math.PI / 180, true)).toBeCloseTo(90 * Math.PI / 180);
+        });
+
+        it('should not snap when constrain is false', () => {
+            const angle = 17 * Math.PI / 180;
+            expect(snapManager.snapAngle(angle, false)).toBeCloseTo(angle);
+        });
+
+        it('should handle negative angles', () => {
+            expect(snapManager.snapAngle(-14 * Math.PI / 180, true)).toBeCloseTo(-15 * Math.PI / 180);
+        });
+    });
 });
