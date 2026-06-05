@@ -1,4 +1,5 @@
 import paper from 'paper';
+import DOMPurify from 'dompurify';
 import { PathShape } from '../../features/shapes/models/path';
 import { PathNode } from '../../features/shapes/models/node';
 
@@ -71,8 +72,14 @@ export const SVGImporter = {
      * Imports an SVG string and returns an array of PathShapes.
      */
     importSVG(svgString: string): PathShape[] {
-        // Create a temporary item to hold the imported SVG
-        const item = scope.project.importSVG(svgString, {
+        const sanitized = DOMPurify.sanitize(svgString, {
+            USE_PROFILES: { svg: true, svgFilters: true },
+            ADD_TAGS: ['use'],
+            FORBID_TAGS: ['script', 'foreignObject'],
+            FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover']
+        });
+
+        const item = scope.project.importSVG(sanitized, {
             expandShapes: true, // Convert rects, circles, etc. to paths
             insert: false,      // Don't insert into the active layer
             applyMatrix: true   // Apply transforms to geometry
