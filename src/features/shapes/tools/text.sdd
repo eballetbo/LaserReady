@@ -138,7 +138,7 @@ Tasks:
   [x] Text horizontal alignment (left / center / right).
   [x] Text vertical alignment (top / middle / bottom).
   [x] Upper case display toggle (non-destructive).
-  [ ] Bold and italic style rendering with font variant selection.
+  [x] Bold and italic style rendering with font variant selection.
   [ ] Text bending — circular arc layout with drag handle.
   [ ] Distort toggle for bent text (warp vs. rigid characters).
   [ ] Text on path — flow text along a selected PathShape.
