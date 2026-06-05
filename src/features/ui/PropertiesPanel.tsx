@@ -16,6 +16,8 @@ import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../sh
 import { BreakPathCommand } from '../shapes/commands/break-path';
 import { AlignCommand } from '../shapes/commands/align';
 import { DistributeCommand } from '../shapes/commands/distribute';
+import { TransformCommand } from '../shapes/commands/transform';
+import { UpdateParamsCommand } from '../shapes/commands/update-params';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 
@@ -113,30 +115,28 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
         if (!bounds) bounds = { minX: 0, minY: 0, width: 0, height: 0 };
 
-        editor.startAction();
-
-        // Convert Input Millimeters -> Internal Pixels
         const valPx = val * PIXELS_PER_MM;
 
-        if (key === 'x') {
-            const dx = valPx - bounds.minX;
-            selection.forEach(obj => obj.move(dx, 0));
-        } else if (key === 'y') {
-            const dy = valPx - bounds.minY;
-            selection.forEach(obj => obj.move(0, dy));
-        } else if (key === 'w') {
-            if (bounds.width === 0) return;
-            // scale factor is ratio of new pixels / old pixels
-            const sx = valPx / bounds.width;
-            selection.forEach(obj => obj.scale(sx, 1, { x: bounds!.minX, y: bounds!.minY }));
-        } else if (key === 'h') {
-            if (bounds.height === 0) return;
-            const sy = valPx / bounds.height;
-            selection.forEach(obj => obj.scale(1, sy, { x: bounds!.minX, y: bounds!.minY }));
-        }
+        const command = new TransformCommand(selection, (shapes) => {
+            if (key === 'x') {
+                const dx = valPx - bounds!.minX;
+                shapes.forEach(obj => obj.move?.(dx, 0));
+            } else if (key === 'y') {
+                const dy = valPx - bounds!.minY;
+                shapes.forEach(obj => obj.move?.(0, dy));
+            } else if (key === 'w') {
+                if (bounds!.width === 0) return;
+                const sx = valPx / bounds!.width!;
+                shapes.forEach(obj => obj.scale?.(sx, 1, { x: bounds!.minX, y: bounds!.minY }));
+            } else if (key === 'h') {
+                if (bounds!.height === 0) return;
+                const sy = valPx / bounds!.height!;
+                shapes.forEach(obj => obj.scale?.(1, sy, { x: bounds!.minX, y: bounds!.minY }));
+            }
+        });
 
+        editor.history.execute(command);
         editor.render();
-        editor.endAction();
     };
 
     const handleKeyDown = (e: React.KeyboardEvent, key: string) => {
@@ -147,7 +147,7 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
     };
 
     const updateParam = (key: string, value: string) => {
-        let val = parseFloat(value);
+        const val = parseFloat(value);
 
         if (key === 'sides') setSides(val);
         if (key === 'points') setPoints(val);
@@ -160,8 +160,10 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
         if (key === 'points' && val < 3) return;
         if (key === 'innerRadius' && (val <= 0 || val >= 1)) return;
 
-        selectedObject.params[key] = val;
-        editor.updateShape(selectedObject);
+        const oldValue = (selectedObject.params[key] as number) ?? val;
+        const command = new UpdateParamsCommand(selectedObject.id, key, oldValue, val);
+        editor.history.execute(command);
+        editor.render();
     };
 
     return (
