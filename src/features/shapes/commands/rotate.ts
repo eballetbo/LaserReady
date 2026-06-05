@@ -58,7 +58,6 @@ export class RotateShapeCommand implements Command {
     }
 
     undo(): void {
-        // Restore original state for each shape
         this.shapesToRotate.forEach((shape, i) => {
             const original = this.originalStates[i];
 
@@ -66,21 +65,24 @@ export class RotateShapeCommand implements Command {
                 const g = shape as any;
                 g.children = original.children.map((c: any) => {
                     const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
-                    clone.id = c.id; // Preserve ID
+                    clone.id = c.id;
                     return clone;
                 });
                 g.x = original.x;
                 g.y = original.y;
                 g.rotation = original.rotation;
-            } else if (original.nodes && shape.nodes) {
+            } else if (original.type === 'path' && original.nodes && shape.nodes) {
                 shape.nodes = original.nodes.map((n: any) => n.clone());
                 if (original.rotation !== undefined) {
                     (shape as any).rotation = original.rotation;
                 }
+            } else if (original.type === 'other') {
+                (shape as any).x = original.x;
+                (shape as any).y = original.y;
+                (shape as any).rotation = original.rotation;
             }
         });
 
-        // Trigger store update
         const { shapes, setShapes } = useStore.getState();
         setShapes([...shapes]);
     }
