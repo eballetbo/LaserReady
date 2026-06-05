@@ -560,11 +560,14 @@ export class SelectTool extends BaseTool {
             });
 
             if (e.shiftKey) {
+                const existing = this.editor.selectedShapes;
+                const combined = [...existing];
                 newSelection.forEach(s => {
-                    if (!this.editor.selectedShapes.includes(s)) {
-                        this.editor.selectedShapes.push(s);
+                    if (!combined.find(e => e.id === s.id)) {
+                        combined.push(s);
                     }
                 });
+                this.editor.selectedShapes = combined;
             } else {
                 this.editor.selectedShapes = newSelection;
             }
