@@ -75,6 +75,61 @@ describe('SVG Export', () => {
         expect(svgString).toContain('height="200.00mm"');
     });
 
+    it('should export shape style properties (strokeColor, fillColor)', () => {
+        const nodes = [
+            new PathNode(0, 0),
+            new PathNode(100, 0),
+            new PathNode(100, 100),
+            new PathNode(0, 100)
+        ];
+
+        const shape = new PathShape(nodes, true, 'layer-1', 'path', {});
+        shape.strokeColor = '#ff0000';
+        shape.strokeWidth = 2;
+        shape.fillColor = '#00ff00';
+
+        const svgString = exportToSVG([shape], 500, 500);
+
+        expect(svgString).toContain('ff0000');
+        expect(svgString).toContain('00ff00');
+    });
+
+    it('should not crash on group shapes and export their children', () => {
+        const child1 = new PathShape([
+            new PathNode(0, 0), new PathNode(50, 0),
+            new PathNode(50, 50), new PathNode(0, 50)
+        ], true, 'layer-1');
+
+        const child2 = new PathShape([
+            new PathNode(60, 0), new PathNode(110, 0),
+            new PathNode(110, 50), new PathNode(60, 50)
+        ], true, 'layer-1');
+
+        const group = {
+            id: 'group-1',
+            type: 'group',
+            layerId: 'layer-1',
+            closed: true,
+            children: [child1, child2]
+        };
+
+        expect(() => {
+            const svgString = exportToSVG([group] as any, 500, 500);
+            expect(svgString).toContain('<path');
+        }).not.toThrow();
+    });
+
+    it('should use default black stroke when shape has no styles', () => {
+        const shape = new PathShape([
+            new PathNode(0, 0), new PathNode(100, 0),
+            new PathNode(100, 100), new PathNode(0, 100)
+        ], true, 'layer-1');
+
+        const svgString = exportToSVG([shape], 500, 500);
+
+        expect(svgString).toContain('stroke');
+    });
+
     it('should vectorize text elements', () => {
         // Arrange
         const textShape = {
