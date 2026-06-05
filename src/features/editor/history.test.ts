@@ -4,6 +4,7 @@ import { RectTool } from '../shapes/registry';
 import { SelectTool } from '../shapes/tools/select';
 import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
+import { DeleteShapeCommand } from '../shapes/commands/delete';
 import { useStore } from '../../store/useStore';
 
 // Mock getMousePos since we don't have a real DOM/Canvas
@@ -157,5 +158,48 @@ describe('Undo/Redo Integration Tests', () => {
         const undoneShape = mockEditor.shapes[0];
         expect(undoneShape.nodes[0].x).toBe(0); // Back to start
         expect(history['undoStack'].length).toBe(0);
+    });
+
+    it('should undo deleteSelected (shapes restored after Ctrl+Z)', () => {
+        const shape1 = new PathShape([
+            new PathNode(0, 0), new PathNode(50, 0),
+            new PathNode(50, 50), new PathNode(0, 50)
+        ], true, 'layer-1');
+        const shape2 = new PathShape([
+            new PathNode(100, 100), new PathNode(150, 100),
+            new PathNode(150, 150), new PathNode(100, 150)
+        ], true, 'layer-1');
+
+        useStore.setState({ shapes: [shape1, shape2], selectedShapes: [shape1.id] });
+
+        const command = new DeleteShapeCommand([shape1]);
+        history.execute(command);
+
+        expect(mockEditor.shapes.length).toBe(1);
+        expect(mockEditor.shapes[0].id).toBe(shape2.id);
+
+        history.undo();
+
+        expect(mockEditor.shapes.length).toBe(2);
+        expect(mockEditor.shapes.find((s: any) => s.id === shape1.id)).toBeDefined();
+    });
+
+    it('should undo clear (all shapes restored after Ctrl+Z)', () => {
+        const shapes = [
+            new PathShape([new PathNode(0, 0), new PathNode(10, 10)], true, 'layer-1'),
+            new PathShape([new PathNode(20, 20), new PathNode(30, 30)], true, 'layer-1'),
+            new PathShape([new PathNode(40, 40), new PathNode(50, 50)], true, 'layer-1')
+        ];
+
+        useStore.setState({ shapes, selectedShapes: [] });
+
+        const command = new DeleteShapeCommand(shapes);
+        history.execute(command);
+
+        expect(mockEditor.shapes.length).toBe(0);
+
+        history.undo();
+
+        expect(mockEditor.shapes.length).toBe(3);
     });
 });
