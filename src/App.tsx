@@ -334,6 +334,7 @@ function AppContent() {
                         <span className={`text-[10px] font-bold ${theme.textMuted} uppercase mr-3 tracking-wider`}>{t('area')}:</span>
                         <input
                             type="number"
+                            aria-label="Material width (mm)"
                             value={(material.width / PIXELS_PER_MM).toFixed(0)}
                             onChange={(e) => setMaterial({ ...material, width: Number(e.target.value) * PIXELS_PER_MM })}
                             className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
@@ -341,6 +342,7 @@ function AppContent() {
                         <span className={`text-xs ${theme.textMuted} mx-1`}>x</span>
                         <input
                             type="number"
+                            aria-label="Material height (mm)"
                             value={(material.height / PIXELS_PER_MM).toFixed(0)}
                             onChange={(e) => setMaterial({ ...material, height: Number(e.target.value) * PIXELS_PER_MM })}
                             className={`w-12 bg-transparent text-sm ${theme.text} text-center focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
@@ -349,10 +351,10 @@ function AppContent() {
                     </div>
 
                     <div className="flex items-center gap-1 mr-2">
-                        <button onClick={() => editor?.undo()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-red-500`} title={`${t('undo')} (Ctrl+Z)`}>
+                        <button onClick={() => editor?.undo()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-red-500`} title={`${t('undo')} (Ctrl+Z)`} aria-label={t('undo')}>
                             <Undo2 size={18} />
                         </button>
-                        <button onClick={() => editor?.redo()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-red-500`} title={`${t('redo')} (Ctrl+Shift+Z)`}>
+                        <button onClick={() => editor?.redo()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-red-500`} title={`${t('redo')} (Ctrl+Shift+Z)`} aria-label={t('redo')}>
                             <Redo2 size={18} />
                         </button>
                     </div>
@@ -362,26 +364,28 @@ function AppContent() {
                             onClick={() => setTool(tool === 'hand' ? 'select' : 'hand')}
                             className={`p-1.5 rounded ${theme.buttonHover} ${tool === 'hand' ? 'text-red-500 bg-gray-100 dark:bg-gray-800' : theme.textMuted}`}
                             title={t('handTool')}
+                            aria-label={t('handTool')}
+                            aria-pressed={tool === 'hand'}
                         >
                             <Hand size={18} />
                         </button>
-                        <button onClick={() => editor && editor.setZoom(editor.zoom / 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomOut')}>
+                        <button onClick={() => editor && editor.setZoom(editor.zoom / 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomOut')} aria-label={t('zoomOut')}>
                             <ZoomOut size={18} />
                         </button>
-                        <button onClick={() => editor && editor.setZoom(editor.zoom * 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomIn')}>
+                        <button onClick={() => editor && editor.setZoom(editor.zoom * 1.2)} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('zoomIn')} aria-label={t('zoomIn')}>
                             <ZoomIn size={18} />
                         </button>
-                        <button onClick={() => editor?.resetZoom()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('resetZoom')}>
+                        <button onClick={() => editor?.resetZoom()} className={`p-1.5 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-blue-500`} title={t('resetZoom')} aria-label={t('resetZoom')}>
                             <Maximize size={18} />
                         </button>
                     </div>
-                    <button onClick={() => setDarkMode(!isDarkMode)} className={`p-2 rounded ${theme.buttonHover}`}>
+                    <button onClick={() => setDarkMode(!isDarkMode)} className={`p-2 rounded ${theme.buttonHover}`} aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
                         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
-                    <a href="https://www.buymeacoffee.com/eballetbo" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-yellow-500`} title="Buy Me a Coffee">
+                    <a href="https://www.buymeacoffee.com/eballetbo" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-yellow-500`} title="Buy Me a Coffee" aria-label="Buy Me a Coffee">
                         <Coffee size={20} />
                     </a>
-                    <a href="https://github.com/eballetbo/LaserReady" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-black dark:hover:text-white`} title="GitHub">
+                    <a href="https://github.com/eballetbo/LaserReady" target="_blank" rel="noopener noreferrer" className={`p-2 rounded ${theme.buttonHover} ${theme.textMuted} hover:text-black dark:hover:text-white`} title="GitHub" aria-label="GitHub repository">
                         <Github size={20} />
                     </a>
 

@@ -125,6 +125,8 @@ export default function Canvas({
                 <canvas
                     ref={canvasRef}
                     data-testid="main-canvas"
+                    aria-label="Design canvas"
+                    role="application"
                     className="block touch-none select-none outline-none w-full h-full"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}

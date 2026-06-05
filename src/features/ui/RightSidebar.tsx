@@ -32,9 +32,12 @@ export default function RightSidebar({ theme, selection, editor, applyLaserMode,
     return (
         <div className={`w-72 ${theme.panel} border-l ${theme.border} flex flex-col shrink-0 z-20`}>
             {/* TABS */}
-            <div className={`flex border-b ${theme.border}`}>
+            <div className={`flex border-b ${theme.border}`} role="tablist" aria-label="Sidebar panels">
                 <button
                     onClick={() => setActiveTab('properties')}
+                    role="tab"
+                    aria-selected={activeTab === 'properties'}
+                    aria-controls="panel-properties"
                     className={`flex-1 py-3 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors
                         ${activeTab === 'properties'
                             ? `border-b-2 border-red-500 ${theme.text}`
@@ -46,6 +49,9 @@ export default function RightSidebar({ theme, selection, editor, applyLaserMode,
                 </button>
                 <button
                     onClick={() => setActiveTab('library')}
+                    role="tab"
+                    aria-selected={activeTab === 'library'}
+                    aria-controls="panel-library"
                     className={`flex-1 py-3 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors
                         ${activeTab === 'library'
                             ? `border-b-2 border-red-500 ${theme.text}`
@@ -60,16 +66,20 @@ export default function RightSidebar({ theme, selection, editor, applyLaserMode,
             {/* CONTENT */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {activeTab === 'properties' ? (
-                    <PropertiesPanel
-                        theme={theme}
-                        selection={selection}
-                        editor={editor}
-                        applyLaserMode={applyLaserMode}
-                        deleteSelected={deleteSelected}
-                        isEmbedded={true} // Prop to tell PropertiesPanel it's inside a container
-                    />
+                    <div id="panel-properties" role="tabpanel" className="flex-1 flex flex-col overflow-hidden">
+                        <PropertiesPanel
+                            theme={theme}
+                            selection={selection}
+                            editor={editor}
+                            applyLaserMode={applyLaserMode}
+                            deleteSelected={deleteSelected}
+                            isEmbedded={true}
+                        />
+                    </div>
                 ) : (
-                    <AssetLibrary theme={theme} />
+                    <div id="panel-library" role="tabpanel" className="flex-1 flex flex-col overflow-hidden">
+                        <AssetLibrary theme={theme} />
+                    </div>
                 )}
             </div>
         </div>
