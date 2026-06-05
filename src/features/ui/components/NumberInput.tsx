@@ -1,11 +1,7 @@
 import React from 'react';
+import { ThemeColors } from '../../../config/themes';
 
-interface Theme {
-    text: string;
-    inputBg?: string;
-    inputBorder?: string;
-    [key: string]: string | undefined;
-}
+type Theme = ThemeColors;
 
 interface NumberInputProps {
     label: string;

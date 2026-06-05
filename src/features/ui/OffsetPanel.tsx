@@ -2,9 +2,10 @@ import { useLanguage } from '../../contexts/language';
 import { useStore } from '../../store/useStore';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { NumberInput, SectionHeader } from './components';
+import { ThemeColors } from '../../config/themes';
 
 interface OffsetPanelProps {
-    theme: any;
+    theme: ThemeColors;
 }
 
 export const OffsetPanel = ({ theme }: OffsetPanelProps) => {

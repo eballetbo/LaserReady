@@ -16,18 +16,9 @@ import {
 } from 'lucide-react';
 import { Button } from './components';
 import { useStore } from '../../store/useStore';
+import { ThemeColors } from '../../config/themes';
 
-interface Theme {
-    iconColor: string;
-    buttonHover: string;
-    border: string;
-    panel: string;
-    text?: string;
-    textMuted?: string;
-    inputBg?: string;
-    inputBorder?: string;
-    [key: string]: string | undefined;
-}
+type Theme = ThemeColors;
 
 interface ToolbarProps {
     tool: string;

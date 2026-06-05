@@ -88,17 +88,9 @@ const LIBRARIES: { [key: string]: { name: string; categories: IconCategories } }
     }
 };
 
-interface Theme {
-    iconColor: string;
-    buttonHover: string;
-    border: string;
-    panel: string;
-    text: string;
-    textMuted: string;
-    inputBg?: string; // Optional to match potential variations, but we try to be strict
-    inputBorder?: string;
-    [key: string]: string | undefined;
-}
+import { ThemeColors } from '../../config/themes';
+
+type Theme = ThemeColors;
 
 interface AssetLibraryProps {
     theme: Theme;
