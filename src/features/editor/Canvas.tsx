@@ -23,7 +23,9 @@ export default function Canvas({
     const hasPerformedInitialFit = useRef(false);
     const selectionCallbackRef = useRef(onSelectionChange);
 
-    selectionCallbackRef.current = onSelectionChange;
+    useEffect(() => {
+        selectionCallbackRef.current = onSelectionChange;
+    });
 
     const stableSelectionCallback = useCallback((sel: IShape[]) => {
         selectionCallbackRef.current?.([...sel]);
@@ -46,6 +48,7 @@ export default function Canvas({
                 editor.dispose();
             }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
