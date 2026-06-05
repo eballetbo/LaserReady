@@ -89,6 +89,25 @@ export class PathShape {
         );
     }
 
+    toJSON(): Record<string, any> {
+        return {
+            id: this.id,
+            type: this.type,
+            closed: this.closed,
+            layerId: this.layerId,
+            params: this.params,
+            strokeColor: this.strokeColor,
+            strokeWidth: this.strokeWidth,
+            fillColor: this.fillColor,
+            nodes: this.nodes.map(n => ({
+                x: n.x, y: n.y,
+                cpIn: { x: n.cpIn.x, y: n.cpIn.y },
+                cpOut: { x: n.cpOut.x, y: n.cpOut.y },
+                type: n.type
+            }))
+        };
+    }
+
     static fromJSON(json: any): PathShape {
         const nodes = (json.nodes || []).map((n: any) => PathNode.fromJSON(n));
         // Fallback: if json.layerId exists use it, else default 'layer-1'
