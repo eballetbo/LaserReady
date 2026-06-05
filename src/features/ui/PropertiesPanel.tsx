@@ -238,27 +238,6 @@ export default function PropertiesPanel({ theme, selection, editor, applyLaserMo
 
                     {selectedObject && selectedObject.type === 'text' && (
                         <div className="space-y-3">
-                            <div>
-                                <SectionHeader>{t('content')}</SectionHeader>
-                                <textarea
-                                    value={selectedObject.text}
-                                    onChange={(e) => {
-                                        selectedObject.text = e.target.value;
-                                        editor?.render();
-                                    }}
-                                    onBlur={(e) => {
-                                        if (!editor) return;
-                                        const cmd = new ChangeTextStyleCommand(
-                                            selectedObject.id,
-                                            { text: selectedObject.text },
-                                            { text: e.target.value }
-                                        );
-                                        editor.history.execute(cmd);
-                                    }}
-                                    className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
-                                    rows={3}
-                                />
-                            </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="text-[10px] text-gray-400 block mb-1">{t('fontFamily')}</label>
