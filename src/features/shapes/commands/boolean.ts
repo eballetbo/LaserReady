@@ -1,8 +1,8 @@
-
 import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { BooleanOperations } from '../../../core/math/boolean';
 import { PathShape } from '../models/path';
+import { notify } from '../../ui/Toast';
 
 type BooleanOperationType = 'unite' | 'subtract' | 'intersect' | 'exclude';
 
@@ -26,7 +26,7 @@ export class BooleanCommand implements Command {
             const result = BooleanOperations.perform(this.originalShapes, this.operation);
 
             if (!result || result.length === 0) {
-                console.warn(`Boolean '${this.operation}' produced no result — originals preserved.`);
+                notify(`Boolean '${this.operation}' produced no result — shapes may not overlap.`, 'warning');
                 return;
             }
 
