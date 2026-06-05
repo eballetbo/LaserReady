@@ -3,10 +3,11 @@ import { RendererConfig } from '../../features/editor/render/types';
 import { Point, Rect } from '../math/geometry';
 
 export interface SelectionBox {
-    startX: number;
-    startY: number;
-    endX: number;
-    endY: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    style: { fill: string; stroke: string };
 }
 
 export interface IHistoryManager {

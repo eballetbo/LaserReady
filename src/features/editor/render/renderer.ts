@@ -1,6 +1,7 @@
 import { Geometry } from '../../../core/math/geometry';
 import { IShape, ILayer, OperationMode } from '../../../types/core';
 import { SnapResult } from '../snapping';
+import { SelectionBox } from '../../../core/tools/base';
 import {
     DEFAULT_GRID_COLOR,
     DEFAULT_GRID_LINE_WIDTH,
@@ -489,7 +490,7 @@ export class CanvasRenderer {
         this.ctx.setLineDash([]);
     }
 
-    drawSelectionBox(box: any): void {
+    drawSelectionBox(box: SelectionBox): void {
         this.ctx.fillStyle = box.style.fill;
         this.ctx.strokeStyle = box.style.stroke;
         this.ctx.lineWidth = DEFAULT_GRID_LINE_WIDTH;
