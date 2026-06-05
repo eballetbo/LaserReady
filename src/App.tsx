@@ -7,8 +7,8 @@ import { CanvasController } from './features/shapes';
 import { PathShape } from './features/shapes/models/path';
 import { LASER_MODES } from './config/laser-modes';
 import { exportToSVG, downloadSVG } from './features/io/svg-export';
-import { PIXELS_PER_MM, ZOOM_STEP } from './config/constants';
-import { TOOL_SHORTCUTS } from './config/shortcuts';
+import { PIXELS_PER_MM } from './config/constants';
+import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { LanguageProvider, useLanguage } from './contexts/language';
 import { restoreSession, exportProjectFile, importProjectFile } from './features/persistence/auto-save';
 import { notify } from './features/ui/Toast';
@@ -132,123 +132,14 @@ function AppContent() {
         URL.revokeObjectURL(url);
     };
 
-    // Global Key handlers
-    useEffect(() => {
-        const handleKey = (e: KeyboardEvent) => {
-            // Ignore if typing in an input
-            const target = e.target as HTMLElement;
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                if (tool !== 'node-edit') deleteSelected();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    editor?.redo();
-                } else {
-                    editor?.undo();
-                }
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-                e.preventDefault();
-                editor?.redo();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-                e.preventDefault();
-                editor?.copy();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
-                e.preventDefault();
-                editor?.cut();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-                e.preventDefault();
-                editor?.paste();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                e.preventDefault();
-                editor?.duplicate();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                e.preventDefault();
-                editor?.selectAll();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                handleSaveProject();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                if (editor && editor.shapes.length > 0) {
-                    if (confirm('Create a new document? Unsaved changes will be lost.')) {
-                        editor.newDocument();
-                    }
-                } else {
-                    editor?.newDocument();
-                }
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === ']') {
-                e.preventDefault();
-                if (e.shiftKey) editor?.bringToFront();
-                else editor?.bringForward();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === '[') {
-                e.preventDefault();
-                if (e.shiftKey) editor?.sendToBack();
-                else editor?.sendBackward();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
-                e.preventDefault();
-                editor?.setZoom((editor?.zoom ?? 1) * ZOOM_STEP);
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === '-') {
-                e.preventDefault();
-                editor?.setZoom((editor?.zoom ?? 1) / ZOOM_STEP);
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === '0') {
-                e.preventDefault();
-                editor?.resetZoom();
-            }
-
-            if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-                if (e.key === '?') {
-                    setShowShortcuts(prev => !prev);
-                    return;
-                }
-                const toolName = TOOL_SHORTCUTS[e.key.toLowerCase()];
-                if (toolName) {
-                    setTool(toolName);
-                }
-            }
-
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                if (editor && editor.selectedShapes.length > 0) {
-                    e.preventDefault();
-                    const step = e.shiftKey ? 10 : 1;
-                    const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
-                    const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0;
-                    editor.nudge(dx, dy);
-                }
-            }
-        };
-        window.addEventListener('keydown', handleKey);
-        return () => window.removeEventListener('keydown', handleKey);
-    }, [editor, tool]);
+    useGlobalShortcuts({
+        editor,
+        tool,
+        setTool,
+        deleteSelected,
+        handleSaveProject,
+        setShowShortcuts,
+    });
 
     // --- FILE I/O ---
     const handleExport = () => {
