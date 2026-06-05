@@ -54,28 +54,18 @@ export class ChangeTextCommand implements Command {
     }
 
     execute(): void {
-        const { shapes, setShapes } = useStore.getState();
-        const newShapes = shapes.map(s => {
-            if (s.id === this.shapeId) {
-                const clone = s.clone!();
-                (clone as any).text = this.newText;
-                return clone;
-            }
-            return s;
-        });
-        setShapes(newShapes);
+        this.applyText(this.newText);
     }
 
     undo(): void {
+        this.applyText(this.oldText);
+    }
+
+    private applyText(text: string): void {
         const { shapes, setShapes } = useStore.getState();
-        const newShapes = shapes.map(s => {
-            if (s.id === this.shapeId) {
-                const clone = s.clone!();
-                (clone as any).text = this.oldText;
-                return clone;
-            }
-            return s;
-        });
-        setShapes(newShapes);
+        const shape = shapes.find(s => s.id === this.shapeId);
+        if (!shape) return;
+        (shape as any).text = text;
+        setShapes([...shapes]);
     }
 }
