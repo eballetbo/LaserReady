@@ -137,10 +137,9 @@ export function offsetShape(
 
     // 3. Unite all stroke items to form a single "Donut" (Stroke)
     // We unite sequentially.
-    let stroke: paper.Item = strokeItems[0];
+    let stroke: paper.PathItem = strokeItems[0] as paper.PathItem;
     for (let i = 1; i < strokeItems.length; i++) {
-        // @ts-ignore
-        const united = stroke.unite(strokeItems[i], { insert: false });
+        const united = stroke.unite(strokeItems[i] as paper.PathItem, { insert: false });
         // remove old stroke if it was an intermediate result (not an original item)
         // If i=1, stroke is strokeItems[0] (should keep or remove? We created it, we should remove if not needed)
         // Wait, united is a NEW item. 
@@ -161,16 +160,12 @@ export function offsetShape(
     // Ensure last result is not removed
 
     // 4. Boolean with original path
-    let result: paper.Item;
+    let result: paper.PathItem;
 
     if (distance > 0) {
-        // OUTWARD: Union Stroke + Original
-        // @ts-ignore
-        result = stroke.unite(path, { insert: false });
+        result = stroke.unite(path as paper.PathItem, { insert: false });
     } else {
-        // INWARD: Original - Stroke
-        // @ts-ignore
-        result = path.subtract(stroke, { insert: false });
+        result = (path as paper.PathItem).subtract(stroke, { insert: false });
     }
 
     // Convert back
@@ -201,10 +196,9 @@ export function offsetShapes(
     const items = shapes.map(s => toPaperPath(s));
 
     // 2. Unite them all into one geometry
-    let hull: paper.Item = items[0];
+    let hull: paper.PathItem = items[0] as paper.PathItem;
     for (let i = 1; i < items.length; i++) {
-        // @ts-ignore
-        const united = hull.unite(items[i], { insert: false });
+        const united = hull.unite(items[i] as paper.PathItem, { insert: false });
         if (i > 1) hull.remove(); // Remove intermediate
         hull = united;
     }
