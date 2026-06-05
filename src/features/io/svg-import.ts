@@ -27,14 +27,11 @@ export const SVGImporter = {
                 return new PathNode(x, y, cpInX, cpInY, cpOutX, cpOutY);
             });
 
-            // Extract styles
-            const style = {
-                strokeColor: path.strokeColor ? path.strokeColor.toCSS(true) : undefined,
-                strokeWidth: path.strokeWidth,
-                fillColor: path.fillColor ? path.fillColor.toCSS(true) : undefined
-            };
+            const strokeColor = path.strokeColor ? path.strokeColor.toCSS(true) : undefined;
+            const strokeWidth = path.strokeWidth || undefined;
+            const fillColor = path.fillColor ? path.fillColor.toCSS(true) : undefined;
 
-            shapes.push(new PathShape(nodes, path.closed, 'imported-layer', undefined, style)); // Added default layerId, null type, and style as params
+            shapes.push(new PathShape(nodes, path.closed, 'imported-layer', 'path', {}, undefined, strokeColor, strokeWidth, fillColor));
         };
 
         const traverse = (node: paper.Item) => {
