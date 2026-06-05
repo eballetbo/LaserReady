@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { PIXELS_PER_MM } from '../../config/constants';
 
@@ -62,7 +62,7 @@ export const Ruler: React.FC<RulerProps> = ({ orientation }) => {
         return { labelStepMm, tickStepMm, ticksPerLabel };
     };
 
-    const draw = () => {
+    const draw = useCallback(() => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
         if (!canvas || !container) return;
@@ -166,18 +166,17 @@ export const Ruler: React.FC<RulerProps> = ({ orientation }) => {
             }
         }
         ctx.stroke();
-    };
+    }, [zoom, pan, orientation]);
 
     useEffect(() => {
         draw();
-    }, [zoom, pan, orientation]);
+    }, [draw]);
 
-    // Handle Resize
     useEffect(() => {
         const handleResize = () => draw();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [draw]);
 
     // Mouse Tracking
     useEffect(() => {
