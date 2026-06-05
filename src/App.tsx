@@ -152,6 +152,21 @@ function AppContent() {
                 e.preventDefault();
                 editor?.duplicate();
             }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.preventDefault();
+                editor?.selectAll();
+            }
+
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                if (editor && editor.selectedShapes.length > 0) {
+                    e.preventDefault();
+                    const step = e.shiftKey ? 10 : 1;
+                    const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
+                    const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0;
+                    editor.nudge(dx, dy);
+                }
+            }
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
