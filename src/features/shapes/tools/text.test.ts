@@ -59,6 +59,51 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — horizontal alignment (alignX)', () => {
+    it('defaults alignX to left', () => {
+        const t = new TextObject(100, 100, 'Hello');
+        expect(t.alignX).toBe('left');
+    });
+
+    it('left alignment: anchor is at left edge', () => {
+        const t = new TextObject(100, 100, 'Hello', { alignX: 'left' });
+        const bounds = t.getBounds();
+        expect(bounds.minX).toBeCloseTo(100, 0);
+    });
+
+    it('center alignment: anchor is at horizontal center', () => {
+        const t = new TextObject(100, 100, 'Hello', { alignX: 'center' });
+        const bounds = t.getBounds();
+        expect(bounds.cx).toBeCloseTo(100, 0);
+    });
+
+    it('right alignment: anchor is at right edge', () => {
+        const t = new TextObject(100, 100, 'Hello', { alignX: 'right' });
+        const bounds = t.getBounds();
+        expect(bounds.maxX).toBeCloseTo(100, 0);
+    });
+
+    it('width is the same regardless of alignX', () => {
+        const left = new TextObject(0, 0, 'Test', { alignX: 'left' });
+        const center = new TextObject(0, 0, 'Test', { alignX: 'center' });
+        const right = new TextObject(0, 0, 'Test', { alignX: 'right' });
+
+        expect(center.getBounds().width).toBeCloseTo(left.getBounds().width, 1);
+        expect(right.getBounds().width).toBeCloseTo(left.getBounds().width, 1);
+    });
+
+    it('alignX persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'X', { alignX: 'center' });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.alignX).toBe('center');
+    });
+
+    it('alignX persists through clone', () => {
+        const t = new TextObject(0, 0, 'X', { alignX: 'right' });
+        expect(t.clone().alignX).toBe('right');
+    });
+});
+
 describe('TextObject — vertical line spacing (vSpace)', () => {
     it('defaults vSpace to 0', () => {
         const t = new TextObject(0, 0, 'Hello');
