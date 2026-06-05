@@ -6,7 +6,8 @@ import { CanvasController } from './features/shapes';
 import { PathShape } from './features/shapes/models/path';
 import { LASER_MODES } from './config/laser-modes';
 import { exportToSVG, downloadSVG } from './features/io/svg-export';
-import { PIXELS_PER_MM } from './config/constants';
+import { PIXELS_PER_MM, ZOOM_STEP } from './config/constants';
+import { TOOL_SHORTCUTS } from './config/shortcuts';
 import { LanguageProvider, useLanguage } from './contexts/language';
 
 
@@ -168,6 +169,28 @@ function AppContent() {
                 e.preventDefault();
                 if (e.shiftKey) editor?.sendToBack();
                 else editor?.sendBackward();
+            }
+
+            if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+                e.preventDefault();
+                editor?.setZoom((editor?.zoom ?? 1) * ZOOM_STEP);
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+                e.preventDefault();
+                editor?.setZoom((editor?.zoom ?? 1) / ZOOM_STEP);
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+                e.preventDefault();
+                editor?.resetZoom();
+            }
+
+            if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+                const toolName = TOOL_SHORTCUTS[e.key.toLowerCase()];
+                if (toolName) {
+                    setTool(toolName);
+                }
             }
 
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
