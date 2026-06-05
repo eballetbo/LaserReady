@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee, Languages, Hand } from 'lucide-react';
 import { Toolbar, RightSidebar } from './features/ui';
+import ShortcutHelp from './features/ui/ShortcutHelp';
 import { Canvas } from './features/editor';
 import { CanvasController } from './features/shapes';
 import { PathShape } from './features/shapes/models/path';
@@ -88,6 +89,7 @@ function AppContent() {
     // const [tool, setTool] = useState('select'); // Removed
     const [editor, setEditor] = useState<CanvasController | null>(null);
     const [selection, setSelection] = useState<any[]>([]); // Typed as any[] for now
+    const [showShortcuts, setShowShortcuts] = useState(false);
 
     const { language, setLanguage, t } = useLanguage();
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -212,6 +214,10 @@ function AppContent() {
             }
 
             if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+                if (e.key === '?') {
+                    setShowShortcuts(prev => !prev);
+                    return;
+                }
                 const toolName = TOOL_SHORTCUTS[e.key.toLowerCase()];
                 if (toolName) {
                     setTool(toolName);
@@ -416,6 +422,7 @@ function AppContent() {
                 />
             </div>
 
+            {showShortcuts && <ShortcutHelp onClose={() => setShowShortcuts(false)} />}
         </div >
     );
 }
