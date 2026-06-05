@@ -1,5 +1,6 @@
 import { useStore } from '../../store/useStore';
 import { serializeProject, deserializeShapes, LaserProject, validateProject } from './project-format';
+import { notify } from '../ui/Toast';
 
 const DB_NAME = 'LaserReady';
 const DB_VERSION = 1;
@@ -67,8 +68,8 @@ export function triggerAutoSave(): void {
             state.activeLayerId,
             state.material
         );
-        saveToIndexedDB(project).catch(err => {
-            console.warn('Auto-save failed:', err);
+        saveToIndexedDB(project).catch(() => {
+            notify('Auto-save failed. Changes may not persist.', 'warning');
         });
     }, 500);
 }
@@ -79,7 +80,7 @@ export async function restoreSession(): Promise<boolean> {
 
     const validation = validateProject(project);
     if (!validation.valid) {
-        console.warn('Saved session validation failed:', validation.errors);
+        notify('Saved session is corrupted and cannot be restored.', 'warning');
         return false;
     }
 
@@ -91,8 +92,8 @@ export async function restoreSession(): Promise<boolean> {
         if (project.activeLayerId) state.setActiveLayerId(project.activeLayerId);
         if (project.material) state.setMaterial(project.material);
         return true;
-    } catch (err) {
-        console.warn('Session restore failed:', err);
+    } catch {
+        notify('Failed to restore previous session.', 'warning');
         return false;
     }
 }
@@ -118,7 +119,7 @@ export function importProjectFile(json: string): boolean {
         const parsed = JSON.parse(json);
         const validation = validateProject(parsed, json.length);
         if (!validation.valid) {
-            console.warn('Project validation failed:', validation.errors);
+            notify('Project file is invalid: ' + validation.errors.join(', '), 'error');
             return false;
         }
 
@@ -130,8 +131,8 @@ export function importProjectFile(json: string): boolean {
         if (project.activeLayerId) state.setActiveLayerId(project.activeLayerId);
         if (project.material) state.setMaterial(project.material);
         return true;
-    } catch (err) {
-        console.warn('Project import failed:', err);
+    } catch {
+        notify('Failed to import project file.', 'error');
         return false;
     }
 }
