@@ -91,6 +91,21 @@ export interface Translation {
 
     // Library
     category: string;
+
+    // Node editing
+    nodeOperations: string;
+    group: string;
+    ungroup: string;
+
+    // Alignment
+    align: string;
+    alignToPage: string;
+    operations: string;
+
+    // Position
+    position: string;
+    x: string;
+    y: string;
 }
 
 export const en: Translation = {
@@ -185,4 +200,19 @@ export const en: Translation = {
 
     // Asset Library
     category: 'Category',
+
+    // Node editing
+    nodeOperations: "Node Operations",
+    group: "Group",
+    ungroup: "Ungroup",
+
+    // Alignment
+    align: "Align",
+    alignToPage: "Align to Page",
+    operations: "Operations",
+
+    // Position
+    position: "Position",
+    x: "X",
+    y: "Y",
 };

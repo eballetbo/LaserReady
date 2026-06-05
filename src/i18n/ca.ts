@@ -92,4 +92,19 @@ export const ca: Translation = {
 
     // Asset Library
     category: 'Categoria',
+
+    // Node editing
+    nodeOperations: "Operacions de Node",
+    group: "Agrupar",
+    ungroup: "Desagrupar",
+
+    // Alignment
+    align: "Alinear",
+    alignToPage: "Alinear a Pàgina",
+    operations: "Operacions",
+
+    // Position
+    position: "Posició",
+    x: "X",
+    y: "Y",
 };

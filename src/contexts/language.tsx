@@ -1,8 +1,9 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { translations } from '../i18n/translations';
+import { Translation } from '../i18n/en';
 
 type Language = 'en' | 'es' | 'ca';
-type TranslationKey = string; // Ideally keyof typeof translations['en']
+export type TranslationKey = keyof Translation;
 
 interface LanguageContextType {
     language: Language;
@@ -23,8 +24,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     }, [language]);
 
     const t = (key: TranslationKey): string => {
-        const langTrans = translations[language as keyof typeof translations] || translations['en'];
-        return (langTrans as any)[key] || key;
+        const langTrans = translations[language] || translations['en'];
+        return langTrans[key] || key;
     };
 
     return (
