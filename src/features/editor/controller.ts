@@ -1,4 +1,4 @@
-import { EDITOR_CONFIG } from '../../config/constants';
+import { EDITOR_CONFIG, MIN_ZOOM, MAX_ZOOM } from '../../config/constants';
 import { CanvasRenderer } from './render/renderer';
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
@@ -324,9 +324,8 @@ export class CanvasController {
     }
 
     setZoom(value: number) {
-        const newZoom = Math.max(0.1, Math.min(5, value));
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, value));
         useStore.getState().setZoom(newZoom);
-        // Note: unsubscribe listener will catch this update and update inputManager
     }
 
     // Note: unsubscribe listener will catch this update and update inputManager
@@ -347,7 +346,7 @@ export class CanvasController {
         const scaleY = (containerHeight - margin * 2) / matH;
         // Actually fit usually allows zooming out, but maybe max 1.
         // Let's just use min(scaleX, scaleY) clamped for sanity.
-        const clampedZoom = Math.max(0.01, Math.min(50, Math.min(scaleX, scaleY)));
+        const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(scaleX, scaleY)));
 
         // Calculate Centering Pan
         // We want the scaled material to be centered in container.

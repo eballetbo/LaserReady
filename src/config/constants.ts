@@ -59,8 +59,8 @@ export const TEXT_STROKE_WIDTH = 1;
 // ZOOM & TRANSFORM
 // ========================================
 export const DEFAULT_ZOOM = 1;
-export const MIN_ZOOM = 0.1;
-export const MAX_ZOOM = 5;
+export const MIN_ZOOM = 0.05;
+export const MAX_ZOOM = 50;
 export const ZOOM_STEP = 1.2;
 
 // ========================================
