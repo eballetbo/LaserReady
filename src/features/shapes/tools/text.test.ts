@@ -257,16 +257,13 @@ describe('TextObject — vertical alignment (alignY)', () => {
         expect(t.alignY).toBe('top');
     });
 
-    it('middle alignment: anchor is at vertical center', () => {
-        const t = new TextObject(100, 100, 'Hello', { alignY: 'middle' });
-        const bounds = t.getBounds();
-        expect(bounds.cy).toBeCloseTo(100, 0);
-    });
+    it('alignY does NOT move the bounding box position', () => {
+        const top = new TextObject(100, 100, 'AB\nCD', { alignY: 'top' });
+        const mid = new TextObject(100, 100, 'AB\nCD', { alignY: 'middle' });
+        const bot = new TextObject(100, 100, 'AB\nCD', { alignY: 'bottom' });
 
-    it('bottom alignment: anchor is at bottom edge', () => {
-        const t = new TextObject(100, 100, 'Hello', { alignY: 'bottom' });
-        const bounds = t.getBounds();
-        expect(bounds.maxY).toBeCloseTo(100, 0);
+        expect(mid.getBounds().minY).toBeCloseTo(top.getBounds().minY, 1);
+        expect(bot.getBounds().minY).toBeCloseTo(top.getBounds().minY, 1);
     });
 
     it('height is the same regardless of alignY', () => {
@@ -296,22 +293,15 @@ describe('TextObject — horizontal alignment (alignX)', () => {
         expect(t.alignX).toBe('left');
     });
 
-    it('left alignment: anchor is at left edge', () => {
-        const t = new TextObject(100, 100, 'Hello', { alignX: 'left' });
-        const bounds = t.getBounds();
-        expect(bounds.minX).toBeCloseTo(100, 0);
-    });
+    it('alignment does NOT move the bounding box position', () => {
+        const left = new TextObject(100, 100, 'Short\nA longer line', { alignX: 'left' });
+        const center = new TextObject(100, 100, 'Short\nA longer line', { alignX: 'center' });
+        const right = new TextObject(100, 100, 'Short\nA longer line', { alignX: 'right' });
 
-    it('center alignment: anchor is at horizontal center', () => {
-        const t = new TextObject(100, 100, 'Hello', { alignX: 'center' });
-        const bounds = t.getBounds();
-        expect(bounds.cx).toBeCloseTo(100, 0);
-    });
-
-    it('right alignment: anchor is at right edge', () => {
-        const t = new TextObject(100, 100, 'Hello', { alignX: 'right' });
-        const bounds = t.getBounds();
-        expect(bounds.maxX).toBeCloseTo(100, 0);
+        expect(center.getBounds().minX).toBeCloseTo(left.getBounds().minX, 1);
+        expect(right.getBounds().minX).toBeCloseTo(left.getBounds().minX, 1);
+        expect(center.getBounds().maxX).toBeCloseTo(left.getBounds().maxX, 1);
+        expect(right.getBounds().maxX).toBeCloseTo(left.getBounds().maxX, 1);
     });
 
     it('width is the same regardless of alignX', () => {
