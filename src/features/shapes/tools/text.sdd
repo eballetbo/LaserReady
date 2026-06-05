@@ -1,32 +1,78 @@
 Spec: Text Tool
 
 Purpose:
-  Create and edit text objects on the canvas.
+  Create and edit rich text objects on the canvas with full typographic control,
+  including multi-line text, character/line spacing, alignment, bending,
+  and text-on-path for laser-ready designs.
 
 Owns:
   ./text.ts
   ./text.test.ts
 
+Can modify:
+  ../../models/text.ts
+  ../../commands/text.ts
+  ../../../ui/TextOptionsBar.tsx
+  ../../../ui/PropertiesPanel.tsx
+
 Must:
   Click places a text insertion point.
   A hidden textarea captures keyboard input.
   Text renders on canvas in real-time as user types.
+  Enter key creates a new line within the same text object.
   Click elsewhere or tool switch commits the text.
   Double-click existing text enters edit mode.
   Empty text is discarded (no empty TextObject in store).
   Text creation uses CreateShapeCommand.
   Event listeners are cleaned up with AbortController (no leaks).
+  Escape key finishes editing and commits the text.
 
 Must not:
   Leave orphan textareas in the DOM.
   Commit empty text objects to the store.
   Block global shortcuts while editing (only capture when textarea is focused).
+  Store font file data in the project (reference font by name only).
 
 Depends on:
   @BaseTool
   @TextObject
   @CreateShapeCommand
-  @opentype.js (for text-to-path conversion)
+  @opentype.js (for text-to-path conversion and metrics)
+  @PathShape (for text-on-path target)
+
+# --- Text Object Properties ---
+
+# These properties are stored on TextObject and editable via TextOptionsBar or Properties panel.
+
+# Typography
+
+# fontFamily: string — system font name
+# fontSize: number — height of capital letters in mm
+# bold: boolean
+# italic: boolean
+# upperCase: boolean — force all characters to uppercase for display
+
+# Spacing
+
+# hSpace: number — horizontal character spacing as % of font size (0 = default, positive = wider, negative = tighter)
+# vSpace: number — vertical line spacing as % of font height (0 = default / 100% line height)
+
+# Alignment
+
+# alignX: 'left' | 'center' | 'right' — horizontal text anchor
+# alignY: 'top' | 'middle' | 'bottom' — vertical text anchor
+
+# Bending
+
+# bend: number — bend radius (0 = no bend, positive = curve upward, negative = curve downward)
+# distort: boolean — whether to distort individual characters when bending
+
+# Path attachment
+
+# pathId: string | null — ID of a PathShape to flow text along (null = freestanding)
+
+Exposes:
+  TextTool (extends BaseTool)
 
 Scenario: create text
   Given the Text tool is active
@@ -34,6 +80,49 @@ Scenario: create text
   Then "Hello" appears on canvas at that position
   When the user switches to Select tool
   Then a TextObject with text "Hello" is committed to store
+
+Scenario: multi-line text
+  Given the Text tool is active and the user is typing
+  When the user presses Enter
+  Then a new line is started within the same text object
+  And VSpace controls the distance between lines
+
+Scenario: adjust character spacing
+  Given a TextObject "LASER" is selected
+  When the user sets HSpace to 20 (via TextOptionsBar)
+  Then the characters spread apart by 20% of font size
+  And the change is undoable
+
+Scenario: bend text into arc
+  Given a TextObject "READY" is selected
+  When the user drags the bend handle upward
+  Then characters arrange along a circular arc curving upward
+  And the bend value updates in real time
+
+Scenario: text on path
+  Given a TextObject and a PathShape are both selected
+  When the user applies "Attach to Path"
+  Then the text flows along the path's contour
+  And individual characters are positioned tangent to the path
+  And the text updates if the path is edited
+
+Scenario: upper case toggle
+  Given a TextObject with text "Hello World" is selected
+  When the user enables Upper Case in TextOptionsBar
+  Then the canvas displays "HELLO WORLD"
+  And the stored text property remains "Hello World" (non-destructive)
+
+Scenario: auto-weld overlapping characters
+  Given a script font TextObject where letters naturally overlap
+  When the user enables Weld in TextOptionsBar
+  Then overlapping letter outlines are merged via boolean union
+  And no internal cut lines remain between touching characters
+
+Scenario: alignment change
+  Given a multi-line TextObject is selected
+  When the user changes alignX from 'left' to 'center'
+  Then all lines center-align relative to the text anchor point
+  And the anchor point position does not move
 
 Tasks:
   [x] Click to place text insertion point.
@@ -43,3 +132,26 @@ Tasks:
   [x] Edit existing text on double-click.
   [x] Discard empty text.
   [x] AbortController for listener cleanup.
+  [ ] Multi-line text support (Enter key inserts newline).
+  [ ] Horizontal character spacing (hSpace property + rendering).
+  [ ] Vertical line spacing (vSpace property + rendering).
+  [ ] Text horizontal alignment (left / center / right).
+  [ ] Text vertical alignment (top / middle / bottom).
+  [ ] Upper case display toggle (non-destructive).
+  [ ] Bold and italic style rendering with font variant selection.
+  [ ] Text bending — circular arc layout with drag handle.
+  [ ] Distort toggle for bent text (warp vs. rigid characters).
+  [ ] Text on path — flow text along a selected PathShape.
+  [ ] Auto-weld overlapping characters (boolean union on rendered outlines).
+  [ ] TextOptionsBar UI component (font, size, spacing, alignment, toggles).
+  [ ] Undo/redo for all text property changes via commands.
+
+Done when:
+  Multi-line text renders with configurable line spacing.
+  Character spacing adjusts visually and persists in project file.
+  Alignment options reposition text without moving the anchor.
+  Bent text arranges characters along a circular arc.
+  Text on path flows characters tangent to the path.
+  Upper case toggle displays uppercase without modifying stored text.
+  All property changes are undoable.
+  TextOptionsBar exposes all properties when a TextObject is selected.
