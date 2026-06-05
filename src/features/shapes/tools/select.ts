@@ -311,14 +311,17 @@ export class SelectTool extends BaseTool {
             let totalDx = 0;
             let totalDy = 0;
 
-            const currentBounds = shape.getBounds ? shape.getBounds() : shape;
-            const originalBounds = snapshot.type === 'path' && snapshot.nodes
-                ? { minX: Math.min(...snapshot.nodes.map((n: any) => n.x)), minY: Math.min(...snapshot.nodes.map((n: any) => n.y)) }
-                : { minX: snapshot.x ?? 0, minY: snapshot.y ?? 0 };
-
-            if (currentBounds && originalBounds) {
+            if (snapshot.type === 'path' && snapshot.nodes) {
+                const currentBounds = shape.getBounds ? shape.getBounds() : { minX: shape.x ?? 0, minY: shape.y ?? 0 };
+                const originalBounds = {
+                    minX: Math.min(...snapshot.nodes.map((n: any) => n.x)),
+                    minY: Math.min(...snapshot.nodes.map((n: any) => n.y))
+                };
                 totalDx = (currentBounds.minX ?? 0) - originalBounds.minX;
                 totalDy = (currentBounds.minY ?? 0) - originalBounds.minY;
+            } else {
+                totalDx = (shape.x ?? 0) - (snapshot.x ?? 0);
+                totalDy = (shape.y ?? 0) - (snapshot.y ?? 0);
             }
 
             if (Math.abs(totalDx) > 0.01 || Math.abs(totalDy) > 0.01) {
