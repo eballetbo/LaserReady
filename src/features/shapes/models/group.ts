@@ -1,5 +1,3 @@
-
-// @ts-nocheck
 import { IShape } from '../types';
 import { Geometry, Rect } from '../../../core/math/geometry';
 
@@ -50,43 +48,35 @@ export class GroupShape implements IShape {
         this.x += dx;
         this.y += dy;
         this.children.forEach(child => {
-            if (typeof child.move === 'function') {
+            if (child.move) {
                 child.move(dx, dy);
-            } else {
-                // Manual update for plain objects
+            } else if (child.nodes) {
                 child.x = (child.x || 0) + dx;
                 child.y = (child.y || 0) + dy;
-                if (child.nodes) {
-                    child.nodes.forEach((n: any) => {
-                        n.x += dx; n.y += dy;
-                        if (n.cpIn) { n.cpIn.x += dx; n.cpIn.y += dy; }
-                        if (n.cpOut) { n.cpOut.x += dx; n.cpOut.y += dy; }
-                    });
-                }
+                child.nodes.forEach(n => {
+                    n.x += dx; n.y += dy;
+                    if (n.cpIn) { n.cpIn.x += dx; n.cpIn.y += dy; }
+                    if (n.cpOut) { n.cpOut.x += dx; n.cpOut.y += dy; }
+                });
             }
         });
     }
 
     rotate(angle: number, center: { x: number, y: number }): void {
         this.children.forEach(child => {
-            if (typeof (child as any).rotate === 'function') {
-                (child as any).rotate(angle, center);
+            if (child.rotate) {
+                child.rotate(angle, center);
             }
         });
-        // We might want to update this.rotation, but usually it's derived or relative.
-        // For now, let's just track it loosely if needed.
         this.rotation += angle;
     }
 
     scale(sx: number, sy: number, center: { x: number, y: number }): void {
         this.children.forEach(child => {
-            if (typeof (child as any).scale === 'function') {
-                (child as any).scale(sx, sy, center);
+            if (child.scale) {
+                child.scale(sx, sy, center);
             }
         });
-        // Update position? x/y are top-left usually, derived from bounds.
-        // We don't strictly maintain x/y for Groups as authoritative, bounds are.
-        // But let's update them to be safe via bounds
         const b = this.getBounds();
         this.x = b.minX;
         this.y = b.minY;
@@ -110,8 +100,7 @@ export class GroupShape implements IShape {
         return clone;
     }
 
-    // toJSON for storage
-    toJSON() {
+    toJSON(): Record<string, unknown> {
         return {
             id: this.id,
             type: 'group',
@@ -126,23 +115,25 @@ export class GroupShape implements IShape {
         };
     }
 
-    static fromJSON(json: any): GroupShape {
+    static fromJSON(json: Record<string, unknown>): GroupShape {
+        // Lazy imports to avoid circular dependency
         const { PathShape } = require('./path');
         const { TextObject } = require('./text');
 
-        const children = (json.children || []).map((c: any) => {
+        const childrenData = (json.children as Record<string, unknown>[]) || [];
+        const children: IShape[] = childrenData.map(c => {
             if (c.type === 'text') return TextObject.fromJSON(c);
             if (c.type === 'group') return GroupShape.fromJSON(c);
             return PathShape.fromJSON(c);
         });
 
         const group = new GroupShape(children);
-        group.id = json.id;
-        group.layerId = json.layerId || 'layer-1';
-        group.rotation = json.rotation || 0;
-        group.strokeColor = json.strokeColor;
-        group.strokeWidth = json.strokeWidth;
-        group.fillColor = json.fillColor;
+        group.id = json.id as string;
+        group.layerId = (json.layerId as string) || 'layer-1';
+        group.rotation = (json.rotation as number) || 0;
+        group.strokeColor = json.strokeColor as string | undefined;
+        group.strokeWidth = json.strokeWidth as number | undefined;
+        group.fillColor = json.fillColor as string | undefined;
         return group;
     }
 }

@@ -171,7 +171,7 @@ export class TextObject implements IShape {
         }, this.layerId);
     }
 
-    toJSON(): Record<string, any> {
+    toJSON(): Record<string, unknown> {
         return {
             id: this.id,
             type: this.type,
@@ -192,7 +192,7 @@ export class TextObject implements IShape {
         };
     }
 
-    static fromJSON(json: any): TextObject {
+    static fromJSON(json: Record<string, unknown>): TextObject {
         return new TextObject(json.x, json.y, json.text, {
             fontSize: json.fontSize,
             fontFamily: json.fontFamily,

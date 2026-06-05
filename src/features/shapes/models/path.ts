@@ -1,5 +1,6 @@
-import { Geometry } from '../../../core/math/geometry';
+import { Geometry, Rect } from '../../../core/math/geometry';
 import { PathNode } from './node';
+import { ShapeParams } from '../types';
 
 export interface PathStyle {
     strokeColor?: string;
@@ -11,7 +12,7 @@ export class PathShape {
     nodes: PathNode[];
     closed: boolean;
     type: string | null;
-    params: Record<string, any>;
+    params: ShapeParams;
     id: string;
     layerId: string;
     strokeColor?: string;
@@ -21,9 +22,9 @@ export class PathShape {
     constructor(
         nodes: PathNode[] = [],
         closed: boolean = false,
-        layerId: string = 'layer-1', // Default to layer-1
+        layerId: string = 'layer-1',
         type: string = 'path',
-        params: Record<string, any> = {},
+        params: ShapeParams = {},
         id?: string,
         strokeColor?: string,
         strokeWidth?: number,
@@ -40,7 +41,7 @@ export class PathShape {
         this.fillColor = fillColor;
     }
 
-    getBounds(): any {
+    getBounds(): Rect {
         return Geometry.calculateBoundingBox(this.nodes);
     }
 

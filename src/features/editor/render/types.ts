@@ -21,6 +21,4 @@ export interface RendererConfig {
     colorFill: string;
     /** Color used for selection highlights and bounding boxes. */
     colorSelection: string;
-    /** Allow extra properties for extensibility */
-    [key: string]: any;
 }

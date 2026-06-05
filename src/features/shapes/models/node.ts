@@ -25,7 +25,7 @@ export class PathNode {
         return new PathNode(this.x, this.y, this.cpIn.x, this.cpIn.y, this.cpOut.x, this.cpOut.y, this.type);
     }
 
-    static fromJSON(json: any): PathNode {
+    static fromJSON(json: { x: number; y: number; cpIn: { x: number; y: number }; cpOut: { x: number; y: number }; type?: NodeType }): PathNode {
         return new PathNode(json.x, json.y, json.cpIn.x, json.cpIn.y, json.cpOut.x, json.cpOut.y, json.type);
     }
 }
