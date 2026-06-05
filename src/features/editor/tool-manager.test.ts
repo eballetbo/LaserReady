@@ -35,8 +35,6 @@ describe('ToolManager', () => {
             config: { handleRadius: 5 },
             getMousePos: vi.fn(() => ({ x: 50, y: 50 })),
             render: vi.fn(),
-            startAction: vi.fn(),
-            endAction: vi.fn(),
             groupSelected: vi.fn(),
             ungroupSelected: vi.fn(),
             get shapes() { return useStore.getState().shapes; },

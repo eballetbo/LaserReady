@@ -78,7 +78,6 @@ export class ToolManager {
 
     private initEvents() {
         this.inputManager.on('down', (_x, _y, e) => {
-            this.editor.startAction();
             this.activeTool?.onMouseDown(e);
         });
 
@@ -88,7 +87,6 @@ export class ToolManager {
 
         this.inputManager.on('up', (_x, _y, e) => {
             this.activeTool?.onMouseUp(e);
-            this.editor.endAction();
         });
 
         this.inputManager.on('contextmenu', (_x, _y, e) => {
@@ -130,8 +128,6 @@ export class ToolManager {
             return;
         }
 
-        this.editor.startAction();
         this.activeTool?.onKeyDown(e);
-        this.editor.endAction();
     }
 }

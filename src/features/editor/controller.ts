@@ -266,7 +266,6 @@ export class CanvasController {
 
     moveSelected(dx: number, dy: number) {
         if (this.selectedShapes.length > 0) {
-            // We assume startAction is called by the tool onMouseDown
             const command = new MoveShapeCommand(this, this.selectedShapes, dx, dy);
             command.execute();
             this.render();
@@ -491,19 +490,4 @@ export class CanvasController {
         this.render();
     }
 
-    /**
-     * STEP 7: Temporary stub for backward compatibility.
-     * Node manipulation methods still call this, but it's a no-op now.
-     * TODO: Migrate node manipulation to use commands.
-     */
-    startAction(): void {
-        // No-op: Commands handle history now
-    }
-
-    /**
-     * STEP 7: Temporary stub for backward compatibility.
-     */
-    endAction(): void {
-        // No-op: Commands handle history now
-    }
 }
