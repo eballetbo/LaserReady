@@ -116,6 +116,19 @@ function AppContent() {
         editor?.deleteSelected();
     };
 
+    const handleSaveProject = () => {
+        const json = exportProjectFile();
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'design.laser';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     // Global Key handlers
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
@@ -220,19 +233,6 @@ function AppContent() {
     }, [editor, tool]);
 
     // --- FILE I/O ---
-    const handleSaveProject = () => {
-        const json = exportProjectFile();
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'design.laser';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
-
     const handleExport = () => {
         if (!editor) return;
         const layers = useStore.getState().layers;
