@@ -158,6 +158,18 @@ function AppContent() {
                 editor?.selectAll();
             }
 
+            if ((e.ctrlKey || e.metaKey) && e.key === ']') {
+                e.preventDefault();
+                if (e.shiftKey) editor?.bringToFront();
+                else editor?.bringForward();
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+                e.preventDefault();
+                if (e.shiftKey) editor?.sendToBack();
+                else editor?.sendBackward();
+            }
+
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 if (editor && editor.selectedShapes.length > 0) {
                     e.preventDefault();

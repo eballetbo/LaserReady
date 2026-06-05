@@ -17,6 +17,7 @@ import { GroupCommand } from '../shapes/commands/group';
 import { UngroupCommand } from '../shapes/commands/ungroup';
 import { ImportShapesCommand } from '../shapes/commands/import';
 import { DuplicateCommand } from '../shapes/commands/duplicate';
+import { ZOrderCommand } from '../shapes/commands/zorder';
 import { updateShapeGeometry } from './utils/geometry-updater';
 
 /**
@@ -357,6 +358,32 @@ export class CanvasController {
         if (this.selectedShapes.length === 0) return;
         const command = new MoveShapeCommand(this, this.selectedShapes, dx, dy);
         this.history.execute(command);
+        this.render();
+    }
+
+    // --- Z-order ---
+
+    bringForward() {
+        if (this.selectedShapes.length === 0) return;
+        this.history.execute(new ZOrderCommand(this.selectedShapes, 'bringForward'));
+        this.render();
+    }
+
+    sendBackward() {
+        if (this.selectedShapes.length === 0) return;
+        this.history.execute(new ZOrderCommand(this.selectedShapes, 'sendBackward'));
+        this.render();
+    }
+
+    bringToFront() {
+        if (this.selectedShapes.length === 0) return;
+        this.history.execute(new ZOrderCommand(this.selectedShapes, 'bringToFront'));
+        this.render();
+    }
+
+    sendToBack() {
+        if (this.selectedShapes.length === 0) return;
+        this.history.execute(new ZOrderCommand(this.selectedShapes, 'sendToBack'));
         this.render();
     }
 
