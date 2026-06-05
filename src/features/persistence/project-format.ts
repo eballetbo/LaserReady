@@ -121,6 +121,7 @@ export function serializeProject(
 export function deserializeShapes(data: Record<string, unknown>[]): IShape[] {
     const shapes: IShape[] = [];
     for (const json of data) {
+        if (!json || typeof json !== 'object') continue;
         try {
             switch (json.type) {
                 case 'text':
