@@ -19,6 +19,7 @@ import { ImportShapesCommand } from '../shapes/commands/import';
 import { DuplicateCommand } from '../shapes/commands/duplicate';
 import { ZOrderCommand } from '../shapes/commands/zorder';
 import { updateShapeGeometry } from './utils/geometry-updater';
+import { notify } from '../ui/Toast';
 
 /**
  * Main Editor Controller.
@@ -285,7 +286,7 @@ export class CanvasController {
             this.render();
         } catch (e: any) {
             console.error("SVG Import Error:", e);
-            alert(e.message || "Error importing SVG");
+            notify(e.message || "Error importing SVG", 'error');
         }
     }
 

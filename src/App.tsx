@@ -11,6 +11,7 @@ import { PIXELS_PER_MM, ZOOM_STEP } from './config/constants';
 import { TOOL_SHORTCUTS } from './config/shortcuts';
 import { LanguageProvider, useLanguage } from './contexts/language';
 import { restoreSession, exportProjectFile, importProjectFile } from './features/persistence/auto-save';
+import { notify } from './features/ui/Toast';
 
 
 
@@ -271,15 +272,24 @@ function AppContent() {
             const result = f.target?.result;
             if (typeof result === 'string') {
                 if (file.name.endsWith('.laser')) {
-                    importProjectFile(result);
-                    editor?.render();
+                    const success = importProjectFile(result);
+                    if (success) {
+                        editor?.render();
+                        notify('Project loaded successfully', 'success');
+                    } else {
+                        notify('Failed to load project file — it may be corrupted or unsupported', 'error');
+                    }
                 } else {
                     editor?.importSVGString(result);
+                    notify(`Imported ${file.name}`, 'success');
                 }
             }
         };
+        reader.onerror = () => {
+            notify('Failed to read file', 'error');
+        };
         reader.readAsText(file);
-        e.target.value = ''; // Reset
+        e.target.value = '';
     };
 
 
