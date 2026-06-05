@@ -59,6 +59,36 @@ describe('TextObject — horizontal character spacing (hSpace)', () => {
     });
 });
 
+describe('TextObject — text on path (pathId)', () => {
+    it('defaults pathId to null', () => {
+        const t = new TextObject(0, 0, 'Hello');
+        expect(t.pathId).toBeNull();
+    });
+
+    it('stores pathId from style', () => {
+        const t = new TextObject(0, 0, 'Hello', { pathId: 'path-abc-123' });
+        expect(t.pathId).toBe('path-abc-123');
+    });
+
+    it('pathId persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'Test', { pathId: 'some-path-id' });
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.pathId).toBe('some-path-id');
+    });
+
+    it('null pathId persists through toJSON/fromJSON', () => {
+        const t = new TextObject(0, 0, 'Test');
+        const restored = TextObject.fromJSON(t.toJSON());
+        expect(restored.pathId).toBeNull();
+    });
+
+    it('pathId persists through clone', () => {
+        const t = new TextObject(0, 0, 'Test', { pathId: 'path-xyz' });
+        const cloned = t.clone();
+        expect(cloned.pathId).toBe('path-xyz');
+    });
+});
+
 describe('TextObject — text bending', () => {
     it('defaults bend to 0', () => {
         const t = new TextObject(0, 0, 'Hello');
