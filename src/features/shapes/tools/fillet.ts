@@ -14,25 +14,42 @@ export class FilletTool extends BaseTool {
     onMouseDown(e: MouseEvent): void {
         this.editor.getMousePos(e);
 
-        // If we are hovering a valid candidate, execute fillet
         if (this.hoveredShapeId && this.hoveredNodeIndex !== null) {
             const radius = useStore.getState().filletRadius;
+            if (radius <= 0) return;
 
-            // Check if radius is "valid" for the operation?
-            // If radius > 0, Fillet.
-            // If radius <= 0, Do nothing? Or Remove?
-            // Let's stick to Fillet for now.
+            if (!this.canFillet(this.hoveredShapeId, this.hoveredNodeIndex, radius)) return;
 
-            if (radius > 0) {
-                const command = new FilletCornerCommand(
-                    this.hoveredShapeId,
-                    this.hoveredNodeIndex,
-                    radius
-                );
-                this.editor.history.execute(command);
-                this.editor.render();
-            }
+            const command = new FilletCornerCommand(
+                this.hoveredShapeId,
+                this.hoveredNodeIndex,
+                radius
+            );
+            this.editor.history.execute(command);
+            this.editor.render();
         }
+    }
+
+    private canFillet(shapeId: string, nodeIndex: number, radius: number): boolean {
+        const shape = this.editor.shapes.find(s => s.id === shapeId);
+        if (!shape || !shape.nodes || shape.nodes.length < 3) return false;
+
+        const len = shape.nodes.length;
+        if (!shape.closed && (nodeIndex === 0 || nodeIndex === len - 1)) return false;
+
+        const prevIdx = (nodeIndex - 1 + len) % len;
+        const nextIdx = (nodeIndex + 1) % len;
+        const p1 = shape.nodes[prevIdx];
+        const p2 = shape.nodes[nodeIndex];
+        const p3 = shape.nodes[nextIdx];
+
+        const isLine1 = (!p1.cpOut || (p1.cpOut.x === p1.x && p1.cpOut.y === p1.y)) &&
+            (!p2.cpIn || (p2.cpIn.x === p2.x && p2.cpIn.y === p2.y));
+        const isLine2 = (!p2.cpOut || (p2.cpOut.x === p2.x && p2.cpOut.y === p2.y)) &&
+            (!p3.cpIn || (p3.cpIn.x === p3.x && p3.cpIn.y === p3.y));
+        if (!isLine1 || !isLine2) return false;
+
+        return Geometry.getFilletPoints(p1, p2, p3, radius) !== null;
     }
 
     onMouseMove(e: MouseEvent): void {
