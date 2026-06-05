@@ -15,7 +15,15 @@ interface TextRenderData {
     rotation?: number;
     scaleX?: number;
     scaleY?: number;
+    hSpace?: number;
+    vSpace?: number;
+    alignX?: 'left' | 'center' | 'right';
+    alignY?: 'top' | 'middle' | 'bottom';
+    upperCase?: boolean;
     getBounds?(): Rect;
+    getDisplayText?(): string;
+    getLineHeight?(): number;
+    measureLineWidth?(line: string): number;
 }
 import {
     DEFAULT_GRID_COLOR,
@@ -512,9 +520,8 @@ export class CanvasRenderer {
     drawText(textObject: TextRenderData, isSelected: boolean, config: RendererConfig, layerColor: string, layerMode: OperationMode, zoom: number): void {
         this.ctx.save();
 
-        // Font settings
-        const fontStyle = textObject.fontStyle || DEFAULT_FONT_FAMILY;
-        const fontWeight = textObject.fontWeight || DEFAULT_FONT_FAMILY;
+        const fontStyle = textObject.fontStyle || 'normal';
+        const fontWeight = textObject.fontWeight || 'normal';
         const fontSize = textObject.fontSize || DEFAULT_FONT_SIZE;
         const fontFamily = textObject.fontFamily || DEFAULT_FONT_FAMILY;
         this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
@@ -529,27 +536,59 @@ export class CanvasRenderer {
             this.ctx.scale(textObject.scaleX || 1, textObject.scaleY || 1);
         }
 
-        const lines = (textObject.text || '').split('\n');
-        const lineHeight = fontSize * TEXT_LINE_HEIGHT_MULTIPLIER;
+        const displayText = textObject.getDisplayText
+            ? textObject.getDisplayText()
+            : (textObject.upperCase ? (textObject.text || '').toUpperCase() : (textObject.text || ''));
+        const lines = displayText.split('\n');
+        const lineHeight = textObject.getLineHeight
+            ? textObject.getLineHeight()
+            : fontSize * TEXT_LINE_HEIGHT_MULTIPLIER * (1 + (textObject.vSpace || 0) / 100);
+        const hSpace = textObject.hSpace || 0;
+        const alignX = textObject.alignX || 'left';
+
+        const totalWidth = textObject.measureLineWidth
+            ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
+            : undefined;
 
         lines.forEach((line: string, i: number) => {
-            if (layerMode === 'ENGRAVE') {
-                this.ctx.fillStyle = layerColor;
-                this.ctx.fillText(line, 0, 0 + i * lineHeight);
+            let xOffset = 0;
+            if (alignX !== 'left' && totalWidth !== undefined) {
+                const lineW = textObject.measureLineWidth!(line);
+                if (alignX === 'center') xOffset = (totalWidth - lineW) / 2;
+                else if (alignX === 'right') xOffset = totalWidth - lineW;
+            }
+
+            const y = i * lineHeight;
+
+            if (hSpace === 0) {
+                if (layerMode === 'ENGRAVE') {
+                    this.ctx.fillStyle = layerColor;
+                    this.ctx.fillText(line, xOffset, y);
+                } else {
+                    this.ctx.strokeStyle = layerColor;
+                    this.ctx.lineWidth = TEXT_STROKE_WIDTH;
+                    this.ctx.strokeText(line, xOffset, y);
+                }
             } else {
-                // CUT/SCORE: Stroke text
-                this.ctx.strokeStyle = layerColor;
-                this.ctx.lineWidth = TEXT_STROKE_WIDTH;
-                this.ctx.strokeText(line, 0, 0 + i * lineHeight);
+                const extraPerChar = fontSize * (hSpace / 100);
+                let cx = xOffset;
+                for (const char of line) {
+                    if (layerMode === 'ENGRAVE') {
+                        this.ctx.fillStyle = layerColor;
+                        this.ctx.fillText(char, cx, y);
+                    } else {
+                        this.ctx.strokeStyle = layerColor;
+                        this.ctx.lineWidth = TEXT_STROKE_WIDTH;
+                        this.ctx.strokeText(char, cx, y);
+                    }
+                    cx += this.ctx.measureText(char).width + extraPerChar;
+                }
             }
         });
 
         this.ctx.restore();
 
-        // Draw selection overlay separately (in world space)
         if (isSelected) {
-            // This might be expensive if using measure
-            // Ideally textObject has a `getBounds()` method we can assume exists
             const bounds = textObject.getBounds ? textObject.getBounds() : { minX: textObject.x, minY: textObject.y, width: 100, height: 20 };
             this.setSelectionStyle(zoom, config.colorSelection);
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);

@@ -14,6 +14,11 @@ export interface TextStyle {
     rotation?: number;
     scaleX?: number;
     scaleY?: number;
+    hSpace?: number;
+    vSpace?: number;
+    alignX?: 'left' | 'center' | 'right';
+    alignY?: 'top' | 'middle' | 'bottom';
+    upperCase?: boolean;
 }
 
 export interface Bounds {
@@ -40,9 +45,13 @@ export class TextObject implements IShape {
     rotation: number;
     scaleX: number;
     scaleY: number;
+    hSpace: number;
+    vSpace: number;
+    alignX: 'left' | 'center' | 'right';
+    alignY: 'top' | 'middle' | 'bottom';
+    upperCase: boolean;
     type: string;
     closed: boolean = false;
-    // Legacy properties that might exist but are handled by layers
     fillColor?: string;
     strokeColor?: string;
     strokeWidth?: number;
@@ -57,21 +66,41 @@ export class TextObject implements IShape {
         this.fontFamily = style.fontFamily || 'Arial';
         this.fontWeight = style.fontWeight || 'normal';
         this.fontStyle = style.fontStyle || 'normal';
-        // Removed properties handled by layer: fillColor, strokeColor, strokeWidth
         this.rotation = style.rotation || 0;
         this.scaleX = style.scaleX || 1;
         this.scaleY = style.scaleY || 1;
+        this.hSpace = style.hSpace || 0;
+        this.vSpace = style.vSpace || 0;
+        this.alignX = style.alignX || 'left';
+        this.alignY = style.alignY || 'top';
+        this.upperCase = style.upperCase || false;
         this.type = 'text';
+    }
+
+    getDisplayText(): string {
+        return this.upperCase ? this.text.toUpperCase() : this.text;
+    }
+
+    getLineHeight(): number {
+        return this.fontSize * TEXT_LINE_HEIGHT_MULTIPLIER * (1 + this.vSpace / 100);
+    }
+
+    measureLineWidth(line: string): number {
+        const baseWidth = TextMeasurer.measure(line, this.fontSize, this.fontFamily, this.fontWeight, this.fontStyle);
+        if (this.hSpace === 0 || line.length <= 1) return baseWidth;
+        const extraPerChar = this.fontSize * (this.hSpace / 100);
+        return baseWidth + extraPerChar * (line.length - 1);
     }
 
     getBounds(): Bounds {
         let maxWidth = 0;
-        const lines = this.text.split('\n');
-        const lineHeight = this.fontSize * TEXT_LINE_HEIGHT_MULTIPLIER;
+        const displayText = this.getDisplayText();
+        const lines = displayText.split('\n');
+        const lineHeight = this.getLineHeight();
         const height = lines.length * lineHeight;
 
         lines.forEach(line => {
-            const width = TextMeasurer.measure(line, this.fontSize, this.fontFamily, this.fontWeight, this.fontStyle);
+            const width = this.measureLineWidth(line);
             if (width > maxWidth) maxWidth = width;
         });
 
@@ -168,7 +197,12 @@ export class TextObject implements IShape {
             strokeWidth: this.strokeWidth,
             rotation: this.rotation,
             scaleX: this.scaleX,
-            scaleY: this.scaleY
+            scaleY: this.scaleY,
+            hSpace: this.hSpace,
+            vSpace: this.vSpace,
+            alignX: this.alignX,
+            alignY: this.alignY,
+            upperCase: this.upperCase
         }, this.layerId);
     }
 
@@ -189,23 +223,33 @@ export class TextObject implements IShape {
             strokeWidth: this.strokeWidth,
             rotation: this.rotation,
             scaleX: this.scaleX,
-            scaleY: this.scaleY
+            scaleY: this.scaleY,
+            hSpace: this.hSpace,
+            vSpace: this.vSpace,
+            alignX: this.alignX,
+            alignY: this.alignY,
+            upperCase: this.upperCase
         };
     }
 
     static fromJSON(json: Record<string, unknown>): TextObject {
-        return new TextObject(json.x, json.y, json.text, {
-            fontSize: json.fontSize,
-            fontFamily: json.fontFamily,
-            fontWeight: json.fontWeight,
-            fontStyle: json.fontStyle,
-            fillColor: json.fillColor,
-            strokeColor: json.strokeColor,
-            strokeWidth: json.strokeWidth,
-            rotation: json.rotation,
-            scaleX: json.scaleX,
-            scaleY: json.scaleY
-        }, json.layerId || 'layer-1');
+        return new TextObject(json.x as number, json.y as number, json.text as string, {
+            fontSize: json.fontSize as number | undefined,
+            fontFamily: json.fontFamily as string | undefined,
+            fontWeight: json.fontWeight as string | undefined,
+            fontStyle: json.fontStyle as string | undefined,
+            fillColor: json.fillColor as string | undefined,
+            strokeColor: json.strokeColor as string | undefined,
+            strokeWidth: json.strokeWidth as number | undefined,
+            rotation: json.rotation as number | undefined,
+            scaleX: json.scaleX as number | undefined,
+            scaleY: json.scaleY as number | undefined,
+            hSpace: json.hSpace as number | undefined,
+            vSpace: json.vSpace as number | undefined,
+            alignX: json.alignX as 'left' | 'center' | 'right' | undefined,
+            alignY: json.alignY as 'top' | 'middle' | 'bottom' | undefined,
+            upperCase: json.upperCase as boolean | undefined
+        }, (json.layerId as string) || 'layer-1');
     }
 }
 
