@@ -4,6 +4,7 @@ import { IShape } from '../types';
 import { ResizeShapeCommand } from '../commands/resize';
 import { MoveShapeCommand } from '../commands/move';
 import { RotateShapeCommand } from '../commands/rotate';
+import { captureSnapshot, restoreSnapshot, ShapeSnapshot } from '../utils/snapshot';
 
 interface ControlHit {
     type: 'rotate' | 'resize';
@@ -15,7 +16,7 @@ export class SelectTool extends BaseTool {
     isRotating: boolean;
     isResizing: boolean;
     dragStart: Point | null;
-    initialShapeStates: any[]; // Ideally should be PathShape[] but using any for now to match method calls
+    private initialSnapshots: ShapeSnapshot[];
     initialBounds: Rect | null;
     resizeHandle: string | null;
     rotationCenter: Point | null;
@@ -31,7 +32,7 @@ export class SelectTool extends BaseTool {
         this.isRotating = false;
         this.isResizing = false;
         this.dragStart = null;
-        this.initialShapeStates = [];
+        this.initialSnapshots = [];
         this.initialBounds = null;
         this.resizeHandle = null;
         this.rotationCenter = null;
@@ -40,10 +41,20 @@ export class SelectTool extends BaseTool {
         this.selectionBox = null;
     }
 
+    private captureSelectedSnapshots(): void {
+        this.initialSnapshots = this.editor.selectedShapes.map(s => captureSnapshot(s));
+    }
+
+    private restoreSelectedFromSnapshots(): void {
+        this.editor.selectedShapes.forEach((shape, i) => {
+            const snapshot = this.initialSnapshots[i];
+            if (snapshot) restoreSnapshot(shape, snapshot);
+        });
+    }
+
     onMouseDown(e: MouseEvent): void {
         const { x, y } = this.editor.getMousePos(e);
 
-        // Check for control handles first (if we have any selection)
         if (this.editor.selectedShapes.length > 0) {
             const hit = this.getClickedControl(x, y);
             if (hit) {
@@ -53,11 +64,11 @@ export class SelectTool extends BaseTool {
                         this.isRotating = true;
                         this.rotationCenter = { x: bounds.cx!, y: bounds.cy! };
                         this.rotateStartAngle = Math.atan2(y - bounds.cy!, x - bounds.cx!);
-                        this.initialShapeStates = this.editor.selectedShapes.map(s => s.clone());
+                        this.captureSelectedSnapshots();
                     } else if (hit.type === 'resize' && hit.handle) {
                         this.isResizing = true;
                         this.resizeHandle = hit.handle;
-                        this.initialShapeStates = this.editor.selectedShapes.map(s => s.clone());
+                        this.captureSelectedSnapshots();
                         this.initialBounds = bounds;
                         this.dragStart = { x, y };
                     }
@@ -67,7 +78,6 @@ export class SelectTool extends BaseTool {
         }
 
         let clickedShape: IShape | null = null;
-        // Hit test in reverse order (top to bottom)
         for (let i = this.editor.shapes.length - 1; i >= 0; i--) {
             const shape = this.editor.shapes[i];
             if (this.hitTestShape(shape, x, y)) {
@@ -78,53 +88,38 @@ export class SelectTool extends BaseTool {
 
         if (clickedShape) {
             if (e.ctrlKey || e.metaKey) {
-                // Ctrl/Cmd + Click: Toggle selection
                 const currentSelection = this.editor.selectedShapes;
                 const index = currentSelection.findIndex(s => s.id === clickedShape.id);
                 if (index > -1) {
-                    // Remove: create new array without this shape
                     this.editor.selectedShapes = currentSelection.filter(s => s.id !== clickedShape.id);
                 } else {
-                    // Add: create new array with this shape
                     this.editor.selectedShapes = [...currentSelection, clickedShape];
                 }
             } else if (e.shiftKey) {
-                // Shift + Click: Add to selection (not toggle)
                 const currentSelection = this.editor.selectedShapes;
                 if (!currentSelection.some(s => s.id === clickedShape.id)) {
                     this.editor.selectedShapes = [...currentSelection, clickedShape];
                 }
             } else {
-                // Single Click:
                 const isAlreadySelected = this.editor.selectedShapes.some(s => s.id === clickedShape!.id);
                 if (!isAlreadySelected) {
-                    // Only deselect others if we clicked something NEW
                     this.editor.selectedShapes = [clickedShape];
                 }
-                // If already selected, do nothing to selection (keep multi-select)
-                // The drag operation will start below
             }
 
             if (this.editor.selectedShapes.length > 0) {
-                this.editor.snapManager.clear(); // Clear any stale snaps when starting a new selection
+                this.editor.snapManager.clear();
                 this.isDraggingShape = true;
                 this.dragStart = { x, y };
-                this.dragOrigin = { x, y }; // Set stable origin
-                // Capture initial state for MoveCommand
-                this.initialShapeStates = this.editor.selectedShapes.map(shape => shape.clone());
+                this.dragOrigin = { x, y };
+                this.captureSelectedSnapshots();
 
-                // SNAP LOGIC: Capture candidates from the clicked shape (or all selected shapes if small count?)
-                // For now, prioritize the shape purely under the cursor if clickedShape is valid
                 this.snapCandidates = [];
-                // Always include the cursor itself
-                this.snapCandidates.push({ x: 0, y: 0 }); // Offset 0,0
+                this.snapCandidates.push({ x: 0, y: 0 });
 
                 const sourceShape = clickedShape || (this.editor.selectedShapes.length === 1 ? this.editor.selectedShapes[0] : null);
 
                 if (sourceShape && sourceShape.nodes) {
-                    // Collect vertices relative to dragStart
-                    // DragStart acts as the "Zero" offset reference
-                    // Candidate = Node - DragStart
                     sourceShape.nodes.forEach(node => {
                         this.snapCandidates.push({
                             x: node.x - x,
@@ -132,8 +127,6 @@ export class SelectTool extends BaseTool {
                         });
                     });
 
-                    // Add center only for closed shapes or specific request? 
-                    // Let's add center if bounds exist
                     if (sourceShape.getBounds) {
                         const b = sourceShape.getBounds();
                         this.snapCandidates.push({
@@ -144,11 +137,10 @@ export class SelectTool extends BaseTool {
                 }
             }
         } else {
-            // Clicked empty space
             if (!e.shiftKey) {
                 this.editor.selectedShapes = [];
             }
-            this.editor.snapManager.clear(); // Clear snap visuals
+            this.editor.snapManager.clear();
             this.isDragSelecting = true;
             this.dragStart = { x, y };
         }
@@ -164,27 +156,10 @@ export class SelectTool extends BaseTool {
             const snappedAngle = this.editor.snapManager.snapAngle(rawAngle - this.rotateStartAngle, e.shiftKey);
             const deltaAngle = e.shiftKey ? snappedAngle : rawAngle - this.rotateStartAngle;
 
-            // Rotate preview: restore original, then apply rotation in-place
             this.editor.selectedShapes.forEach((shape, i) => {
-                const original = this.initialShapeStates[i];
-                if (!original) return; // Guard against missing state
-
-                // Restore state first
-                if (shape.type === 'group') {
-                    const g = shape as any;
-                    const o = original as any;
-                    // If original was captured correctly, g and o should match types
-                    if (o.type === 'group') {
-                        g.x = o.x; g.y = o.y; g.rotation = o.rotation;
-                        if (o.children) {
-                            g.children = o.children.map((c: any) => c.clone ? c.clone() : JSON.parse(JSON.stringify(c)));
-                        }
-                    }
-                } else if (shape.nodes && original.nodes) {
-                    shape.nodes = original.nodes.map((n: any) => n.clone());
-                }
-
-                // Then apply current rotation
+                const snapshot = this.initialSnapshots[i];
+                if (!snapshot) return;
+                restoreSnapshot(shape, snapshot);
                 if (typeof (shape as any).rotate === 'function') {
                     (shape as any).rotate(deltaAngle, this.rotationCenter);
                 }
@@ -204,31 +179,24 @@ export class SelectTool extends BaseTool {
             const width = x - this.dragStart.x;
             const height = y - this.dragStart.y;
 
-            // Determine style based on direction
-            // Left→Right (width > 0) = Enclosing (Blue)
-            // Right→Left (width < 0) = Crossing (Red)
             const isCrossing = width < 0;
             const style = isCrossing
-                ? { fill: 'rgba(0, 255, 0, 0.1)', stroke: 'green' }       // Crossing
-                : { fill: 'rgba(255, 0, 0, 0.1)', stroke: 'red' };    // Enclosing
+                ? { fill: 'rgba(0, 255, 0, 0.1)', stroke: 'green' }
+                : { fill: 'rgba(255, 0, 0, 0.1)', stroke: 'red' };
 
             this.selectionBox = {
                 x: isCrossing ? x : this.dragStart.x,
-                y: this.dragStart.y < y ? this.dragStart.y : y, // Normalize Y for drawing
+                y: this.dragStart.y < y ? this.dragStart.y : y,
                 width: Math.abs(width),
                 height: Math.abs(height),
                 style
             };
 
-            // Assign    editor: CanvasController; can pass it to renderer
             this.editor.selectionBox = this.selectionBox;
-
-            // Trigger normal render which will include the selection box
             this.editor.render();
             return;
         }
 
-        // Cursor updates (only when not dragging a shape)
         if (!this.isDraggingShape) {
             if (this.editor.selectedShapes.length > 0 && this.getClickedControl(x, y)) {
                 this.editor.canvas.style.cursor = 'grab';
@@ -246,21 +214,13 @@ export class SelectTool extends BaseTool {
             }
         }
 
-        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragOrigin && this.initialShapeStates.length > 0) {
-            // Absolute positioning logic
-            // 1. Calculate Raw Total Delta (Mouse - Origin)
+        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.dragOrigin && this.initialSnapshots.length > 0) {
             const rawDx = x - this.dragOrigin.x;
             const rawDy = y - this.dragOrigin.y;
 
             let bestSnapDelta = { x: 0, y: 0 };
             let bestSnapDistSq = Infinity;
             let foundSnap = false;
-
-            // 2. Find Best Snap Correction
-            // Iterate candidates to find what needs to be added to RawDelta
-            // ProbePosition = (DragOrigin + CandidateOffset) + RawDelta
-            //               = (DragOrigin + RawDelta) + CandidateOffset
-            //               = CurrentMouse + CandidateOffset
 
             const excludeIds = this.editor.selectedShapes.map(s => s.id);
             const currentMouse = { x, y };
@@ -275,15 +235,11 @@ export class SelectTool extends BaseTool {
                     const res = this.editor.snapManager.snapPoint(probe, excludeIds);
 
                     if (res.type !== 'none') {
-                        // Corrective delta: SnapPoint - ProbePoint
-                        // We want to shift the whole shape such that ProbePoint moves to SnapPoint.
-                        // Delta = SnapPoint - ProbePoint.
                         const dx = res.point.x - probe.x;
                         const dy = res.point.y - probe.y;
                         const distSq = dx * dx + dy * dy;
 
                         let effectiveDistSq = distSq;
-                        // Bias for object snaps
                         if (res.type !== 'grid') {
                             effectiveDistSq *= 0.5;
                         }
@@ -297,7 +253,6 @@ export class SelectTool extends BaseTool {
                     }
                 }
             } else {
-                // Fallback: Snap Cursor
                 const res = this.editor.snapManager.snapPoint(currentMouse, excludeIds);
                 if (res.type !== 'none') {
                     bestSnapDelta = {
@@ -313,33 +268,13 @@ export class SelectTool extends BaseTool {
                 this.editor.snapManager.clear();
             }
 
-            // 3. Apply Total Delta to Initial States
             const totalDx = rawDx + bestSnapDelta.x;
             const totalDy = rawDy + bestSnapDelta.y;
 
             this.editor.selectedShapes.forEach((shape, i) => {
-                const original = this.initialShapeStates[i];
-                if (!original) return;
-
-                // Restore from original first to avoid drift
-                // Clone the original props to the live shape
-                if (shape.type === 'group') {
-                    const g = shape as any;
-                    const o = original as any;
-                    g.x = o.x; g.y = o.y; g.rotation = o.rotation;
-                    if (o.children && g.children) {
-                        g.children = o.children.map((c: any) => c.clone());
-                    }
-                } else if (shape.nodes && original.nodes) {
-                    shape.nodes = original.nodes.map((n: any) => n.clone());
-                } else {
-                    const s = shape as any;
-                    const o = original as any;
-                    s.x = o.x; s.y = o.y;
-                    // Restore other props if needed?
-                }
-
-                // Now Apply Move
+                const snapshot = this.initialSnapshots[i];
+                if (!snapshot) return;
+                restoreSnapshot(shape, snapshot);
                 if ('move' in shape) {
                     (shape as any).move(totalDx, totalDy);
                 }
@@ -350,40 +285,18 @@ export class SelectTool extends BaseTool {
     }
 
     onMouseUp(e: MouseEvent): void {
-        // Handle rotation with RotateCommand for undo/redo
         if (this.isRotating && this.editor.selectedShapes.length > 0 && this.rotationCenter) {
             const { x, y } = this.editor.getMousePos(e);
 
-            // Restore shapes to original state first
-            this.editor.selectedShapes.forEach((shape, i) => {
-                const original = this.initialShapeStates[i];
-                if (shape.type === 'group') {
-                    const g = shape as any;
-                    const o = original as any;
-                    g.x = o.x; g.y = o.y; g.rotation = o.rotation;
-                    g.children = o.children.map((c: any) => c.clone());
-                } else if (shape.nodes && original.nodes) {
-                    shape.nodes = original.nodes.map((n: any) => n.clone());
-                } else {
-                    // Restore parametric properties (Text, Rect, Circle, etc.)
-                    const s = shape as any;
-                    const o = original as any;
-                    s.x = o.x; s.y = o.y; s.rotation = o.rotation;
-                    if (o.scaleX !== undefined) s.scaleX = o.scaleX;
-                    if (o.scaleY !== undefined) s.scaleY = o.scaleY;
-                    if (o.fontSize !== undefined) s.fontSize = o.fontSize;
-                }
-            });
+            this.restoreSelectedFromSnapshots();
 
-            // Calculate final rotation angle
             const finalRawAngle = Math.atan2(y - this.rotationCenter.y, x - this.rotationCenter.x);
             const finalSnapped = this.editor.snapManager.snapAngle(finalRawAngle - this.rotateStartAngle, e.shiftKey);
             const deltaAngle = e.shiftKey ? finalSnapped : finalRawAngle - this.rotateStartAngle;
 
-            // Only create command if there was actual rotation
             if (Math.abs(deltaAngle) > 0.001) {
                 const command = new RotateShapeCommand(
-                    this.editor.selectedShapes as any[],
+                    this.editor.selectedShapes,
                     deltaAngle,
                     this.rotationCenter
                 );
@@ -391,86 +304,42 @@ export class SelectTool extends BaseTool {
             }
         }
 
-        // STEP 6: Handle drag/move with MoveCommand for undo/redo
-        // We need to check if we were dragging and if there was movement
-        // We can check total displacement.
-        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.initialShapeStates.length > 0) {
-
-            // We moved shapes via absolute logic in onMouseMove.
-            // Calculate final delta from state(0) vs original(0).
+        if (this.isDraggingShape && this.editor.selectedShapes.length > 0 && this.initialSnapshots.length > 0) {
             const shape = this.editor.selectedShapes[0];
-            const original = this.initialShapeStates[0];
+            const snapshot = this.initialSnapshots[0];
 
             let totalDx = 0;
             let totalDy = 0;
 
             const currentBounds = shape.getBounds ? shape.getBounds() : shape;
-            const originalBounds = original.getBounds ? original.getBounds() : original;
+            const originalBounds = snapshot.type === 'path' && snapshot.nodes
+                ? { minX: Math.min(...snapshot.nodes.map((n: any) => n.x)), minY: Math.min(...snapshot.nodes.map((n: any) => n.y)) }
+                : { minX: snapshot.x ?? 0, minY: snapshot.y ?? 0 };
 
             if (currentBounds && originalBounds) {
-                totalDx = currentBounds.minX - originalBounds.minX;
-                totalDy = currentBounds.minY - originalBounds.minY;
+                totalDx = (currentBounds.minX ?? 0) - originalBounds.minX;
+                totalDy = (currentBounds.minY ?? 0) - originalBounds.minY;
             }
 
-            // Only create command if there was actual movement
             if (Math.abs(totalDx) > 0.01 || Math.abs(totalDy) > 0.01) {
-                // Restore to original positions first
-                this.editor.selectedShapes.forEach((shape, i) => {
-                    const original = this.initialShapeStates[i];
-                    if (shape.type === 'group') {
-                        const g = shape as any;
-                        const o = original as any;
-                        g.x = o.x; g.y = o.y; g.rotation = o.rotation;
-                        g.children = o.children.map((c: any) => c.clone());
-                    } else if (shape.nodes && original.nodes) {
-                        shape.nodes = original.nodes.map((n: any) => n.clone());
-                    } else {
-                        const s = shape as any;
-                        const o = original as any;
-                        s.x = o.x; s.y = o.y; s.rotation = o.rotation;
-                        if (o.scaleX !== undefined) s.scaleX = o.scaleX;
-                        if (o.scaleY !== undefined) s.scaleY = o.scaleY;
-                        if (o.fontSize !== undefined) s.fontSize = o.fontSize;
-                    }
-                });
+                this.restoreSelectedFromSnapshots();
 
-                // Execute move via Command (which applies the delta AND pushes to history)
                 const command = new MoveShapeCommand(
-                    this.editor as any,
-                    this.editor.selectedShapes as any[],
+                    this.editor,
+                    this.editor.selectedShapes,
                     totalDx,
                     totalDy
                 );
                 this.editor.history.execute(command);
             }
-            this.editor.snapManager.clear(); // Ensure snaps are cleared after drag
+            this.editor.snapManager.clear();
         }
 
-        // STEP 5: Handle resize with ResizeCommand for undo/redo
         if (this.isResizing && this.editor.selectedShapes.length > 0 && this.initialBounds && this.dragStart) {
             const { x, y } = this.editor.getMousePos(e);
 
-            // First, restore shapes to original state
-            this.editor.selectedShapes.forEach((shape, i) => {
-                const original = this.initialShapeStates[i];
-                if (shape.type === 'group') {
-                    const g = shape as any;
-                    const o = original as any;
-                    g.x = o.x; g.y = o.y; g.rotation = o.rotation;
-                    g.children = o.children.map((c: any) => c.clone());
-                } else if (shape.nodes && original.nodes) {
-                    shape.nodes = original.nodes.map((n: any) => n.clone());
-                } else {
-                    const s = shape as any;
-                    const o = original as any;
-                    s.x = o.x; s.y = o.y; s.rotation = o.rotation;
-                    if (o.scaleX !== undefined) s.scaleX = o.scaleX;
-                    if (o.scaleY !== undefined) s.scaleY = o.scaleY;
-                    if (o.fontSize !== undefined) s.fontSize = o.fontSize;
-                }
-            });
+            this.restoreSelectedFromSnapshots();
 
-            // Calculate final scale factors
             const bounds = this.initialBounds;
             let sx = 1, sy = 1;
             let fixedX = 0, fixedY = 0;
@@ -528,7 +397,7 @@ export class SelectTool extends BaseTool {
             const epsilon = 0.0001;
             if (Math.abs(sx - 1) > epsilon || Math.abs(sy - 1) > epsilon) {
                 const command = new ResizeShapeCommand(
-                    this.editor.selectedShapes as any[],
+                    this.editor.selectedShapes,
                     sx,
                     sy,
                     { x: fixedX, y: fixedY }
@@ -585,7 +454,7 @@ export class SelectTool extends BaseTool {
         this.isRotating = false;
         this.isResizing = false;
         this.isDragSelecting = false;
-        this.initialShapeStates = [];
+        this.initialSnapshots = [];
         this.initialBounds = null;
         this.dragStart = null;
         this.dragOrigin = null;
@@ -655,10 +524,10 @@ export class SelectTool extends BaseTool {
             return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
         } else {
             const tolerance = 10 / this.editor.zoom;
-            // Geometry.isPointInBezierPath is robust for closed/open shapes
             return Geometry.isPointInBezierPath(this.editor.ctx, shape, x, y, tolerance);
         }
     }
+
     handleResize(x: number, y: number): void {
         if (!this.initialBounds || !this.dragStart || !this.resizeHandle) return;
 
@@ -716,28 +585,10 @@ export class SelectTool extends BaseTool {
             sy = s * Math.sign(sy);
         }
 
-        // Apply resize to selection for preview
         this.editor.selectedShapes.forEach((shape, i) => {
-            const original = this.initialShapeStates[i];
-            // Restore from original first
-            if (shape.type === 'group') {
-                const g = shape as any;
-                const o = original as any;
-                g.x = o.x; g.y = o.y; g.rotation = o.rotation;
-                if (o.children && g.children) {
-                    g.children = o.children.map((c: any) => c.clone());
-                }
-            } else if (shape.nodes && original.nodes) {
-                shape.nodes = original.nodes.map((n: any) => n.clone());
-            } else {
-                const s = shape as any;
-                const o = original as any;
-                s.x = o.x; s.y = o.y; s.rotation = o.rotation;
-                if (o.scaleX !== undefined) s.scaleX = o.scaleX;
-                if (o.scaleY !== undefined) s.scaleY = o.scaleY;
-            }
-
-            // Apply scaling
+            const snapshot = this.initialSnapshots[i];
+            if (!snapshot) return;
+            restoreSnapshot(shape, snapshot);
             if ((shape as any).scale) {
                 (shape as any).scale(sx, sy, { x: fixedX, y: fixedY });
             }
