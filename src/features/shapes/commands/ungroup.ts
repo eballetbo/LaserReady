@@ -25,8 +25,8 @@ export class UngroupCommand implements Command {
 
         this.originalGroupIndices = this.originalGroupIds.map(id => shapes.findIndex(s => s.id === id));
 
-        let newShapes = shapes.filter(s => !this.originalGroupIds.includes(s.id));
-        let allChildren: IShape[] = [];
+        const newShapes = shapes.filter(s => !this.originalGroupIds.includes(s.id));
+        const allChildren: IShape[] = [];
 
         this.groupsToUngroup.forEach((group, gi) => {
             if (group.children) {

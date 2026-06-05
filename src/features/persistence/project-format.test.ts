@@ -26,7 +26,7 @@ describe('validateProject', () => {
     });
 
     it('should reject missing version', () => {
-        const { version, ...noVersion } = validProject;
+        const { version: _version, ...noVersion } = validProject;
         const result = validateProject(noVersion);
         expect(result.valid).toBe(false);
         expect(result.errors.some(e => e.includes('version'))).toBe(true);

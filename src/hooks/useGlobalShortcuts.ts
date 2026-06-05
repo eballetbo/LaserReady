@@ -15,7 +15,9 @@ interface ShortcutDeps {
 
 export function useGlobalShortcuts(deps: ShortcutDeps) {
     const ref = useRef(deps);
-    ref.current = deps;
+    useEffect(() => {
+        ref.current = deps;
+    });
 
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
