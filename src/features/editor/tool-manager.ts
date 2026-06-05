@@ -108,8 +108,12 @@ export class ToolManager {
             return;
         }
 
-        // Ignore keys handled by App.jsx or that shouldn't trigger a save
-        if (e.key === 'Delete' || e.key === 'Backspace') return;
+        // Delete/Backspace: delegate to active tool (e.g. node-edit deletes nodes)
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            this.activeTool?.onKeyDown(e);
+            return;
+        }
+
         if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y')) return;
 
         // Group (Ctrl+G) - Global command

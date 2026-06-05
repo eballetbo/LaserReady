@@ -115,7 +115,9 @@ function AppContent() {
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
-            if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (tool !== 'node-edit') deleteSelected();
+            }
 
             if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
                 e.preventDefault();
@@ -133,7 +135,7 @@ function AppContent() {
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, [editor]);
+    }, [editor, tool]);
 
     // --- FILE I/O ---
     const handleExport = () => {
