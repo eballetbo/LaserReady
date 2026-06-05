@@ -6,6 +6,20 @@ import { PathShape } from '../../features/shapes/models/path';
 import { IShape } from '../../features/shapes/types';
 import { LaserLayer } from '../../types/layer';
 
+interface TextShapeView {
+    x?: number;
+    y?: number;
+    text?: string;
+    fontFamily?: string;
+    fontSize?: number;
+    fontWeight?: string;
+    fontStyle?: string;
+    fillColor?: string;
+    rotation?: number;
+    scaleX?: number;
+    scaleY?: number;
+}
+
 // Initialize a headless PaperScope for SVG exporting
 const scope = new paper.PaperScope();
 scope.setup(new paper.Size(1000, 1000));
@@ -20,9 +34,8 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number, lay
 
     const addShapeToProject = (shape: IShape): void => {
         if (shape.type === 'group') {
-            const group = shape as any;
-            if (group.children) {
-                group.children.forEach((child: IShape) => addShapeToProject(child));
+            if (shape.children) {
+                shape.children.forEach(child => addShapeToProject(child));
             }
             return;
         }
@@ -30,23 +43,23 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number, lay
         let item: paper.Item | null = null;
 
         if (shape.type === 'text') {
-            const textShape = shape as any;
+            const t = shape as unknown as TextShapeView;
             const textItem = new scope.PointText({
-                point: new paper.Point(textShape.x, textShape.y),
-                content: textShape.text,
-                fontFamily: textShape.fontFamily,
-                fontSize: textShape.fontSize,
-                fontWeight: textShape.fontWeight,
-                fontStyle: textShape.fontStyle,
-                fillColor: textShape.fillColor || 'black'
+                point: new paper.Point(t.x ?? 0, t.y ?? 0),
+                content: t.text ?? '',
+                fontFamily: t.fontFamily,
+                fontSize: t.fontSize,
+                fontWeight: t.fontWeight,
+                fontStyle: t.fontStyle,
+                fillColor: t.fillColor || 'black'
             });
 
-            if (textShape.rotation) textItem.rotate(textShape.rotation);
-            if (textShape.scaleX && textShape.scaleY) textItem.scale(textShape.scaleX, textShape.scaleY);
+            if (t.rotation) textItem.rotate(t.rotation);
+            if (t.scaleX && t.scaleY) textItem.scale(t.scaleX, t.scaleY);
 
-            item = (textItem as any).toPath();
+            item = (textItem as unknown as { toPath(): paper.PathItem }).toPath();
             textItem.remove();
-        } else if ((shape as any).nodes) {
+        } else if (shape.nodes) {
             item = BooleanOperations.toPaperPath(shape as PathShape) as paper.PathItem;
         }
 
