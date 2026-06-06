@@ -233,90 +233,75 @@ export class WeldTextCommand implements Command {
 
     private performWeld(): void {
         const text = this.textObject.getDisplayText();
-        const path = this.font.getPath(
-            text,
-            this.textObject.x,
-            this.textObject.y,
-            this.textObject.fontSize
-        );
+        const fontSize = this.textObject.fontSize;
+        const x = this.textObject.x;
+        const y = this.textObject.y;
 
-        let lastX = 0;
-        let lastY = 0;
-        const shapes: PathShape[] = [];
-        let currentNodes: PathNode[] = [];
+        // Get per-character paths so each glyph (with its holes) stays as a compound path
+        const charPaths: paper.PathItem[] = [];
+        const paper = BooleanOperations.getPaperScope();
 
-        path.commands.forEach((cmd: opentype.PathCommand) => {
-            switch (cmd.type) {
-                case 'M':
-                    if (currentNodes.length > 0) {
-                        shapes.push(new PathShape(currentNodes, true, this.textObject.layerId));
-                        currentNodes = [];
-                    }
-                    currentNodes.push(new PathNode(cmd.x, cmd.y));
-                    lastX = cmd.x;
-                    lastY = cmd.y;
-                    break;
-                case 'L':
-                    currentNodes.push(new PathNode(cmd.x, cmd.y));
-                    lastX = cmd.x;
-                    lastY = cmd.y;
-                    break;
-                case 'C':
-                    if (currentNodes.length > 0) {
-                        const prev = currentNodes[currentNodes.length - 1]!;
-                        prev.cpOut = { x: cmd.x1, y: cmd.y1 };
-                    }
-                    currentNodes.push(new PathNode(cmd.x, cmd.y, cmd.x2, cmd.y2));
-                    lastX = cmd.x;
-                    lastY = cmd.y;
-                    break;
-                case 'Q': {
-                    const q1x = cmd.x1; const q1y = cmd.y1;
-                    const p0x = lastX; const p0y = lastY;
-                    const p3x = cmd.x; const p3y = cmd.y;
-                    const c1x = p0x + (2 / 3) * (q1x - p0x);
-                    const c1y = p0y + (2 / 3) * (q1y - p0y);
-                    const c2x = p3x + (2 / 3) * (q1x - p3x);
-                    const c2y = p3y + (2 / 3) * (q1y - p3y);
-                    if (currentNodes.length > 0) {
-                        const prev = currentNodes[currentNodes.length - 1]!;
-                        prev.cpOut = { x: c1x, y: c1y };
-                    }
-                    currentNodes.push(new PathNode(p3x, p3y, c2x, c2y));
-                    lastX = p3x;
-                    lastY = p3y;
-                    break;
+        let advanceX = x;
+        for (let i = 0; i < text.length; i++) {
+            const glyph = this.font.charToGlyph(text[i]!);
+            const charPath = this.font.getPath(text[i]!, advanceX, y, fontSize);
+
+            // Build a Paper.js CompoundPath from this character's SVG path data
+            const svgPath = charPath.toPathData(5);
+            if (svgPath && svgPath !== 'M0 0') {
+                const paperPath = new paper.CompoundPath(svgPath);
+                if (paperPath.children.length > 0 || (paperPath as any).segments?.length > 0) {
+                    charPaths.push(paperPath);
+                } else {
+                    paperPath.remove();
                 }
-                case 'Z':
-                    break;
             }
-        });
 
-        if (currentNodes.length > 0) {
-            shapes.push(new PathShape(currentNodes, true, this.textObject.layerId));
+            // Advance by glyph width
+            const scale = fontSize / this.font.unitsPerEm;
+            advanceX += glyph.advanceWidth * scale;
         }
 
-        if (shapes.length < 2) {
+        if (charPaths.length < 2) {
             notify('Text has no overlapping outlines to weld.', 'info');
-            if (shapes.length === 1) {
-                this.resultShape = shapes[0]!;
-                this.resultShape.layerId = this.textObject.layerId;
-                this.swap(this.textObject, this.resultShape);
+            charPaths.forEach(p => p.remove());
+            if (charPaths.length === 1) {
+                const resultShapes = BooleanOperations.fromPaperItem(charPaths[0]!);
+                charPaths[0]!.remove();
+                if (resultShapes.length > 0) {
+                    const finalShape: IShape = resultShapes.length === 1
+                        ? resultShapes[0]! : new GroupShape(resultShapes);
+                    finalShape.layerId = this.textObject.layerId;
+                    this.resultShape = finalShape;
+                    this.swap(this.textObject, finalShape);
+                }
             }
             return;
         }
 
-        const welded = BooleanOperations.unite(shapes) as PathShape[] | null;
-        if (!welded || welded.length === 0) {
+        // Unite character compound paths sequentially (preserves holes)
+        let result: paper.PathItem = charPaths[0]!;
+        for (let i = 1; i < charPaths.length; i++) {
+            const next = charPaths[i]!;
+            const united = result.unite(next);
+            result.remove();
+            next.remove();
+            result = united;
+        }
+
+        const resultShapes = BooleanOperations.fromPaperItem(result);
+        result.remove();
+
+        if (!resultShapes || resultShapes.length === 0) {
             notify('Weld produced no result — characters may not overlap.', 'info');
             return;
         }
 
         let finalShape: IShape;
-        if (welded.length === 1) {
-            finalShape = welded[0]!;
+        if (resultShapes.length === 1) {
+            finalShape = resultShapes[0]!;
         } else {
-            finalShape = new GroupShape(welded);
+            finalShape = new GroupShape(resultShapes);
         }
 
         finalShape.layerId = this.textObject.layerId;

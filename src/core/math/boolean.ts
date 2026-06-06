@@ -10,6 +10,13 @@ type BooleanOperation = 'unite' | 'subtract' | 'intersect' | 'exclude';
 
 export const BooleanOperations = {
     /**
+     * Returns the headless PaperScope used for boolean operations.
+     */
+    getPaperScope(): typeof paper {
+        return scope;
+    },
+
+    /**
      * Converts a PathShape to a paper.Path
      */
     toPaperPath(shape: PathShape): paper.Path {
