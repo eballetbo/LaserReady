@@ -4,6 +4,7 @@ import { useStore } from '../../../store/useStore';
 import { ChangeTextCommand } from '../commands/text';
 import { CreateShapeCommand } from '../commands/create';
 import { IShape } from '../types';
+import { DEFAULT_FONT_SIZE, DEFAULT_FONT_FAMILY } from '../../../config/constants';
 
 export class TextTool extends BaseTool {
     activeText: TextObject | null;
@@ -32,8 +33,8 @@ export class TextTool extends BaseTool {
             this.startEditing(clickedShape);
         } else {
             const newText = new TextObject(x, y, '', {
-                fontSize: 24,
-                fontFamily: 'Arial'
+                fontSize: DEFAULT_FONT_SIZE,
+                fontFamily: DEFAULT_FONT_FAMILY
             }, this.editor.activeLayerId);
             const command = new CreateShapeCommand(newText);
             this.editor.history.execute(command);

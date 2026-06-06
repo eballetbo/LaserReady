@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TextObject } from '../models/text';
-import { TEXT_LINE_HEIGHT_MULTIPLIER } from '../../../config/constants';
+import { TEXT_LINE_HEIGHT_MULTIPLIER, DEFAULT_FONT_SIZE } from '../../../config/constants';
 
 describe('TextObject — horizontal character spacing (hSpace)', () => {
     it('defaults hSpace to 0', () => {
@@ -511,7 +511,7 @@ describe('TextTool — multi-line text support', () => {
         const multiBounds = multiLine.getBounds();
         const threeBounds = threeLine.getBounds();
 
-        const lineHeight = 24 * TEXT_LINE_HEIGHT_MULTIPLIER;
+        const lineHeight = DEFAULT_FONT_SIZE * TEXT_LINE_HEIGHT_MULTIPLIER;
         expect(singleBounds.height).toBeCloseTo(lineHeight, 1);
         expect(multiBounds.height).toBeCloseTo(2 * lineHeight, 1);
         expect(threeBounds.height).toBeCloseTo(3 * lineHeight, 1);
@@ -551,7 +551,7 @@ describe('TextTool — multi-line text support', () => {
         expect(t.text.split('\n')).toHaveLength(3);
 
         const bounds = t.getBounds();
-        const lineHeight = 24 * TEXT_LINE_HEIGHT_MULTIPLIER;
+        const lineHeight = DEFAULT_FONT_SIZE * TEXT_LINE_HEIGHT_MULTIPLIER;
         expect(bounds.height).toBeCloseTo(3 * lineHeight, 1);
     });
 });
