@@ -99,10 +99,9 @@ export class CanvasController {
             }
 
             const hasSelection = state.selectedShapes.length > 0 && state.tool === 'select';
-            const needsAnimation = hasSelection || state.tool === 'text';
-            if (needsAnimation && !this.animationFrameId) {
+            if (hasSelection && !this.animationFrameId) {
                 this.startSelectionAnimation();
-            } else if (!needsAnimation && this.animationFrameId) {
+            } else if (!hasSelection && this.animationFrameId && !this.isEditingText()) {
                 this.stopSelectionAnimation();
             }
 
@@ -228,19 +227,28 @@ export class CanvasController {
         });
     }
 
+    private isEditingText(): boolean {
+        const textTool = this.toolManager.tools['text'] as any;
+        return !!(textTool?.activeText);
+    }
+
     renderImmediate() {
         const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndices } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
         let textEditing: TextEditingState | null = null;
-        if (tool === 'text') {
+        if (tool === 'text' && this.isEditingText()) {
             const textTool = this.toolManager.tools['text'] as any;
-            if (textTool?.activeText) {
-                textEditing = {
-                    textId: textTool.activeText.id,
-                    cursorPosition: textTool.cursorPosition ?? 0
-                };
+            textEditing = {
+                textId: textTool.activeText.id,
+                cursorPosition: textTool.cursorPosition ?? 0
+            };
+            // Start animation for cursor blink if not already running
+            if (!this.animationFrameId) {
+                this.startSelectionAnimation();
             }
+        } else if (this.animationFrameId && !(selectedIds.length > 0 && tool === 'select')) {
+            this.stopSelectionAnimation();
         }
 
         this.renderer.drawScene(
