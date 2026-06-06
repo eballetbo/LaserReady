@@ -555,3 +555,77 @@ describe('TextTool — multi-line text support', () => {
         expect(bounds.height).toBeCloseTo(3 * lineHeight, 1);
     });
 });
+
+describe('TextTool — blinking cursor', () => {
+    async function makeTextEditor() {
+        const { createMockEditor } = await import('../../../test-utils/mock-editor');
+        const editor = createMockEditor();
+        Object.defineProperty(editor, 'selectedShapes', {
+            value: [],
+            writable: true,
+            configurable: true
+        });
+        return editor;
+    }
+
+    it('TextTool initializes cursorPosition to 0', async () => {
+        const { TextTool } = await import('./text');
+        const editor = await makeTextEditor();
+        const tool = new TextTool(editor);
+        expect(tool.cursorPosition).toBe(0);
+    });
+
+    it('cursorPosition is set to text length when editing starts', async () => {
+        const { TextTool } = await import('./text');
+        const { TextObject: TO } = await import('../models/text');
+        const editor = await makeTextEditor();
+        const tool = new TextTool(editor);
+
+        const textObj = new TO(100, 100, 'Hello');
+        const { useStore: store } = await import('../../../store/useStore');
+        store.getState().setShapes([textObj as any]);
+
+        tool.startEditing(textObj);
+        expect(tool.cursorPosition).toBe(5);
+        tool.finishEditing();
+    });
+
+    it('cursorPosition resets to 0 when editing finishes', async () => {
+        const { TextTool } = await import('./text');
+        const { TextObject: TO } = await import('../models/text');
+        const editor = await makeTextEditor();
+        const tool = new TextTool(editor);
+
+        const textObj = new TO(100, 100, 'Test');
+        const { useStore: store } = await import('../../../store/useStore');
+        store.getState().setShapes([textObj as any]);
+
+        tool.startEditing(textObj);
+        expect(tool.cursorPosition).toBe(4);
+        tool.finishEditing();
+        expect(tool.cursorPosition).toBe(0);
+    });
+
+    it('cursorPosition updates on textarea input', async () => {
+        const { TextTool } = await import('./text');
+        const { TextObject: TO } = await import('../models/text');
+        const editor = await makeTextEditor();
+        const tool = new TextTool(editor);
+
+        const textObj = new TO(100, 100, '');
+        const { useStore: store } = await import('../../../store/useStore');
+        store.getState().setShapes([textObj as any]);
+
+        tool.startEditing(textObj);
+        expect(tool.textarea).not.toBeNull();
+
+        // Simulate typing 'AB'
+        tool.textarea!.value = 'AB';
+        tool.textarea!.selectionStart = 2;
+        tool.textarea!.selectionEnd = 2;
+        tool.textarea!.dispatchEvent(new Event('input'));
+        expect(tool.cursorPosition).toBe(2);
+
+        tool.finishEditing();
+    });
+});
