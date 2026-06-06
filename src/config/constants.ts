@@ -68,6 +68,7 @@ export const AVAILABLE_FONTS: { name: string; category: string }[] = [
     { name: 'Ubuntu', category: 'Sans-Serif' },
     { name: 'Noto Sans', category: 'Sans-Serif' },
     { name: 'Oswald', category: 'Sans-Serif' },
+    { name: 'Verdana', category: 'Sans-Serif' },
     // Display — bold, decorative, great for engraving and signage
     { name: 'Bebas Neue', category: 'Display' },
     { name: 'Anton', category: 'Display' },
