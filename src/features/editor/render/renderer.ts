@@ -693,8 +693,8 @@ export class CanvasRenderer {
         const cursorHeight = fontSize;
 
         this.ctx.save();
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = '#2563eb';
+        this.ctx.lineWidth = 1.5;
         this.ctx.setLineDash([]);
         this.ctx.beginPath();
         this.ctx.moveTo(cursorX, cursorY - cursorHeight * 0.8);
