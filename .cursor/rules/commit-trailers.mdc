@@ -1,0 +1,33 @@
+---
+description: Git commit message trailers convention for AI-assisted commits
+alwaysApply: true
+---
+
+# Commit Trailers
+
+When creating git commits in this project, ALWAYS append these trailers at the end of the commit message body:
+
+```
+Signed-off-by: Enric Balletbo i Serra <eballetbo@gmail.com>
+Assisted-by: Cursor:claude-4.6-opus
+```
+
+## Rules
+
+- NEVER use `Co-authored-by: Cursor <cursoragent@cursor.com>`
+- ALWAYS include `Signed-off-by` with the author's identity
+- ALWAYS include `Assisted-by: AGENT_NAME:MODEL_VERSION` (currently `Cursor:claude-4.6-opus`)
+- Trailers go after a blank line at the end of the commit body
+- `Signed-off-by` comes before `Assisted-by`
+
+## Example
+
+```
+feat(text): add blinking cursor during editing
+
+Implements a visible blinking cursor at the insertion point
+when editing text.
+
+Signed-off-by: Enric Balletbo i Serra <eballetbo@gmail.com>
+Assisted-by: Cursor:claude-4.6-opus
+```
