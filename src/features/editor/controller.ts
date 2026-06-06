@@ -1,5 +1,5 @@
 import { EDITOR_CONFIG, MIN_ZOOM, MAX_ZOOM } from '../../config/constants';
-import { CanvasRenderer } from './render/renderer';
+import { CanvasRenderer, TextEditingState } from './render/renderer';
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
 import { ToolManager } from './tool-manager';
@@ -231,6 +231,17 @@ export class CanvasController {
         const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndices } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
+        let textEditing: TextEditingState | null = null;
+        if (tool === 'text') {
+            const textTool = this.toolManager.tools['text'] as any;
+            if (textTool?.activeText) {
+                textEditing = {
+                    textId: textTool.activeText.id,
+                    cursorPosition: textTool.cursorPosition ?? 0
+                };
+            }
+        }
+
         this.renderer.drawScene(
             shapes,
             selectedObjects,
@@ -244,7 +255,8 @@ export class CanvasController {
             pan,
             selectedNodeIndices,
             this.previewOrigin,
-            useStore.getState().material
+            useStore.getState().material,
+            textEditing
         );
 
         if (this.snapManager && this.snapManager.activeSnap) {

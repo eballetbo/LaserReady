@@ -8,6 +8,7 @@ import { IShape } from '../types';
 export class TextTool extends BaseTool {
     activeText: TextObject | null;
     textarea: HTMLTextAreaElement | null;
+    cursorPosition: number = 0;
     private originalText: string = '';
     private abortController: AbortController | null = null;
 
@@ -84,10 +85,29 @@ export class TextTool extends BaseTool {
 
         this.textarea.addEventListener('input', (e: Event) => {
             if (this.activeText) {
-                this.activeText.text = (e.target as HTMLTextAreaElement).value;
+                const ta = e.target as HTMLTextAreaElement;
+                this.activeText.text = ta.value;
+                this.cursorPosition = ta.selectionStart ?? ta.value.length;
                 this.editor.render();
             }
         }, { signal });
+
+        this.textarea.addEventListener('keyup', () => {
+            if (this.textarea) {
+                this.cursorPosition = this.textarea.selectionStart ?? this.cursorPosition;
+                this.editor.render();
+            }
+        }, { signal });
+
+        this.textarea.addEventListener('mouseup', () => {
+            if (this.textarea) {
+                this.cursorPosition = this.textarea.selectionStart ?? this.cursorPosition;
+                this.editor.render();
+            }
+        }, { signal });
+
+        this.cursorPosition = textObject.text.length;
+        this.textarea.selectionStart = this.textarea.selectionEnd = textObject.text.length;
     }
 
     finishEditing() {
@@ -99,6 +119,7 @@ export class TextTool extends BaseTool {
             this.textarea.parentNode.removeChild(this.textarea);
             this.textarea = null;
         }
+        this.cursorPosition = 0;
         if (this.activeText) {
             const currentText = this.activeText.text;
             if (currentText.trim() === '') {

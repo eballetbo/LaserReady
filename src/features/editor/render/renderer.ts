@@ -5,6 +5,7 @@ import { SelectionBox } from '../../../core/tools/base';
 import { PathNode } from '../../shapes/models/node';
 
 interface TextRenderData {
+    id?: string;
     x: number;
     y: number;
     text: string;
@@ -26,6 +27,11 @@ interface TextRenderData {
     getDisplayText?(): string;
     getLineHeight?(): number;
     measureLineWidth?(line: string): number;
+}
+
+export interface TextEditingState {
+    textId: string;
+    cursorPosition: number;
 }
 import {
     DEFAULT_GRID_COLOR,
@@ -53,6 +59,7 @@ export class CanvasRenderer {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private lineDashOffset: number = 0;
+    private textEditing: TextEditingState | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -144,8 +151,10 @@ export class CanvasRenderer {
         pan: { x: number; y: number } = { x: 0, y: 0 },
         selectedNodeIndices: number[] = [],
         previewOrigin: { x: number; y: number } | null = null,
-        material: { width: number; height: number } | null = null
+        material: { width: number; height: number } | null = null,
+        textEditing: TextEditingState | null = null
     ): void {
+        this.textEditing = textEditing;
         this.clear();
 
         this.ctx.save();
@@ -599,6 +608,14 @@ export class CanvasRenderer {
             });
         }
 
+        // Draw blinking cursor if this text is being edited
+        if (this.textEditing && textObject.id === this.textEditing.textId) {
+            const blinkOn = Math.floor(Date.now() / 530) % 2 === 0;
+            if (blinkOn) {
+                this.drawTextCursor(textObject, this.textEditing.cursorPosition, fontSize, lineHeight, hSpace, alignX);
+            }
+        }
+
         this.ctx.restore();
 
         if (isSelected) {
@@ -607,6 +624,83 @@ export class CanvasRenderer {
             this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
             this.ctx.setLineDash([]);
         }
+    }
+
+    private drawTextCursor(
+        textObject: TextRenderData,
+        cursorPos: number,
+        fontSize: number,
+        lineHeight: number,
+        hSpace: number,
+        alignX: 'left' | 'center' | 'right'
+    ): void {
+        const displayText = textObject.getDisplayText
+            ? textObject.getDisplayText()
+            : (textObject.text || '');
+        const lines = displayText.split('\n');
+
+        // Find which line and column the cursor is on
+        let remaining = cursorPos;
+        let cursorLine = 0;
+        let cursorCol = 0;
+        for (let i = 0; i < lines.length; i++) {
+            if (remaining <= lines[i]!.length) {
+                cursorLine = i;
+                cursorCol = remaining;
+                break;
+            }
+            remaining -= lines[i]!.length + 1; // +1 for newline
+            if (i === lines.length - 1) {
+                cursorLine = i;
+                cursorCol = lines[i]!.length;
+            }
+        }
+
+        // Compute x position of cursor within the line
+        const line = lines[cursorLine] || '';
+        const textBeforeCursor = line.substring(0, cursorCol);
+
+        const totalWidth = textObject.measureLineWidth
+            ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
+            : undefined;
+
+        let lineXOffset = 0;
+        if (totalWidth !== undefined && alignX !== 'left') {
+            const lineW = textObject.measureLineWidth!(line);
+            if (alignX === 'center') lineXOffset = (totalWidth - lineW) / 2;
+            else if (alignX === 'right') lineXOffset = totalWidth - lineW;
+        }
+
+        let cursorX: number;
+        if (hSpace === 0) {
+            cursorX = lineXOffset + this.ctx.measureText(textBeforeCursor).width;
+        } else {
+            const extraPerChar = fontSize * (hSpace / 100);
+            let cx = lineXOffset;
+            for (const char of textBeforeCursor) {
+                cx += this.ctx.measureText(char).width + extraPerChar;
+            }
+            cursorX = cx;
+        }
+
+        const alignY = textObject.alignY || 'top';
+        let blockYOffset = 0;
+        const totalHeight = lines.length * lineHeight;
+        if (alignY === 'middle') blockYOffset = -totalHeight / 2;
+        else if (alignY === 'bottom') blockYOffset = -totalHeight;
+
+        const cursorY = blockYOffset + cursorLine * lineHeight;
+        const cursorHeight = fontSize;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 1;
+        this.ctx.setLineDash([]);
+        this.ctx.beginPath();
+        this.ctx.moveTo(cursorX, cursorY - cursorHeight * 0.8);
+        this.ctx.lineTo(cursorX, cursorY + cursorHeight * 0.2);
+        this.ctx.stroke();
+        this.ctx.restore();
     }
 
     private drawBentText(

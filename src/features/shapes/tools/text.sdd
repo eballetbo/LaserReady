@@ -19,6 +19,7 @@ Must:
   Click places a text insertion point.
   A hidden textarea captures keyboard input.
   Text renders on canvas in real-time as user types.
+  A blinking cursor (caret) shows the current insertion point while editing.
   Enter key creates a new line within the same text object.
   Click elsewhere or tool switch commits the text.
   Double-click existing text enters edit mode.
@@ -118,6 +119,15 @@ Scenario: auto-weld overlapping characters
   Then overlapping letter outlines are merged via boolean union
   And no internal cut lines remain between touching characters
 
+Scenario: blinking cursor during editing
+  Given the Text tool is active and the user is typing at position 3
+  Then a vertical cursor line blinks at the insertion point between characters 3 and 4
+  And the cursor blinks at ~500ms intervals (on/off)
+  When the user moves the cursor with arrow keys
+  Then the cursor position updates to reflect the new insertion point
+  When the user finishes editing
+  Then the cursor is no longer visible
+
 Scenario: alignment change
   Given a multi-line TextObject is selected
   When the user changes alignX from 'left' to 'center'
@@ -128,6 +138,7 @@ Tasks:
   [x] Click to place text insertion point.
   [x] Hidden textarea for input capture.
   [x] Real-time canvas rendering of typed text.
+  [x] Blinking cursor (caret) at insertion point during text editing.
   [x] Commit on tool switch / click elsewhere.
   [x] Edit existing text on double-click.
   [x] Discard empty text.
@@ -147,6 +158,7 @@ Tasks:
   [x] Undo/redo for all text property changes via commands.
 
 Done when:
+  Blinking cursor is visible at insertion point while editing text.
   Multi-line text renders with configurable line spacing.
   Character spacing adjusts visually and persists in project file.
   Alignment options reposition text without moving the anchor.
