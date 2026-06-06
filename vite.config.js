@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(APP_VERSION),
     },
-    base: isElectron ? './' : '/',
+    base: isElectron ? './' : (process.env.VITE_BASE || '/'),
     test: {
       globals: true,
       environment: 'jsdom',

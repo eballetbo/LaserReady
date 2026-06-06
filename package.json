@@ -14,7 +14,10 @@
     "dev": "vite",
     "dev:electron": "VITE_ELECTRON=true vite",
     "build": "vite build",
-    "build:linux": "npm run build && electron-builder --linux flatpak",
+    "build:linux": "VITE_ELECTRON=true vite build && electron-builder --linux",
+    "build:mac": "VITE_ELECTRON=true vite build && electron-builder --mac",
+    "build:win": "set VITE_ELECTRON=true && vite build && electron-builder --win",
+    "build:electron": "VITE_ELECTRON=true vite build && electron-builder --publish always",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
@@ -24,21 +27,34 @@
     "appId": "com.laserready.app",
     "productName": "LaserReady",
     "directories": {
-      "output": "release/${version}"
+      "output": "release"
     },
     "files": [
       "dist-electron/**/*",
       "dist/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "eballetbo",
+      "repo": "LaserReady"
+    },
     "linux": {
-      "target": "flatpak",
+      "target": ["AppImage", "deb"],
       "category": "Graphics",
       "icon": "resources/icon.png"
     },
-    "flatpak": {
-      "runtimeVersion": "23.08",
-      "base": "org.electronjs.Electron2.BaseApp",
-      "baseVersion": "23.08"
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.graphics-design",
+      "icon": "resources/icon.png"
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "resources/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   },
   "dependencies": {
