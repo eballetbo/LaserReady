@@ -14,9 +14,10 @@ Assisted-by: Cursor:claude-4.6-opus
 
 ## Rules
 
-- NEVER use `Co-authored-by: Cursor <cursoragent@cursor.com>`
+- NEVER add `Co-authored-by: Cursor <cursoragent@cursor.com>` — the `Assisted-by` trailer already attributes work to Cursor; duplicating with `Co-authored-by` is redundant and unwanted.
 - ALWAYS include `Signed-off-by` with the author's identity
 - ALWAYS include `Assisted-by: AGENT_NAME:MODEL_VERSION` (currently `Cursor:claude-4.6-opus`)
+- These two trailers are the ONLY ones needed. Do NOT add any other AI/bot attribution trailers.
 - Trailers go after a blank line at the end of the commit body
 - `Signed-off-by` comes before `Assisted-by`
 
