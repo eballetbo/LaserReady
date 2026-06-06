@@ -562,7 +562,7 @@ export class CanvasRenderer {
             this.drawBentText(lines, fontSize, hSpace, bend, textObject.distort || false, layerColor, layerMode);
         } else {
             const totalWidth = textObject.measureLineWidth
-                ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
+                ? lines.reduce((max, l) => Math.max(max, textObject.measureLineWidth!(l)), 0)
                 : undefined;
 
             const alignY = textObject.alignY || 'top';
@@ -661,7 +661,7 @@ export class CanvasRenderer {
         const textBeforeCursor = line.substring(0, cursorCol);
 
         const totalWidth = textObject.measureLineWidth
-            ? Math.max(...lines.map(l => textObject.measureLineWidth!(l)))
+            ? lines.reduce((max, l) => Math.max(max, textObject.measureLineWidth!(l)), 0)
             : undefined;
 
         let lineXOffset = 0;
