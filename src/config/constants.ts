@@ -48,7 +48,7 @@ export const ROTATION_HANDLE_OFFSET = 20;
 // ========================================
 // TEXT DEFAULTS
 // ========================================
-export const DEFAULT_FONT_SIZE = 24;
+export const DEFAULT_FONT_SIZE = 96;
 export const DEFAULT_FONT_FAMILY = 'Arial';
 export const DEFAULT_FONT_WEIGHT = 'normal';
 export const DEFAULT_FONT_STYLE = 'normal';

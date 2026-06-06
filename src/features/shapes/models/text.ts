@@ -1,6 +1,6 @@
 
 import { Geometry, Point } from '../../../core/math/geometry';
-import { TEXT_LINE_HEIGHT_MULTIPLIER } from '../../../config/constants';
+import { TEXT_LINE_HEIGHT_MULTIPLIER, DEFAULT_FONT_SIZE, DEFAULT_FONT_FAMILY } from '../../../config/constants';
 import { IShape } from '../types';
 
 export interface TextStyle {
@@ -70,8 +70,8 @@ export class TextObject implements IShape {
         this.y = y;
         this.text = text;
         this.layerId = layerId;
-        this.fontSize = style.fontSize || 24;
-        this.fontFamily = style.fontFamily || 'Arial';
+        this.fontSize = style.fontSize || DEFAULT_FONT_SIZE;
+        this.fontFamily = style.fontFamily || DEFAULT_FONT_FAMILY;
         this.fontWeight = style.fontWeight || 'normal';
         this.fontStyle = style.fontStyle || 'normal';
         this.rotation = style.rotation || 0;
