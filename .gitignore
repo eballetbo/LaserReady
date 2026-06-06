@@ -29,3 +29,7 @@ release
 
 # SpecDD local overrides
 .specdd/bootstrap.local.md
+
+# Generated files
+bugs.json
+patches/
