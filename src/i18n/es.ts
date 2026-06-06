@@ -30,7 +30,6 @@ export const es: Translation = {
     noSelection: "Selecciona un elemento para editar.",
 
     // App
-    editorAlpha: "EDITOR (ALPHA)",
     area: "ÁREA",
     import: "Importar",
     export: "Exportar",
