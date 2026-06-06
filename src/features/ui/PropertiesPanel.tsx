@@ -11,7 +11,7 @@ import { CanvasController } from '../editor/controller';
 import { Button, NumberInput, SectionHeader } from './components';
 import { OffsetPanel } from './OffsetPanel';
 import { TextOptionsBar } from './TextOptionsBar';
-import { ConvertToPathCommand, preloadConversionFont } from '../shapes/commands/convert-to-path';
+import { ConvertToPathCommand, loadFontForConversion } from '../shapes/commands/convert-to-path';
 import { ChangeTextStyleCommand } from '../shapes/commands/text';
 import { ChangeNodeTypeCommand, DeleteNodeCommand } from '../shapes/commands/node';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../shapes/commands/segment';
@@ -293,7 +293,7 @@ export default function PropertiesPanel({ theme, editor, applyLaserMode, deleteS
                                     variant="primary"
                                     onClick={async () => {
                                         if (!editor) return;
-                                        const font = await preloadConversionFont();
+                                        const font = await loadFontForConversion(selectedObject.fontFamily || 'Roboto');
                                         if (!font) return;
                                         const command = new ConvertToPathCommand(selectedObject, font);
                                         editor.history.execute(command);
