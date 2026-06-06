@@ -55,6 +55,42 @@ export const DEFAULT_FONT_STYLE = 'normal';
 export const TEXT_LINE_HEIGHT_MULTIPLIER = 1.2;
 export const TEXT_STROKE_WIDTH = 1;
 
+export const AVAILABLE_FONTS: { name: string; category: string }[] = [
+    // Sans-serif — clean lines, ideal for laser cutting
+    { name: 'Arial', category: 'Sans-Serif' },
+    { name: 'Roboto', category: 'Sans-Serif' },
+    { name: 'Open Sans', category: 'Sans-Serif' },
+    { name: 'Lato', category: 'Sans-Serif' },
+    { name: 'Montserrat', category: 'Sans-Serif' },
+    { name: 'Poppins', category: 'Sans-Serif' },
+    { name: 'Raleway', category: 'Sans-Serif' },
+    { name: 'Nunito', category: 'Sans-Serif' },
+    { name: 'Ubuntu', category: 'Sans-Serif' },
+    { name: 'Noto Sans', category: 'Sans-Serif' },
+    { name: 'Oswald', category: 'Sans-Serif' },
+    // Display — bold, decorative, great for engraving and signage
+    { name: 'Bebas Neue', category: 'Display' },
+    { name: 'Anton', category: 'Display' },
+    { name: 'Righteous', category: 'Display' },
+    { name: 'Bungee', category: 'Display' },
+    { name: 'Black Ops One', category: 'Display' },
+    { name: 'Permanent Marker', category: 'Display' },
+    { name: 'Orbitron', category: 'Display' },
+    // Serif — classic, good for formal engraving
+    { name: 'Times New Roman', category: 'Serif' },
+    { name: 'Georgia', category: 'Serif' },
+    { name: 'Playfair Display', category: 'Serif' },
+    { name: 'Merriweather', category: 'Serif' },
+    // Script — decorative handwriting, beautiful for gifts/awards
+    { name: 'Dancing Script', category: 'Script' },
+    { name: 'Pacifico', category: 'Script' },
+    { name: 'Great Vibes', category: 'Script' },
+    { name: 'Sacramento', category: 'Script' },
+    // Monospace — technical/industrial look
+    { name: 'Courier New', category: 'Monospace' },
+    { name: 'Roboto Mono', category: 'Monospace' },
+];
+
 // ========================================
 // ZOOM & TRANSFORM
 // ========================================

@@ -21,7 +21,7 @@ import { DistributeCommand } from '../shapes/commands/distribute';
 import { TransformCommand } from '../shapes/commands/transform';
 import { notify } from './Toast';
 import { UpdateParamsCommand } from '../shapes/commands/update-params';
-import { PIXELS_PER_MM } from '../../config/constants';
+import { PIXELS_PER_MM, AVAILABLE_FONTS } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 import { ThemeColors } from '../../config/themes';
 
@@ -259,11 +259,18 @@ export default function PropertiesPanel({ theme, editor, applyLaserMode, deleteS
                                         }}
                                         className={`w-full p-1.5 text-sm rounded border ${theme.inputBorder} ${theme.inputBg} ${theme.text}`}
                                     >
-                                        <option value="Arial">Arial</option>
-                                        <option value="Times New Roman">Times New Roman</option>
-                                        <option value="Courier New">Courier New</option>
-                                        <option value="Georgia">Georgia</option>
-                                        <option value="Verdana">Verdana</option>
+                                        {(() => {
+                                            const categories = [...new Set(AVAILABLE_FONTS.map(f => f.category))];
+                                            return categories.map(cat => (
+                                                <optgroup key={cat} label={cat}>
+                                                    {AVAILABLE_FONTS.filter(f => f.category === cat).map(f => (
+                                                        <option key={f.name} value={f.name} style={{ fontFamily: f.name }}>
+                                                            {f.name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ));
+                                        })()}
                                     </select>
                                 </div>
                                 <NumberInput label={t('fontSize')} value={selectedObject.fontSize} onChange={(v) => {
