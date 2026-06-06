@@ -1,29 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, AlertCircle, CheckCircle, Info } from 'lucide-react';
-
-export type ToastType = 'success' | 'error' | 'info' | 'warning';
+import { ToastType, setToastFn, setConfirmFn } from './toast-utils';
 
 interface Toast {
     id: string;
     message: string;
     type: ToastType;
     duration?: number;
-}
-
-let addToastFn: ((message: string, type?: ToastType, duration?: number) => void) | null = null;
-let showConfirmFn: ((message: string) => Promise<boolean>) | null = null;
-
-export function notify(message: string, type: ToastType = 'info', duration = 4000) {
-    if (addToastFn) {
-        addToastFn(message, type, duration);
-    } else {
-        console.warn('[Toast not mounted]', message);
-    }
-}
-
-export function confirmDialog(message: string): Promise<boolean> {
-    if (showConfirmFn) return showConfirmFn(message);
-    return Promise.resolve(window.confirm(message));
 }
 
 const ICONS: Record<ToastType, typeof Info> = {
@@ -61,9 +44,9 @@ export function ToastContainer() {
     }, []);
 
     useEffect(() => {
-        addToastFn = addToast;
-        showConfirmFn = showConfirm;
-        return () => { addToastFn = null; showConfirmFn = null; };
+        setToastFn(addToast);
+        setConfirmFn(showConfirm);
+        return () => { setToastFn(null); setConfirmFn(null); };
     }, [addToast, showConfirm]);
 
     const removeToast = useCallback((id: string) => {

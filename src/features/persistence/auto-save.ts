@@ -1,6 +1,6 @@
 import { useStore } from '../../store/useStore';
 import { serializeProject, deserializeShapes, LaserProject, validateProject } from './project-format';
-import { notify } from '../ui/Toast';
+import { notify } from '../ui/toast-utils';
 
 const DB_NAME = 'LaserReady';
 const DB_VERSION = 1;

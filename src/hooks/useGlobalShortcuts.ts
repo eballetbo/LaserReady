@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { CanvasController } from '../features/shapes';
 import { TOOL_SHORTCUTS } from '../config/shortcuts';
 import { ZOOM_STEP } from '../config/constants';
-import { confirmDialog } from '../features/ui/Toast';
+import { confirmDialog } from '../features/ui/toast-utils';
 
 interface ShortcutDeps {
     editor: CanvasController | null;

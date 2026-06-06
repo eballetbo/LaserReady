@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { useLanguage } from '../../contexts/language';
+import { useLanguage } from '../../contexts/useLanguage';
 import {
     Trash2, Combine, Minus, SquaresIntersect, XCircle, Link, Unlink,
     AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
@@ -19,7 +19,7 @@ import { BreakPathCommand } from '../shapes/commands/break-path';
 import { AlignCommand } from '../shapes/commands/align';
 import { DistributeCommand } from '../shapes/commands/distribute';
 import { TransformCommand } from '../shapes/commands/transform';
-import { notify } from './Toast';
+import { notify } from './toast-utils';
 import { UpdateParamsCommand } from '../shapes/commands/update-params';
 import { PIXELS_PER_MM, AVAILABLE_FONTS } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';

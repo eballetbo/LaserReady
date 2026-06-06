@@ -1,4 +1,4 @@
-import { useLanguage } from '../../contexts/language';
+import { useLanguage } from '../../contexts/useLanguage';
 import { useStore } from '../../store/useStore';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { NumberInput, SectionHeader } from './components';

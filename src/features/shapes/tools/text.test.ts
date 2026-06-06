@@ -195,7 +195,6 @@ describe('TextObject — text bending', () => {
     });
 
     it('positive bend curves text upward (negative cy)', () => {
-        const fontSize = 24;
         const charWidths = [14.4, 14.4, 14.4]; // 3 chars
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
         const bend = 30;
@@ -214,7 +213,6 @@ describe('TextObject — text bending', () => {
     });
 
     it('negative bend curves text downward (positive cy)', () => {
-        const fontSize = 24;
         const charWidths = [14.4, 14.4, 14.4];
         const totalArcLen = charWidths.reduce((a, b) => a + b, 0);
         const bend = -30;

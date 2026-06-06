@@ -1,4 +1,4 @@
-import { useLanguage } from '../../contexts/language';
+import { useLanguage } from '../../contexts/useLanguage';
 import {
     MousePointer2,
     Square,

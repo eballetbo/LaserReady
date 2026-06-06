@@ -9,7 +9,7 @@ import { CanvasController } from '../editor/controller';
 import { ChangeTextStyleCommand } from '../shapes/commands/text';
 import { loadFontForConversion, WeldTextCommand } from '../shapes/commands/convert-to-path';
 import { ThemeColors } from '../../config/themes';
-import { useLanguage } from '../../contexts/language';
+import { useLanguage } from '../../contexts/useLanguage';
 
 type Theme = ThemeColors;
 

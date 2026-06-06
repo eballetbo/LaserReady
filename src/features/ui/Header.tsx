@@ -2,14 +2,14 @@ import { useRef, useState } from 'react';
 import { Sun, Moon, Download, Upload, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Github, Coffee, Languages, Hand } from 'lucide-react';
 import { CanvasController } from '../shapes';
 import { PIXELS_PER_MM } from '../../config/constants';
-import { useLanguage } from '../../contexts/language';
+import { useLanguage } from '../../contexts/useLanguage';
 import { ThemeColors } from '../../config/themes';
 import { PathShape } from '../shapes/models/path';
 import { exportToSVG, downloadSVG } from '../io/svg-export';
 import { importProjectFile } from '../persistence/auto-save';
 import { useStore } from '../../store/useStore';
 import { useShallow } from 'zustand/react/shallow';
-import { notify } from './Toast';
+import { notify } from './toast-utils';
 
 interface HeaderProps {
     editor: CanvasController | null;

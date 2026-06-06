@@ -31,7 +31,7 @@ function AppContent() {
 
     const theme = isDarkMode ? THEMES.dark : THEMES.light;
     const [editor, setEditor] = useState<CanvasController | null>(null);
-    const [selection, setSelection] = useState<IShape[]>([]); // kept for Canvas onSelectionChange callback
+    const [, setSelection] = useState<IShape[]>([]);
     const [showShortcuts, setShowShortcuts] = useState(false);
 
     useEffect(() => {

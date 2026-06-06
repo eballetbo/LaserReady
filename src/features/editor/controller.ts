@@ -19,7 +19,7 @@ import { ImportShapesCommand } from '../shapes/commands/import';
 import { DuplicateCommand } from '../shapes/commands/duplicate';
 import { ZOrderCommand } from '../shapes/commands/zorder';
 import { updateShapeGeometry } from './utils/geometry-updater';
-import { notify } from '../ui/Toast';
+import { notify } from '../ui/toast-utils';
 
 /**
  * Main Editor Controller.
