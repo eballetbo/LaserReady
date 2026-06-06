@@ -93,6 +93,14 @@ export class TextTool extends BaseTool {
             }
         }, { signal });
 
+        this.textarea.addEventListener('keydown', () => {
+            requestAnimationFrame(() => {
+                if (this.textarea) {
+                    this.cursorPosition = this.textarea.selectionStart ?? this.cursorPosition;
+                }
+            });
+        }, { signal });
+
         this.textarea.addEventListener('keyup', () => {
             if (this.textarea) {
                 this.cursorPosition = this.textarea.selectionStart ?? this.cursorPosition;
