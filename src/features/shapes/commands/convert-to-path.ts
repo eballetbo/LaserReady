@@ -5,6 +5,7 @@ import { GroupShape } from '../models/group';
 import { PathNode } from '../models/node';
 import { notify } from '../../ui/Toast';
 import { TextObject } from '../models/text';
+import { BooleanOperations } from '../../../core/math/boolean';
 import opentype from 'opentype.js';
 
 import { IShape } from '../types';
@@ -231,8 +232,6 @@ export class WeldTextCommand implements Command {
     }
 
     private performWeld(): void {
-        const { BooleanOperations } = require('../../../core/math/boolean');
-
         const text = this.textObject.getDisplayText();
         const path = this.font.getPath(
             text,
