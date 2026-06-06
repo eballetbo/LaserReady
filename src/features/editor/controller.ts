@@ -99,9 +99,10 @@ export class CanvasController {
             }
 
             const hasSelection = state.selectedShapes.length > 0 && state.tool === 'select';
-            if (hasSelection && !this.animationFrameId) {
+            const needsAnimation = hasSelection || state.tool === 'text';
+            if (needsAnimation && !this.animationFrameId) {
                 this.startSelectionAnimation();
-            } else if (!hasSelection && this.animationFrameId) {
+            } else if (!needsAnimation && this.animationFrameId) {
                 this.stopSelectionAnimation();
             }
 
