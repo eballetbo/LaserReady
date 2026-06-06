@@ -28,7 +28,6 @@ export interface Translation {
     noSelection: string;
 
     // App
-    editorAlpha: string;
     area: string;
     import: string;
     export: string;
@@ -138,7 +137,6 @@ export const en: Translation = {
     noSelection: "Select an element to edit.",
 
     // App
-    editorAlpha: "EDITOR (ALPHA)",
     area: "AREA",
     import: "Import",
     export: "Export",

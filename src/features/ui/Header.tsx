@@ -80,7 +80,7 @@ export function Header({ editor, theme }: HeaderProps) {
                 </div>
                 <div className="flex flex-col justify-center">
                     <span className={`font-bold tracking-tight ${theme.text} leading-none`}>LaserReady</span>
-                    <span className={`text-[10px] ${theme.textMuted} uppercase tracking-widest leading-none mt-0.5`}>{t('editorAlpha')}</span>
+                    <span className={`text-[10px] ${theme.textMuted} uppercase tracking-widest leading-none mt-0.5`}>{`EDITOR (v${__APP_VERSION__})`}</span>
                 </div>
 
                 {/* LANGUAGE SELECTOR */}

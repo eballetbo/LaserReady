@@ -2,7 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'
 import path from 'node:path'
+import { execSync } from 'node:child_process'
 import { visualizer } from 'rollup-plugin-visualizer'
+
+const commitCount = parseInt(
+  execSync('git rev-list --count HEAD').toString().trim(), 10
+)
+const major = Math.floor(commitCount / 10000)
+const minor = Math.floor((commitCount % 10000) / 100)
+const patch = commitCount % 100
+const APP_VERSION = `${major}.${minor}.${patch}`
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -33,6 +42,9 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+    },
+    define: {
+      __APP_VERSION__: JSON.stringify(APP_VERSION),
     },
     base: isElectron ? './' : '/',
     test: {

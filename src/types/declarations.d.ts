@@ -8,3 +8,5 @@ declare module '*.svg?raw' {
     export default content;
 }
 
+declare const __APP_VERSION__: string;
+
