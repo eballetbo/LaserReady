@@ -9,35 +9,40 @@ import opentype from 'opentype.js';
 
 import { IShape } from '../types';
 
-const FALLBACK_FONT_URL = 'https://unpkg.com/roboto-font@0.1.0/fonts/Roboto/roboto-regular-webfont.ttf';
+const FALLBACK_FONT_PATH = '/fonts/Roboto.ttf';
 
 const fontCache = new Map<string, opentype.Font>();
 
-const GOOGLE_FONT_URL_MAP: Record<string, string> = {
-    'Roboto': 'https://fonts.gstatic.com/s/roboto/v47/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbGmT.ttf',
-    'Open Sans': 'https://fonts.gstatic.com/s/opensans/v40/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjZ0B4gaVc.ttf',
-    'Lato': 'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXg.ttf',
-    'Montserrat': 'https://fonts.gstatic.com/s/montserrat/v29/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXo.ttf',
-    'Poppins': 'https://fonts.gstatic.com/s/poppins/v22/pxiEyp8kv8JHgFVrJJfecg.ttf',
-    'Raleway': 'https://fonts.gstatic.com/s/raleway/v34/1Ptxg8zYS_SKggPN4iEgvnHyvveLxVvaorCIPrE.ttf',
-    'Nunito': 'https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshRTY9jo7eTWk.ttf',
-    'Ubuntu': 'https://fonts.gstatic.com/s/ubuntu/v20/4iCs6KVjbNBYlgo6eA.ttf',
-    'Noto Sans': 'https://fonts.gstatic.com/s/notosans/v36/o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7du3mhPy0.ttf',
-    'Oswald': 'https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvsUZiYA.ttf',
-    'Bebas Neue': 'https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXooxW4.ttf',
-    'Anton': 'https://fonts.gstatic.com/s/anton/v25/1Ptgg87GROyAm0K08i4gS7lu.ttf',
-    'Righteous': 'https://fonts.gstatic.com/s/righteous/v17/1cXxaUPXBpj2rGoU7C9mj3uEicG0.ttf',
-    'Bungee': 'https://fonts.gstatic.com/s/bungee/v14/N0bU2SZBIuF2PU_ECn50Kd_PmA.ttf',
-    'Black Ops One': 'https://fonts.gstatic.com/s/blackopsone/v20/qWcsB6-ypo7xBdr6Xshe96H3WDzRtjkho4M.ttf',
-    'Permanent Marker': 'https://fonts.gstatic.com/s/permanentmarker/v16/Fh4uPib9Iyv2ucM6pGQMWimMp004HaqIfrT5nlk.ttf',
-    'Orbitron': 'https://fonts.gstatic.com/s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6BoWgz.ttf',
-    'Playfair Display': 'https://fonts.gstatic.com/s/playfairdisplay/v37/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvXDXbtM.ttf',
-    'Merriweather': 'https://fonts.gstatic.com/s/merriweather/v30/u-4n0qyriQwlOrhSvowK_l521wRpX837pvjxPA4Y.ttf',
-    'Dancing Script': 'https://fonts.gstatic.com/s/dancingscript/v25/If2cXTr6YS-zF4S-kcSWSVi_sxjsohD9F50Ruu7BMSo3Sup6hNX6plRP.ttf',
-    'Pacifico': 'https://fonts.gstatic.com/s/pacifico/v22/FwZY7-Qmy14u9lezJ96A4sijpFu_.ttf',
-    'Great Vibes': 'https://fonts.gstatic.com/s/greatvibes/v19/RWmMoKWR9v4ksMlYITfQ7YLFpa5eSfmr.ttf',
-    'Sacramento': 'https://fonts.gstatic.com/s/sacramento/v15/buEzpo6gcdjy0EiZMBUG4C0f-w.ttf',
-    'Roboto Mono': 'https://fonts.gstatic.com/s/robotomono/v23/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_3vq_ROW4.ttf',
+const LOCAL_FONT_MAP: Record<string, string> = {
+    'Roboto': '/fonts/Roboto.ttf',
+    'Open Sans': '/fonts/OpenSans.ttf',
+    'Lato': '/fonts/Lato.ttf',
+    'Montserrat': '/fonts/Montserrat.ttf',
+    'Poppins': '/fonts/Poppins.ttf',
+    'Raleway': '/fonts/Raleway.ttf',
+    'Nunito': '/fonts/Nunito.ttf',
+    'Ubuntu': '/fonts/Ubuntu.ttf',
+    'Noto Sans': '/fonts/NotoSans.ttf',
+    'Oswald': '/fonts/Oswald.ttf',
+    'Bebas Neue': '/fonts/BebasNeue.ttf',
+    'Righteous': '/fonts/Righteous.ttf',
+    'Black Ops One': '/fonts/BlackOpsOne.ttf',
+    'Permanent Marker': '/fonts/PermanentMarker.ttf',
+    'Bungee Shade': '/fonts/BungeeShade.ttf',
+    'Playfair Display': '/fonts/PlayfairDisplay.ttf',
+    'Merriweather': '/fonts/Merriweather.ttf',
+    'Dancing Script': '/fonts/DancingScript.ttf',
+    'Pacifico': '/fonts/Pacifico.ttf',
+    'Great Vibes': '/fonts/GreatVibes.ttf',
+    'Sacramento': '/fonts/Sacramento.ttf',
+    'Lobster': '/fonts/Lobster.ttf',
+    'PT Serif': '/fonts/PTSerif.ttf',
+    'Bitter': '/fonts/Bitter.ttf',
+    'Libre Baskerville': '/fonts/LibreBaskerville.ttf',
+    'Roboto Mono': '/fonts/RobotoMono.ttf',
+    'Source Code Pro': '/fonts/SourceCodePro.ttf',
+    'Courier Prime': '/fonts/CourierPrime.ttf',
+    'Verdana': '/fonts/Roboto.ttf',
 };
 
 /**
@@ -47,7 +52,7 @@ const GOOGLE_FONT_URL_MAP: Record<string, string> = {
 export async function loadFontForConversion(fontFamily: string): Promise<opentype.Font | null> {
     if (fontCache.has(fontFamily)) return fontCache.get(fontFamily)!;
 
-    const url = GOOGLE_FONT_URL_MAP[fontFamily] || FALLBACK_FONT_URL;
+    const url = LOCAL_FONT_MAP[fontFamily] || FALLBACK_FONT_PATH;
     try {
         const font = await opentype.load(url);
         fontCache.set(fontFamily, font);
