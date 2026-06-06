@@ -7,6 +7,7 @@ import {
 import { NumberInput, SectionHeader } from './components';
 import { CanvasController } from '../editor/controller';
 import { ChangeTextStyleCommand } from '../shapes/commands/text';
+import { loadFontForConversion, WeldTextCommand } from '../shapes/commands/convert-to-path';
 import { ThemeColors } from '../../config/themes';
 import { useLanguage } from '../../contexts/language';
 
@@ -111,8 +112,20 @@ export const TextOptionsBar: React.FC<TextOptionsBarProps> = ({ selectedObject, 
                             selectedObject.fontStyle === 'italic' ? 'normal' : 'italic'))}
                     {toggleButton('Upper Case', <CaseSensitive size={14} />, selectedObject.upperCase === true,
                         () => executeStyleChange('upperCase', selectedObject.upperCase, !selectedObject.upperCase))}
-                    {toggleButton('Auto-Weld', <Merge size={14} />, selectedObject.weld === true,
-                        () => executeStyleChange('weld', selectedObject.weld, !selectedObject.weld))}
+                    <button
+                        onClick={async () => {
+                            if (!editor) return;
+                            const font = await loadFontForConversion(selectedObject.fontFamily || 'Roboto');
+                            if (!font) return;
+                            const cmd = new WeldTextCommand(selectedObject, font);
+                            editor.history.execute(cmd);
+                            editor.render();
+                        }}
+                        className={`p-1.5 rounded border ${theme.border}`}
+                        title="Weld — merge overlapping characters into a single path"
+                    >
+                        <Merge size={14} />
+                    </button>
                 </div>
             </div>
 
