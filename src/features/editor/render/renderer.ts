@@ -119,11 +119,29 @@ export class CanvasRenderer {
         this.ctx.translate(pan.x, pan.y);
         this.ctx.scale(zoom, zoom);
 
+        const viewport: Rect = {
+            minX: -pan.x / zoom,
+            minY: -pan.y / zoom,
+            maxX: (-pan.x + this.contentCanvas.width) / zoom,
+            maxY: (-pan.y + this.contentCanvas.height) / zoom,
+            width: this.contentCanvas.width / zoom,
+            height: this.contentCanvas.height / zoom,
+            cx: (-pan.x + this.contentCanvas.width / 2) / zoom,
+            cy: (-pan.y + this.contentCanvas.height / 2) / zoom,
+        };
+
         shapes.forEach(shape => {
+            if (!this.isShapeInViewport(shape, viewport)) return;
             this.renderShape(shape, false, [], layers, config, toolType, zoom);
         });
 
         this.ctx.restore();
+    }
+
+    private isShapeInViewport(shape: IShape, viewport: Rect): boolean {
+        const bounds = shape.getBounds ? shape.getBounds() : null;
+        if (!bounds) return true;
+        return Geometry.rectIntersectsRect(bounds, viewport);
     }
 
     drawOverlay(
