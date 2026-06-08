@@ -72,17 +72,18 @@ describe('NodeEditTool - Segment Dragging', () => {
     });
 
     it('should detect segment hit on mouse down', () => {
-        // Mock getHitSegment return
-        (tool as any).getHitSegment = vi.fn().mockReturnValue({ index: 0, t: 0.5 });
+        // Mock hit tester methods
+        (tool as any).hitTester.getHitAnchor = vi.fn().mockReturnValue(-1);
+        (tool as any).hitTester.getHitSegment = vi.fn().mockReturnValue({ index: 0, t: 0.5 });
 
         const event = { clientX: 50, clientY: 5, shiftKey: false } as MouseEvent;
         tool.onMouseDown(event);
 
-        expect(tool.dragState).toEqual(expect.objectContaining({
-            type: 'SEGMENT',
-            nodeIndex: 0
-        }));
-        expect(tool.dragState?.dragStartMouse).toEqual({ x: 50, y: 5 });
+        const state = (tool as any).state;
+        expect(state.kind).toBe('dragging');
+        expect(state.type).toBe('SEGMENT');
+        expect(state.nodeIndex).toBe(0);
+        expect(state.dragStartMouse).toEqual({ x: 50, y: 5 });
     });
 
     it('should drag segment by moving adjacent handles', () => {
@@ -98,7 +99,8 @@ describe('NodeEditTool - Segment Dragging', () => {
         initialNodes.set(0, n1.clone());
         initialNodes.set(1, n2.clone());
 
-        tool.dragState = {
+        (tool as any).state = {
+            kind: 'dragging',
             type: 'SEGMENT',
             nodeIndex: 0,
             initialNodes: initialNodes,
@@ -122,7 +124,8 @@ describe('NodeEditTool - Segment Dragging', () => {
         initialNodes.set(0, shape.nodes[0].clone());
         initialNodes.set(1, shape.nodes[1].clone());
 
-        tool.dragState = {
+        (tool as any).state = {
+            kind: 'dragging',
             type: 'SEGMENT',
             nodeIndex: 0,
             initialNodes: initialNodes,
