@@ -26,11 +26,75 @@ Depends on:
   @FilletCommand
   @SnapManager
 
-Scenario: fillet a rectangle corner
+Scenario: round fillet with positive radius
   Given a rectangle with 4 corner nodes and fillet radius = 5mm
   When the user clicks the top-left corner
-  Then the corner is replaced with a 5mm radius arc
+  Then the corner is replaced with a 5mm radius arc (convex)
   And the path now has 5 nodes (3 corners + 2 new smooth nodes for the arc)
+  And the arc curves toward the interior of the corner
+
+Scenario: round fillet with negative radius (inward arc)
+  Given a rectangle with 4 corner nodes and fillet radius = -5mm
+  When the user clicks a corner node
+  Then the corner is replaced with a concave arc (curving away from corner)
+  And the arc has a radius of curvature matching |5mm|
+  And the path has additional nodes (multi-segment for accuracy)
+
+Scenario: bevel fillet
+  Given a rectangle and fillet style set to 'bevel' with radius = 5mm
+  When the user clicks a corner node
+  Then the corner is replaced with a straight chamfer (bevel)
+  And the two new nodes have no curves (corner type, cpIn=cpOut=position)
+  And the path now has 5 nodes
+
+Scenario: preview on hover (round)
+  Given the Fillet tool is active and radius = 5mm
+  When the user hovers over a valid corner node
+  Then a green arc preview appears on the canvas
+  And the cursor indicates a clickable state
+
+Scenario: preview on hover (bevel)
+  Given the Fillet tool is active, style = bevel, radius = 5mm
+  When the user hovers over a valid corner node
+  Then a green straight-line preview appears on the canvas
+
+Scenario: reject fillet on smooth node
+  Given a path with a smooth node (has bezier curves)
+  When the user clicks that smooth node with the Fillet tool
+  Then nothing happens (fillet only works on straight corners)
+  And the node count remains unchanged
+
+Scenario: reject fillet when radius exceeds segment length
+  Given a small triangle and fillet radius = 50mm (larger than any edge)
+  When the user clicks a corner
+  Then nothing happens (radius rejected as too large)
+  And the node count remains unchanged
+
+Scenario: reject negative radius for bevel style
+  Given fillet style = bevel and radius = -5mm
+  When the user clicks a corner node
+  Then nothing happens (negative not allowed for bevel)
+
+Scenario: undo round fillet
+  Given a rectangle has had a fillet applied (5 nodes)
+  When the user presses Ctrl+Z
+  Then the original 4-node rectangle is restored
+
+Scenario: undo bevel
+  Given a rectangle has had a bevel applied (5 nodes)
+  When the user presses Ctrl+Z
+  Then the original 4-node rectangle is restored
+
+Scenario: fillet radius input accepts negative values
+  Given the Fillet tool is active and style is 'round'
+  When the user types "-10" in the radius input field
+  Then the store's filletRadius is set to -10 * PIXELS_PER_MM
+  And the preview uses the negative radius
+
+Scenario: switching to bevel resets negative radius
+  Given the fillet radius is -5mm and style is 'round'
+  When the user changes style to 'bevel'
+  Then the radius resets to 0 (bevel does not support negative)
 
 Tasks:
   [x] Click to apply fillet.
