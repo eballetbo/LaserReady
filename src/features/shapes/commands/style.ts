@@ -12,6 +12,7 @@ export class UpdateStyleCommand implements Command {
     private shapeIds: string[];
     private newStyle: StyleProperties;
     private oldStyles: Map<string, StyleProperties>;
+    readonly label = 'Update Style';
 
     constructor(shapes: IShape[], newStyle: StyleProperties) {
         this.shapeIds = shapes.map(s => s.id);

@@ -10,6 +10,7 @@ export class ResizeShapeCommand implements Command {
     private sy: number;
     private origin: Point;
     private snapshots: ShapeSnapshot[];
+    readonly label = 'Resize';
 
     constructor(shapesToResize: IShape[], sx: number, sy: number, origin: Point) {
         this.shapesToResize = shapesToResize;

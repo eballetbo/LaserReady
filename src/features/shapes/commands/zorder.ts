@@ -8,6 +8,7 @@ export class ZOrderCommand implements Command {
     private shapeIds: string[];
     private operation: ZOrderOperation;
     private previousOrder: string[] = [];
+    readonly label = 'Reorder';
 
     constructor(shapes: IShape[], operation: ZOrderOperation) {
         this.shapeIds = shapes.map(s => s.id);

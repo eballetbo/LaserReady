@@ -6,6 +6,7 @@ export class DeleteShapeCommand implements Command {
     private shapesToDelete: IShape[];
     private previousSelectedIds: string[];
     private originalIndices: number[] = [];
+    readonly label = 'Delete';
 
     constructor(shapesToDelete: IShape[]) {
         this.shapesToDelete = shapesToDelete;

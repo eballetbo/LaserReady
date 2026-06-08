@@ -9,6 +9,7 @@ export class RotateShapeCommand implements Command {
     private angle: number;
     private center: Point;
     private snapshots: ShapeSnapshot[];
+    readonly label = 'Rotate';
 
     constructor(shapesToRotate: IShape[], angle: number, center: Point) {
         this.shapesToRotate = shapesToRotate;

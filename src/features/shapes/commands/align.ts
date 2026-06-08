@@ -7,6 +7,7 @@ export class AlignCommand implements Command {
     private alignType: AlignType;
     private reference: AlignReference;
     private originalPositions: Map<string, { x: number, y: number }>;
+    readonly label = 'Align';
 
     constructor(shapeIds: string[], type: AlignType, reference: AlignReference = 'selection') {
         this.shapeIds = shapeIds;

@@ -4,6 +4,7 @@ import { IShape } from '../types';
 
 export class ImportShapesCommand implements Command {
     private shapes: IShape[];
+    readonly label = 'Import';
 
     constructor(shapes: IShape[]) {
         this.shapes = shapes;

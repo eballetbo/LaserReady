@@ -12,11 +12,13 @@ export class BooleanCommand implements Command {
     private operation: BooleanOperationType;
     private originalSelection: string[];
     private originalIndices: number[] = [];
+    readonly label: string;
 
     constructor(shapes: PathShape[], operation: BooleanOperationType) {
         this.originalShapes = shapes;
         this.operation = operation;
         this.originalSelection = shapes.map(s => s.id);
+        this.label = `Boolean ${operation}`;
     }
 
     execute(): void {

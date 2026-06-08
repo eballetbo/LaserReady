@@ -6,6 +6,7 @@ export class DistributeCommand implements Command {
     private shapeIds: string[];
     private axis: 'horizontal' | 'vertical';
     private originalPositions: Map<string, { x: number, y: number }>;
+    readonly label = 'Distribute';
 
     constructor(shapeIds: string[], axis: 'horizontal' | 'vertical') {
         this.shapeIds = shapeIds;

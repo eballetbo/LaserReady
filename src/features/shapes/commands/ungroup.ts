@@ -7,6 +7,7 @@ import { GroupShape } from '../models/group';
 export class UngroupCommand implements Command {
     private groupsToUngroup: GroupShape[];
     private originalGroupIds: string[];
+    readonly label = 'Ungroup';
     // We need to track children per group to restore on undo?
     // Actually the GroupShape instance itself holds the children.
     // If we remove GroupShape from store, the object still exists in memory here.

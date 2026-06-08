@@ -6,6 +6,7 @@ import { Geometry } from '../../../core/math/geometry';
 export class MoveNodeCommand implements Command {
     private shapeId: string;
     private changes: { index: number; oldNode: PathNode; newNode: PathNode }[];
+    readonly label = 'Move Node';
 
     constructor(shapeId: string, changes: { index: number; oldNode: PathNode; newNode: PathNode }[] | Map<number, { oldNode: PathNode, newNode: PathNode }>) {
         this.shapeId = shapeId;
@@ -88,6 +89,7 @@ export class InsertNodeCommand implements Command {
     t: number;
     oldNodes: PathNode[];
     newNodes: PathNode[];
+    readonly label = 'Insert Node';
 
     constructor(shapeId: string, segmentIndex: number, t: number) {
         this.id = crypto.randomUUID();
@@ -190,6 +192,7 @@ export class ChangeNodeTypeCommand implements Command {
     newType: NodeType;
     oldNode: PathNode;
     newNode: PathNode;
+    readonly label = 'Change Node Type';
 
     constructor(shapeId: string, nodeIndex: number, newType: NodeType) {
         this.id = crypto.randomUUID();
@@ -310,6 +313,7 @@ export class DeleteNodeCommand implements Command {
     indices: number[];
     oldNodes: PathNode[];
     newNodes: PathNode[];
+    readonly label = 'Delete Node';
 
     constructor(shapeId: string, indices: number | number[]) {
         this.id = crypto.randomUUID();

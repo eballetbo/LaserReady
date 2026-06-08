@@ -7,6 +7,7 @@ export class MoveShapeCommand implements Command {
     private shapeIds: string[];
     private dx: number;
     private dy: number;
+    readonly label = 'Move';
 
     constructor(_editor: CanvasController, shapes: IShape[], dx: number, dy: number) {
         this.shapeIds = shapes.map(s => s.id);

@@ -7,6 +7,7 @@ const DUPLICATE_OFFSET = 10;
 export class DuplicateCommand implements Command {
     private sourceIds: string[];
     private duplicatedShapes: IShape[] = [];
+    readonly label = 'Duplicate';
 
     constructor(sourceShapes: IShape[]) {
         this.sourceIds = sourceShapes.map(s => s.id);

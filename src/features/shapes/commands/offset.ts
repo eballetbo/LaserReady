@@ -17,6 +17,7 @@ export class OffsetCommand implements Command {
     // State for Undo/Redo
     private addedShapes: IShape[] = [];
     private removedShapes: IShape[] = [];
+    readonly label = 'Offset';
 
     constructor(shapeIds: string[], options: OffsetOptions) {
         this.shapeIds = shapeIds;

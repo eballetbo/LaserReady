@@ -9,6 +9,7 @@ export class GroupCommand implements Command {
     private groupShape: GroupShape | null = null;
     private originalIds: string[];
     private originalIndices: number[] = [];
+    readonly label = 'Group';
 
     constructor(shapes: IShape[]) {
         this.shapesToGroup = shapes;

@@ -10,7 +10,7 @@ export class HistoryManager {
     private undoStack: Command[];
     private redoStack: Command[];
 
-    constructor(limit: number = 50) {
+    constructor(limit: number = 100) {
         this.limit = limit;
         this.undoStack = [];
         this.redoStack = [];
@@ -64,6 +64,24 @@ export class HistoryManager {
 
     canRedo(): boolean {
         return this.redoStack.length > 0;
+    }
+
+    get undoLabel(): string | undefined {
+        const top = this.undoStack[this.undoStack.length - 1];
+        return top?.label;
+    }
+
+    get redoLabel(): string | undefined {
+        const top = this.redoStack[this.redoStack.length - 1];
+        return top?.label;
+    }
+
+    get undoCount(): number {
+        return this.undoStack.length;
+    }
+
+    get redoCount(): number {
+        return this.redoStack.length;
     }
 
     clear(): void {
