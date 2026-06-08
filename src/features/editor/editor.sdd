@@ -42,3 +42,66 @@ Depends on:
   @HistoryManager
   @SnapManager
   @useStore
+
+Scenario: zoom with mouse wheel
+  Given the canvas is at zoom level 1.0
+  When the user scrolls the mouse wheel up (zoom in)
+  Then the zoom level increases (e.g. to 1.25)
+  And the zoom centers on the cursor position
+  When the user scrolls down (zoom out)
+  Then the zoom level decreases
+
+Scenario: pan with middle mouse or space+drag
+  Given the canvas is at pan (0, 0)
+  When the user holds Space and drags the canvas
+  Then the pan offset changes by the drag delta
+  And shapes appear to move on screen
+
+Scenario: undo via keyboard
+  Given a shape has been created
+  When the user presses Ctrl+Z
+  Then the shape is removed (undo)
+  When the user presses Ctrl+Shift+Z
+  Then the shape is restored (redo)
+
+Scenario: undo via toolbar buttons
+  Given a shape has been created
+  When the user clicks the Undo button in the toolbar
+  Then the shape is removed
+  When the user clicks the Redo button
+  Then the shape is restored
+
+Scenario: history stack limit
+  Given the user has performed 60 actions
+  Then the history stack retains only the last 50
+  And undo cannot go back further than 50 steps
+
+Scenario: snap to grid
+  Given snapping is enabled and grid is visible
+  When the user drags a shape near a grid intersection
+  Then the shape snaps to the grid point
+  And a snap indicator appears
+
+Scenario: snap to endpoint
+  Given snapping is enabled and shape A has a corner at (100, 100)
+  When the user drags shape B's corner near (100, 100)
+  Then it snaps to exactly (100, 100)
+  And a snap marker is shown
+
+Scenario: tool switching via keyboard shortcuts
+  Given the Select tool is active
+  When the user presses 'P'
+  Then the Pen tool becomes active
+  When the user presses 'V'
+  Then the Select tool becomes active again
+
+Scenario: canvas renders shapes correctly
+  Given 3 shapes exist (rectangle, circle, path)
+  When the canvas renders
+  Then all 3 shapes are visible on the canvas
+  And shapes on hidden layers are not rendered
+
+Scenario: material boundary display
+  Given material is set to 300x200mm
+  Then a dashed rectangle representing the material boundary is visible
+  And it measures 300x200mm in world coordinates
