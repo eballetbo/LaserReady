@@ -31,6 +31,40 @@ Depends on:
   @PathShape
   @IShape
 
+Scenario: import SVG with basic shapes
+  Given an SVG file containing a rectangle and a circle
+  When the user triggers file import
+  Then 2 PathShape instances appear in the store
+  And their geometry matches the SVG coordinates
+
+Scenario: import SVG preserves physical dimensions
+  Given an SVG file with width="100mm" containing a 50mm wide rect
+  When the user imports the file
+  Then the imported rectangle has a width of ~50mm (189px at 96DPI)
+
+Scenario: import SVG sanitizes malicious content
+  Given an SVG file containing a <script> tag and an onclick handler
+  When the user imports the file
+  Then the script and event handler are stripped
+  And valid path geometry is still imported
+  And no script executes
+
+Scenario: export SVG with mm dimensions
+  Given the canvas has 2 shapes and material is set to 300x200mm
+  When the user exports as SVG
+  Then the SVG has width="300mm" height="200mm"
+  And shapes are rendered as <path> elements with correct coordinates
+  And stroke colors match laser mode (red=cut, blue=score, black=engrave)
+
+Scenario: SVG round-trip preserves geometry
+  Given a shape is drawn, exported to SVG, and re-imported
+  Then the re-imported shape matches the original within 0.1mm tolerance
+
+Scenario: reject raster image import
+  Given the user selects a .png or .jpg file for import
+  Then the file is rejected (only SVG accepted)
+  And a notification informs the user
+
 Done when:
   SVG round-trip preserves shape geometry within 0.1mm tolerance.
   Malicious SVG content is stripped without crashing.
