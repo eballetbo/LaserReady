@@ -38,8 +38,38 @@ Scenario: auto-save triggers after shape creation
   Then IndexedDB is updated within 500ms
   And the saved project contains 4 shapes
 
+Scenario: session restore on reload
+  Given the canvas has 2 shapes and auto-save has run
+  When the user reloads the page
+  Then the 2 shapes are restored from IndexedDB
+  And the canvas renders them correctly
+
+Scenario: export .laser project file
+  Given the canvas has shapes, layers, and material dimensions
+  When the user exports a .laser project file
+  Then a JSON file is downloaded
+  And it contains version, shapes array, layers, and material
+
+Scenario: import valid .laser project file
+  Given a valid .laser file with 5 shapes
+  When the user imports the file
+  Then the canvas is populated with 5 shapes
+  And layers and material settings are restored
+
 Scenario: corrupted project rejected on import
   Given a .laser file with version field missing
   When the user imports the file
   Then a validation error notification is shown
   And the canvas state is unchanged
+
+Scenario: oversized project rejected
+  Given a .laser file exceeding MAX_FILE_SIZE (50MB)
+  When the user imports the file
+  Then a validation error is shown
+  And the canvas state is unchanged
+
+Scenario: shape deserialization preserves types
+  Given a project with PathShape, TextObject, and GroupShape
+  When the project is saved and reloaded
+  Then each shape retains its correct class (PathShape, TextObject, GroupShape)
+  And methods like getBounds() work on restored shapes
