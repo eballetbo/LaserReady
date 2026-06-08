@@ -1,8 +1,7 @@
 import paper from 'paper';
-import { BooleanOperations } from '../../core/math/boolean';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { LASER_MODES } from '../../config/laser-modes';
-import { PathShape } from '../../features/shapes/models/path';
+import { PathNode } from '../../features/shapes/models/node';
 import { IShape } from '../../features/shapes/types';
 import { LaserLayer } from '../../types/layer';
 
@@ -24,12 +23,32 @@ interface TextShapeView {
 const scope = new paper.PaperScope();
 scope.setup(new paper.Size(1000, 1000));
 
+function shapeToPaperPath(shape: IShape): paper.Path | null {
+    if (!shape.nodes || shape.nodes.length === 0) return null;
+
+    const path = new scope.Path({ closed: shape.closed });
+
+    shape.nodes.forEach((node: PathNode | { x: number; y: number; cpIn?: { x: number; y: number }; cpOut?: { x: number; y: number } }) => {
+        const point = new scope.Point(node.x, node.y);
+        const cpIn = node.cpIn ?? { x: node.x, y: node.y };
+        const cpOut = node.cpOut ?? { x: node.x, y: node.y };
+        const handleIn = new scope.Point(cpIn.x - node.x, cpIn.y - node.y);
+        const handleOut = new scope.Point(cpOut.x - node.x, cpOut.y - node.y);
+
+        path.add(new scope.Segment(point, handleIn, handleOut));
+    });
+
+    return path;
+}
+
 export const exportToSVG = (shapes: IShape[], width: number, height: number, layers?: LaserLayer[]): string => {
     const layerMap = new Map<string, LaserLayer>();
     if (layers) layers.forEach(l => layerMap.set(l.id, l));
 
-    // Clear project
+    // Clear project and ensure an active layer exists
+    scope.activate();
     scope.project.clear();
+    new scope.Layer();
     scope.view.viewSize = new paper.Size(width, height);
 
     const addShapeToProject = (shape: IShape): void => {
@@ -60,7 +79,7 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number, lay
             item = (textItem as unknown as { toPath(): paper.PathItem }).toPath();
             textItem.remove();
         } else if (shape.nodes) {
-            item = BooleanOperations.toPaperPath(shape as PathShape) as paper.PathItem;
+            item = shapeToPaperPath(shape);
         }
 
         if (!item) return;
