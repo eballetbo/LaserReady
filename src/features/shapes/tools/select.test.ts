@@ -96,8 +96,8 @@ describe('SelectTool - Resize Bug', () => {
         tool.onMouseDown(mouseDownEvent);
 
         // Verify resize mode activated
-        expect(tool.isResizing).toBe(true);
-        expect(tool.resizeHandle).toBe('w');
+        expect((tool as any).state.kind).toBe('resizing');
+        expect((tool as any).state.handle).toBe('w');
 
         // Step 2: User drags to resize
         const mouseMoveEvent = new MouseEvent('mousemove', {
@@ -120,10 +120,8 @@ describe('SelectTool - Resize Bug', () => {
         expect(mockEditor.selectedShapes).toContain(testShape);
         expect(mockEditor.selectedShapes.length).toBe(1);
 
-        // 🔴 THIS WILL FAIL: Resize state should be properly cleared
-        expect(tool.isResizing).toBe(false);
-        expect(tool.isDraggingShape).toBe(false);
-        expect(tool.dragStart).toBeNull();
+        // State should be properly cleared
+        expect((tool as any).state.kind).toBe('idle');
     });
 
     it('🔴 RED: should not confuse resize with move operation', () => {
@@ -136,8 +134,7 @@ describe('SelectTool - Resize Bug', () => {
             clientY: handleY
         }));
 
-        expect(tool.isResizing).toBe(true);
-        expect(tool.isDraggingShape).toBe(false); // Should NOT be dragging
+        expect((tool as any).state.kind).toBe('resizing');
 
         // Move mouse - should trigger resize, not move
         tool.onMouseMove(new MouseEvent('mousemove', {
@@ -501,8 +498,7 @@ describe('SelectTool - Multi-Select Move', () => {
         // 4. Mouse Up
         tool.onMouseUp({ clientX: 60, clientY: 60 } as MouseEvent);
 
-        // Verify move
-        // Since we are mocking everything, we mainly care that selection was preserved
-        expect(tool.isDraggingShape).toBe(false);
+        // State should be cleared after mouseUp
+        expect((tool as any).state.kind).toBe('idle');
     });
 });
