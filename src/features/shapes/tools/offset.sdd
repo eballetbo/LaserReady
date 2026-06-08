@@ -31,6 +31,31 @@ Scenario: outward offset
   When the user clicks
   Then the original square is replaced by the offset result
 
+Scenario: inward offset
+  Given a 50mm square is on canvas and offset distance = -3mm
+  When the user hovers over the square
+  Then a green preview of a ~44mm square appears
+  When the user clicks
+  Then the original square is replaced by the inward offset result
+
+Scenario: offset preview caching
+  Given the Offset tool is active and the user hovers over a shape
+  When the user moves the cursor slightly within the same shape
+  Then the preview does not recompute (uses cached result)
+  When the user changes the offset distance
+  Then the preview recomputes with the new distance
+
+Scenario: offset undo
+  Given a shape has had an offset applied
+  When the user presses Ctrl+Z
+  Then the original shape is restored
+
+Scenario: offset on degenerate path
+  Given a very small path where inward offset would self-intersect
+  When the user hovers or clicks
+  Then no crash occurs (error handled gracefully)
+  And a notification may appear indicating the offset failed
+
 Tasks:
   [x] Hover preview with caching.
   [x] Click to apply offset.
