@@ -134,6 +134,35 @@ Scenario: alignment change
   Then all lines center-align relative to the text anchor point
   And the anchor point position does not move
 
+Scenario: empty text is discarded
+  Given the Text tool is active
+  When the user clicks to place text but types nothing and switches tool
+  Then no TextObject is created in the store
+
+Scenario: edit existing text on double-click
+  Given a TextObject "Hello" exists on canvas and Select tool is active
+  When the user double-clicks on the text
+  Then the text enters edit mode (cursor visible, textarea focused)
+  And the user can append " World" to get "Hello World"
+  When the user clicks elsewhere
+  Then the text is committed as "Hello World"
+
+Scenario: font family change updates rendering
+  Given a TextObject "Test" is selected
+  When the user changes the font family in TextOptionsBar
+  Then the canvas re-renders with the new font
+  And the TextOptionsBar displays the newly selected font
+
+Scenario: text property change is undoable
+  Given a TextObject with fontSize 96 is selected
+  When the user changes fontSize to 48 and presses Ctrl+Z
+  Then the fontSize reverts to 96
+
+Scenario: switch from text tool preserves text
+  Given the Text tool is active and the user has typed "Hello"
+  When the user presses 'V' to switch to Select tool
+  Then a TextObject with text "Hello" is committed to the store
+
 Tasks:
   [x] Click to place text insertion point.
   [x] Hidden textarea for input capture.
