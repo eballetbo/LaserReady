@@ -11,6 +11,8 @@ interface CanvasProps {
     onSelectionChange?: (selection: IShape[]) => void;
 }
 
+const CANVAS_CLASS = 'absolute inset-0 block touch-none select-none outline-none w-full h-full';
+
 export default function Canvas({
     material,
     tool,
@@ -18,7 +20,9 @@ export default function Canvas({
     onSelectionChange
 }: CanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const bgCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const contentCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const editorRef = useRef<CanvasController | null>(null);
     const hasPerformedInitialFit = useRef(false);
     const selectionCallbackRef = useRef(onSelectionChange);
@@ -32,12 +36,19 @@ export default function Canvas({
     }, []);
 
     useEffect(() => {
-        if (!canvasRef.current) return;
+        if (!bgCanvasRef.current || !contentCanvasRef.current || !overlayCanvasRef.current) return;
 
-        const editor = new CanvasController(canvasRef.current, {
-            onSelectionChange: stableSelectionCallback,
-            gridSpacing: DEFAULT_GRID_SPACING
-        });
+        const editor = new CanvasController(
+            {
+                background: bgCanvasRef.current,
+                content: contentCanvasRef.current,
+                overlay: overlayCanvasRef.current
+            },
+            {
+                onSelectionChange: stableSelectionCallback,
+                gridSpacing: DEFAULT_GRID_SPACING
+            }
+        );
         editor.tool = tool;
 
         editorRef.current = editor;
@@ -61,21 +72,25 @@ export default function Canvas({
     }, [tool]);
 
     useEffect(() => {
-        if (!containerRef.current || !canvasRef.current || !editorRef.current) return;
+        if (!containerRef.current || !bgCanvasRef.current || !contentCanvasRef.current || !overlayCanvasRef.current || !editorRef.current) return;
+
+        const canvases = [bgCanvasRef.current, contentCanvasRef.current, overlayCanvasRef.current];
 
         const resizeObserver = new ResizeObserver(() => {
-            if (containerRef.current && canvasRef.current && editorRef.current) {
-                const { clientWidth, clientHeight } = containerRef.current;
+            if (!containerRef.current || !editorRef.current) return;
+            const { clientWidth, clientHeight } = containerRef.current;
 
-                if (canvasRef.current.width !== clientWidth || canvasRef.current.height !== clientHeight) {
-                    canvasRef.current.width = clientWidth;
-                    canvasRef.current.height = clientHeight;
-                    editorRef.current.render();
+            const needsResize = canvases.some(c => c.width !== clientWidth || c.height !== clientHeight);
+            if (needsResize) {
+                canvases.forEach(c => {
+                    c.width = clientWidth;
+                    c.height = clientHeight;
+                });
+                editorRef.current.render();
 
-                    if (!hasPerformedInitialFit.current && clientWidth > 0 && clientHeight > 0) {
-                        editorRef.current.fitToScreen();
-                        hasPerformedInitialFit.current = true;
-                    }
+                if (!hasPerformedInitialFit.current && clientWidth > 0 && clientHeight > 0) {
+                    editorRef.current.fitToScreen();
+                    hasPerformedInitialFit.current = true;
                 }
             }
         });
@@ -121,12 +136,15 @@ export default function Canvas({
             </div>
 
             <div ref={containerRef} className="relative bg-white overflow-hidden shadow-inner">
+                <canvas ref={bgCanvasRef} className={CANVAS_CLASS} style={{ zIndex: 0 }} />
+                <canvas ref={contentCanvasRef} className={CANVAS_CLASS} style={{ zIndex: 1 }} />
                 <canvas
-                    ref={canvasRef}
+                    ref={overlayCanvasRef}
                     data-testid="main-canvas"
                     aria-label="Design canvas"
                     role="application"
-                    className="block touch-none select-none outline-none w-full h-full"
+                    className={CANVAS_CLASS}
+                    style={{ zIndex: 2 }}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                 />

@@ -1,5 +1,5 @@
 import { EDITOR_CONFIG, MIN_ZOOM, MAX_ZOOM } from '../../config/constants';
-import { CanvasRenderer, TextEditingState } from './render/renderer';
+import { CanvasRenderer, CanvasLayers, TextEditingState } from './render/renderer';
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
 import { ToolManager } from './tool-manager';
@@ -21,9 +21,6 @@ import { ZOrderCommand } from '../shapes/commands/zorder';
 import { updateShapeGeometry } from './utils/geometry-updater';
 import { notify } from '../ui/toast-utils';
 
-/**
- * Main Editor Controller.
- */
 export class CanvasController {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
@@ -41,17 +38,23 @@ export class CanvasController {
     zoom: number;
     pan: { x: number; y: number };
     unsubscribe: () => void;
-    selectedShape?: IShape; // Temporary selection for creation tools
+    selectedShape?: IShape;
     private animationFrameId: number | null = null;
     private lastFrameTime: number = 0;
     private renderPending: boolean = false;
     private lastSelectionIds: string = '';
     private renderFrameId: number | null = null;
 
-    constructor(canvasElement: HTMLCanvasElement, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
-        this.canvas = canvasElement;
+    private dirtyFlags = {
+        background: true,
+        content: true,
+        overlay: true,
+    };
+
+    constructor(layers: CanvasLayers, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
+        this.canvas = layers.overlay;
         this.ctx = this.canvas.getContext('2d')!;
-        this.renderer = new CanvasRenderer(this.canvas);
+        this.renderer = new CanvasRenderer(layers);
         this.inputManager = new InputManager(this.canvas);
         this.toolManager = new ToolManager(this, this.inputManager);
         this.history = new HistoryManager();
@@ -64,38 +67,44 @@ export class CanvasController {
 
         this.onSelectionChange = options.onSelectionChange || (() => { });
 
-
-
-        this.activePath = null; // For pen tool
+        this.activePath = null;
         this.previewPoint = null;
-        this.selectionBox = null; // For drag selection preview
-        this.previewOrigin = null; // For custom preview start point
+        this.selectionBox = null;
+        this.previewOrigin = null;
 
         this.zoom = 1;
         this.pan = { x: 0, y: 0 };
 
-
-        // Subscribe to canvas-relevant store slices only
         let prevState = useStore.getState();
         this.unsubscribe = useStore.subscribe((state) => {
             const zoomPanChanged = state.zoom !== this.zoom || state.pan !== this.pan;
-            const canvasChanged =
-                state.shapes !== prevState.shapes ||
-                state.selectedShapes !== prevState.selectedShapes ||
-                state.tool !== prevState.tool ||
-                state.layers !== prevState.layers ||
-                state.selectedNodeIndices !== prevState.selectedNodeIndices ||
-                state.material !== prevState.material ||
-                zoomPanChanged;
 
             if (zoomPanChanged) {
                 this.zoom = state.zoom;
                 this.pan = state.pan;
                 this.inputManager.setTransform(this.zoom, this.pan);
+                this.dirtyFlags.background = true;
+                this.dirtyFlags.content = true;
+                this.dirtyFlags.overlay = true;
             }
 
             if (state.isSnappingEnabled !== this.snapManager.settings.enabled) {
                 this.snapManager.settings.enabled = state.isSnappingEnabled;
+            }
+
+            if (state.shapes !== prevState.shapes || state.layers !== prevState.layers) {
+                this.dirtyFlags.content = true;
+                this.dirtyFlags.overlay = true;
+            }
+
+            if (state.selectedShapes !== prevState.selectedShapes ||
+                state.selectedNodeIndices !== prevState.selectedNodeIndices ||
+                state.tool !== prevState.tool) {
+                this.dirtyFlags.overlay = true;
+            }
+
+            if (state.material !== prevState.material) {
+                this.dirtyFlags.background = true;
             }
 
             const hasSelection = state.selectedShapes.length > 0 && state.tool === 'select';
@@ -105,23 +114,20 @@ export class CanvasController {
                 this.stopSelectionAnimation();
             }
 
+            const anyDirty = this.dirtyFlags.background || this.dirtyFlags.content || this.dirtyFlags.overlay;
+
             prevState = state;
 
-            if (canvasChanged) {
-                this.render();
+            if (anyDirty) {
+                this.scheduleRender();
             }
         });
 
-        // Init input manager transform
         this.inputManager.setTransform(this.zoom, this.pan);
-
-        // Initial Fit to Screen
         setTimeout(() => this.fitToScreen(), 0);
-
         this.render();
     }
 
-    // Proxy getter to get shapes from store for tools usage
     get shapes(): IShape[] {
         return useStore.getState().shapes;
     }
@@ -130,7 +136,6 @@ export class CanvasController {
         useStore.getState().setShapes(value);
     }
 
-    // Proxy for selectedShapes. 
     get selectedShapes(): IShape[] {
         const { shapes, selectedShapes } = useStore.getState();
         return shapes.filter(s => selectedShapes.includes(s.id));
@@ -161,8 +166,6 @@ export class CanvasController {
         useStore.getState().setSelectedNodeIndices(value);
     }
 
-
-
     dispose() {
         this.stopSelectionAnimation();
         if (this.renderFrameId) cancelAnimationFrame(this.renderFrameId);
@@ -177,6 +180,7 @@ export class CanvasController {
             const deltaTime = currentTime - this.lastFrameTime;
             this.lastFrameTime = currentTime;
             this.renderer.updateDashAnimation(deltaTime);
+            this.dirtyFlags.overlay = true;
             this.renderImmediate();
             this.animationFrameId = requestAnimationFrame(animate);
         };
@@ -191,10 +195,6 @@ export class CanvasController {
     }
 
     getMousePos(evt: MouseEvent) {
-        // Fallback or utility if needed, but tools should use the passed point preferably.
-        // However, existing tools likely call this.editor.getMousePos(e).
-        // So we should maintain this method, but delegate to InputManager logic or use stored transform.
-        // Since InputManager is private essentially, we can reuse logic here.
         const rect = this.canvas.getBoundingClientRect();
         return {
             x: (evt.clientX - rect.left - this.pan.x) / this.zoom,
@@ -202,29 +202,25 @@ export class CanvasController {
         };
     }
 
-    // Tools might need to be refactored to accept {x, y} instead of just event?
-    // Current tool interface: onMouseDown(e)
-    // We can monkey-patch the event object to add worldX/worldY or pass it as second arg?
-    // The existing code in PathEditor.handleMouseDown was: 
-    // this.activeTool.onMouseDown(e);
-    // Tools usually call this.editor.getMousePos(e).
-    // So if we keep getMousePos working, tools don't need changes yet.
-    // BUT the prompt says "PathEditor should delegate detection... and only receive clean events".
-    // And "PathEditor... only receive clean events like onClick(worldX, worldY)".
-    // So ideally handleMouseDown receives (worldX, worldY).
-    // And we should probably pass that to the tool?
-    // "activeTool.onMouseDown(e)" -> maybe "activeTool.onMouseDown(e, worldPos)"?
-    // I will try to pass worldPos to tools if they support it, but for compatibility I'll ensure getMousePos still works.
-
-
-
-    render() {
+    private scheduleRender() {
         if (this.renderPending) return;
         this.renderPending = true;
         this.renderFrameId = requestAnimationFrame(() => {
             this.renderPending = false;
             this.renderImmediate();
         });
+    }
+
+    render() {
+        this.dirtyFlags.background = true;
+        this.dirtyFlags.content = true;
+        this.dirtyFlags.overlay = true;
+        this.scheduleRender();
+    }
+
+    renderOverlay() {
+        this.dirtyFlags.overlay = true;
+        this.scheduleRender();
     }
 
     private isEditingText(): boolean {
@@ -243,7 +239,6 @@ export class CanvasController {
                 textId: textTool.activeText.id,
                 cursorPosition: textTool.cursorPosition ?? 0
             };
-            // Start animation for cursor blink if not already running
             if (!this.animationFrameId) {
                 this.startSelectionAnimation();
             }
@@ -251,25 +246,41 @@ export class CanvasController {
             this.stopSelectionAnimation();
         }
 
-        this.renderer.drawScene(
-            shapes,
-            selectedObjects,
-            layers,
-            this.config,
-            tool,
-            this.activePath,
-            this.previewPoint,
-            this.selectionBox,
-            zoom,
-            pan,
-            selectedNodeIndices,
-            this.previewOrigin,
-            useStore.getState().material,
-            textEditing
-        );
+        if (this.dirtyFlags.background) {
+            this.renderer.drawBackground(zoom, pan, useStore.getState().material, this.config);
+            this.dirtyFlags.background = false;
+        }
 
-        if (this.snapManager && this.snapManager.activeSnap) {
-            this.renderer.drawSnapMarker(this.snapManager.activeSnap, zoom, pan);
+        if (this.dirtyFlags.content) {
+            this.renderer.drawContent(shapes, layers, this.config, tool, zoom, pan);
+            this.dirtyFlags.content = false;
+        }
+
+        if (this.dirtyFlags.overlay) {
+            const snapResult = this.snapManager?.activeSnap ?? null;
+
+            this.renderer.drawOverlay(
+                shapes,
+                selectedObjects,
+                layers,
+                this.config,
+                tool,
+                this.activePath,
+                this.previewPoint,
+                this.selectionBox,
+                zoom,
+                pan,
+                selectedNodeIndices,
+                this.previewOrigin,
+                textEditing,
+                snapResult
+            );
+
+            if (this.toolManager.activeTool && 'drawOverlay' in this.toolManager.activeTool) {
+                (this.toolManager.activeTool as any).drawOverlay(this.ctx);
+            }
+
+            this.dirtyFlags.overlay = false;
         }
 
         const selectionKey = selectedIds.join(',');
@@ -277,13 +288,7 @@ export class CanvasController {
             this.lastSelectionIds = selectionKey;
             this.onSelectionChange(selectedObjects);
         }
-
-        if (this.toolManager.activeTool && 'drawOverlay' in this.toolManager.activeTool) {
-            (this.toolManager.activeTool as any).drawOverlay(this.ctx);
-        }
     }
-
-    /* ... Remaining methods unchanged ... */
 
     moveSelected(dx: number, dy: number) {
         if (this.selectedShapes.length > 0) {
@@ -326,12 +331,6 @@ export class CanvasController {
     }
 
     performBooleanOperation(operation: 'unite' | 'subtract' | 'intersect' | 'exclude') {
-        // Pass a copy of the array to command to avoid reference issues if state changes
-        // although selectedShapes getter returns a new array filter.
-        // It's safe.
-        // Fix: Allow all path-based shapes (rect, circle, polygon, path, star)
-        // We can check if it has 'nodes' property or try instanceof. 
-        // Best safest given strict Typescript is checking instanceof PathShape.
         const paths = this.selectedShapes.filter(s => s instanceof PathShape) as PathShape[];
         if (paths.length < 2) return;
         const command = new BooleanCommand(paths, operation);
@@ -340,15 +339,12 @@ export class CanvasController {
 
     applyStyle(style: Partial<IShape>) {
         if (this.selectedShapes.length === 0) return;
-
         const command = new UpdateStyleCommand(this.selectedShapes, style);
         this.history.execute(command);
     }
 
     groupSelected() {
         if (this.selectedShapes.length < 2) return;
-        // Import GroupCommand dynamically or at top (need to add import)
-        // assuming import I added earlier or will add
         const command = new GroupCommand(this.selectedShapes);
         this.history.execute(command);
     }
@@ -357,12 +353,9 @@ export class CanvasController {
         if (this.selectedShapes.length === 0) return;
         const groups = this.selectedShapes.filter(s => s.type === 'group');
         if (groups.length === 0) return;
-
         const command = new UngroupCommand(groups as any);
         this.history.execute(command);
     }
-
-    // --- Clipboard ---
 
     private clipboard: IShape[] = [];
 
@@ -423,8 +416,6 @@ export class CanvasController {
         this.render();
     }
 
-    // --- Z-order ---
-
     bringForward() {
         if (this.selectedShapes.length === 0) return;
         this.history.execute(new ZOrderCommand(this.selectedShapes, 'bringForward'));
@@ -454,7 +445,6 @@ export class CanvasController {
         useStore.getState().updateShape(shape);
     }
 
-
     resetZoom() {
         this.fitToScreen();
     }
@@ -464,56 +454,32 @@ export class CanvasController {
         useStore.getState().setZoom(newZoom);
     }
 
-    // Note: unsubscribe listener will catch this update and update inputManager
-
     fitToScreen(margin: number = 40) {
-
-        // Use canvas dimensions (which now track viewport)
         const containerWidth = this.canvas.width;
         const containerHeight = this.canvas.height;
 
         if (!containerWidth || !containerHeight) return;
 
-        // Material dimensions (in pixels)
         const { width: matW, height: matH } = useStore.getState().material;
 
-        // Calculate Scale
         const scaleX = (containerWidth - margin * 2) / matW;
         const scaleY = (containerHeight - margin * 2) / matH;
-        // Actually fit usually allows zooming out, but maybe max 1.
-        // Let's just use min(scaleX, scaleY) clamped for sanity.
         const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(scaleX, scaleY)));
 
-        // Calculate Centering Pan
-        // We want the scaled material to be centered in container.
-        // ScaledDims = matW * zoom
-        // MarginLeft = (ContainerW - ScaledDims) / 2
-        // PanX should be that MarginLeft.
         const panX = (containerWidth - matW * clampedZoom) / 2;
         const panY = (containerHeight - matH * clampedZoom) / 2;
 
         useStore.getState().setZoom(clampedZoom);
         useStore.getState().setPan({ x: panX, y: panY });
-
-        // Immediate render update in case store update is async/batched 
-        // (though Zustand is usually sync, the subscription handles it)
     }
 
-    /**
-     * STEP 7: Simplified undo - now 100% Command Pattern.
-     * No more state cloning!
-     */
     undo(): void {
         this.history.undo();
         this.render();
     }
 
-    /**
-     * STEP 7: Simplified redo - now 100% Command Pattern.
-     */
     redo(): void {
         this.history.redo();
         this.render();
     }
-
 }

@@ -30,7 +30,7 @@ class MockEditor extends CanvasController {
             addEventListener: vi.fn(),
             removeEventListener: vi.fn()
         } as any;
-        super(mockCanvas);
+        super({ background: mockCanvas, content: mockCanvas, overlay: mockCanvas });
         this.canvas = mockCanvas;
         this.ctx = mockCanvas.getContext('2d');
         this.selectedNodeIndices = [];

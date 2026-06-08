@@ -52,7 +52,7 @@ describe('Shape Styling Logic', () => {
             height: 600
         } as unknown as HTMLCanvasElement;
 
-        const renderer = new CanvasRenderer(canvas);
+        const renderer = new CanvasRenderer({ background: canvas, content: canvas, overlay: canvas });
 
         // 1. Test Default (Black from Layer)
         const defaultShape = new PathShape([], true, 'layer-1');
