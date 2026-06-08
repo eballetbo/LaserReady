@@ -32,6 +32,64 @@ Depends on:
   @ChangeNodeTypeCommand
   @InsertNodeCommand
 
+Scenario: click to select node
+  Given a rectangle path is selected and NodeEdit tool is active
+  When the user clicks on the top-left node
+  Then that node is highlighted as selected
+
+Scenario: drag to move node
+  Given a node is selected in NodeEdit mode
+  When the user drags the node by (+20px, +20px)
+  Then the node's position updates by that delta
+  And connected segments update accordingly
+
+Scenario: arrow nudge
+  Given a node is selected
+  When the user presses the Right arrow key
+  Then the node moves 1px to the right
+  When the user presses Shift+Right
+  Then the node moves 10px to the right
+
+Scenario: change node type to smooth
+  Given a corner node is selected
+  When the user presses 'S'
+  Then the node type changes to 'smooth'
+  And the control handles become colinear
+
+Scenario: change node type to corner
+  Given a smooth node is selected
+  When the user presses 'C'
+  Then the node type changes to 'corner'
+  And the control handles become independent
+
+Scenario: delete node
+  Given a rectangle with 4 nodes and one node selected
+  When the user presses Delete
+  Then the path has 3 nodes
+  And the shape remains valid
+
+Scenario: insert node on segment
+  Given a path with a straight segment between nodes A and B
+  When the user double-clicks the midpoint of that segment
+  Then a new node is inserted between A and B
+  And the path now has one additional node
+
+Scenario: move node with undo
+  Given a node is selected at position (100, 100)
+  When the user drags it to (150, 150) and presses Ctrl+Z
+  Then the node returns to (100, 100)
+
+Scenario: multi-select with shift
+  Given two nodes visible on a path
+  When the user clicks node A, then Shift+clicks node B
+  Then both nodes A and B are selected
+  And dragging moves both simultaneously
+
+Scenario: break path at node
+  Given a closed rectangle with 4 nodes and one node selected
+  When the user triggers "Break Path" at that node
+  Then the path becomes open at that point
+
 Tasks:
   [x] Click to select node.
   [x] Multi-select with Shift.

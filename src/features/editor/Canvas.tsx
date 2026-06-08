@@ -41,6 +41,9 @@ export default function Canvas({
         editor.tool = tool;
 
         editorRef.current = editor;
+        if (typeof window !== 'undefined' && import.meta.env.DEV) {
+            (window as any).editorInstance = editor;
+        }
         onInit(editor);
 
         return () => {
