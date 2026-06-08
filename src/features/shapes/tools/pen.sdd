@@ -29,11 +29,46 @@ Depends on:
   @CreateShapeCommand
   @SnapManager
 
-Scenario: draw triangle
+Scenario: draw closed triangle
   Given the Pen tool is active
-  When the user clicks at 3 positions and closes the path
-  Then a closed PathShape with 3 corner nodes exists
+  When the user clicks at 3 positions and clicks the first node to close
+  Then a closed PathShape with 3 corner nodes exists in the store
   And it is the selected shape
+
+Scenario: draw open path with Enter
+  Given the Pen tool is active
+  When the user clicks at 3 positions and presses Enter
+  Then an open PathShape with 3 nodes exists in the store
+
+Scenario: draw open path with Escape
+  Given the Pen tool is active
+  When the user clicks at 2 positions and presses Escape
+  Then an open PathShape with 2 nodes exists in the store
+
+Scenario: click+drag creates smooth node
+  Given the Pen tool is active
+  When the user click+drags at a position
+  Then the placed node has type 'smooth' with non-zero control handles
+
+Scenario: discard single-node path
+  Given the Pen tool is active
+  When the user clicks once and presses Escape
+  Then no shape is created (single-point paths are discarded)
+
+Scenario: shift constrains to 45 degrees
+  Given the Pen tool is active and one node has been placed
+  When the user holds Shift and clicks at an angle near 30 degrees
+  Then the segment snaps to the nearest 45-degree increment (0 or 45)
+
+Scenario: preview line follows cursor
+  Given the Pen tool is active and one node is placed
+  When the user moves the cursor
+  Then a preview line is visible from the last node to the cursor position
+
+Scenario: undo removes last placed node
+  Given the Pen tool is active and 3 nodes have been placed
+  When the user presses Ctrl+Z
+  Then the path under construction has 2 nodes
 
 Tasks:
   [x] Click to place corner nodes.
