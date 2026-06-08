@@ -32,12 +32,41 @@ Scenario: unite two overlapping rectangles
   When the user clicks "Unite"
   Then a single merged shape replaces both rectangles
   And the result is selected
+  And the shape count decreases from 2 to 1
+
+Scenario: subtract one shape from another
+  Given two overlapping rectangles are selected (A on top of B)
+  When the user clicks "Subtract"
+  Then shape B minus shape A produces a single result shape
+  And the result has a cutout where A overlapped B
+
+Scenario: intersect two overlapping shapes
+  Given two overlapping rectangles are selected
+  When the user clicks "Intersect"
+  Then only the overlapping region remains as a single shape
+  And non-overlapping portions are removed
+
+Scenario: exclude two overlapping shapes
+  Given two overlapping rectangles are selected
+  When the user clicks "Exclude"
+  Then the overlapping region is removed
+  And only the non-overlapping portions remain
+
+Scenario: boolean with fewer than 2 shapes
+  Given only 1 shape is selected
+  Then the boolean operation buttons are disabled or do nothing
 
 Scenario: no overlap produces warning
   Given two non-overlapping shapes are selected
   When the user clicks "Subtract"
   Then a warning notification appears
   And original shapes are preserved
+
+Scenario: boolean operation undo
+  Given two shapes were united into one
+  When the user presses Ctrl+Z
+  Then the original two shapes are restored
+  And the united result is removed
 
 Tasks:
   [x] Unite operation.
