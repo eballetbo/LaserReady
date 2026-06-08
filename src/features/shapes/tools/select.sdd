@@ -36,14 +36,39 @@ Depends on:
 Scenario: click to select
   Given 2 shapes on canvas and nothing selected
   When the user clicks on shape A
-  Then shape A is selected
+  Then shape A is selected (selectedShapes contains shape A)
   And shape B is not selected
 
-Scenario: rubber-band enclosing selection
-  Given 3 shapes on canvas
+Scenario: click empty area deselects
+  Given shape A is selected
+  When the user clicks on an empty area of the canvas
+  Then no shapes are selected (selectedShapes is empty)
+
+Scenario: shift+click adds to selection
+  Given shape A is selected
+  When the user Shift+clicks on shape B
+  Then both shape A and shape B are selected
+
+Scenario: shift+click removes from selection
+  Given shapes A and B are both selected
+  When the user Shift+clicks on shape A
+  Then only shape B remains selected
+
+Scenario: rubber-band enclosing selection (left-to-right)
+  Given 3 shapes on canvas: A and B inside a region, C outside
   When the user drags left-to-right enclosing shapes A and B
   Then shapes A and B are selected
-  And shape C (outside the rectangle) is not selected
+  And shape C (partially outside the rectangle) is not selected
+
+Scenario: rubber-band crossing selection (right-to-left)
+  Given 3 shapes on canvas: A fully inside, B partially overlapping
+  When the user drags right-to-left over shapes A and B
+  Then both A and B are selected (crossing mode includes partial overlap)
+
+Scenario: move shape
+  Given shape A is selected at position (100, 100)
+  When the user drags shape A by (+100, +100)
+  Then shape A's bounding box minX is ~200 and minY is ~200
 
 Scenario: move with undo
   Given shape A is selected at position (100, 100)
@@ -51,6 +76,27 @@ Scenario: move with undo
   Then shape A is at (150, 120)
   When the user presses Ctrl+Z
   Then shape A is back at (100, 100)
+
+Scenario: resize via SE handle
+  Given a 100x100 rectangle is selected
+  When the user drags the bottom-right handle by (+100, +100)
+  Then the shape's width is ~200 and height is ~200
+
+Scenario: resize with undo
+  Given a 100x100 rectangle is selected
+  When the user resizes it to 200x200 and presses Ctrl+Z
+  Then the shape's width returns to ~100
+
+Scenario: rotate shape
+  Given a rectangle is selected
+  When the user drags the rotation handle
+  Then the shape's nodes change position (rotation applied)
+  And the operation is undoable with Ctrl+Z
+
+Scenario: keyboard shortcut activates select tool
+  Given the Pen tool is active
+  When the user presses 'V'
+  Then the Select tool becomes active
 
 Tasks:
   [x] Click selection.
