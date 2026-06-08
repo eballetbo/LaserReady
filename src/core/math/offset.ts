@@ -8,6 +8,9 @@ scope.setup(new paper.Size(1000, 1000));
 
 export type JoinStyle = 'round' | 'miter' | 'bevel';
 
+const ZERO = new scope.Point(0, 0);
+const DEFAULT_MITER_LIMIT = 4;
+
 /**
  * Converts a PathShape to a paper.Path
  */
@@ -17,7 +20,6 @@ const toPaperPath = (shape: PathShape): paper.Path => {
     });
 
     shape.nodes.forEach(node => {
-        // Paper.js handles are relative to the point
         const point = new scope.Point(node.x, node.y);
         const handleIn = new scope.Point(node.cpIn.x - node.x, node.cpIn.y - node.y);
         const handleOut = new scope.Point(node.cpOut.x - node.x, node.cpOut.y - node.y);
@@ -40,7 +42,6 @@ const fromPaperItem = (item: paper.Item): PathShape[] => {
         const nodes = path.segments.map(seg => {
             const x = seg.point.x;
             const y = seg.point.y;
-            // Convert relative handles back to absolute control points
             const cpInX = x + seg.handleIn.x;
             const cpInY = y + seg.handleIn.y;
             const cpOutX = x + seg.handleOut.x;
@@ -60,65 +61,142 @@ const fromPaperItem = (item: paper.Item): PathShape[] => {
     return shapes;
 };
 
+function lineLineIntersect(
+    p1: paper.Point, d1: paper.Point,
+    p2: paper.Point, d2: paper.Point
+): paper.Point | null {
+    const cross = d1.x * d2.y - d1.y * d2.x;
+    if (Math.abs(cross) < 1e-10) return null;
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const t = (dx * d2.y - dy * d2.x) / cross;
+    return new scope.Point(p1.x + t * d1.x, p1.y + t * d1.y);
+}
+
+function createBevelPath(
+    vertex: paper.Point,
+    n1: paper.Point,
+    n2: paper.Point
+): paper.Path {
+    return new scope.Path({
+        segments: [vertex.add(n1), vertex.add(n2), vertex.subtract(n2), vertex.subtract(n1)],
+        closed: true
+    });
+}
+
+function createJoinGeometry(
+    vertex: paper.Point,
+    prevDir: paper.Point | null,
+    nextDir: paper.Point | null,
+    radius: number,
+    join: JoinStyle,
+    miterLimit: number
+): paper.Item {
+    if (!prevDir || !nextDir) {
+        return new scope.Path.Circle(vertex, radius);
+    }
+
+    const n1 = prevDir.normalize().multiply(radius).rotate(90, ZERO);
+    const n2 = nextDir.normalize().multiply(radius).rotate(90, ZERO);
+
+    switch (join) {
+        case 'round':
+            return new scope.Path.Circle(vertex, radius);
+
+        case 'bevel':
+            return createBevelPath(vertex, n1, n2);
+
+        case 'miter': {
+            const d1 = prevDir.normalize();
+            const d2 = nextDir.normalize();
+
+            const outerMiter = lineLineIntersect(vertex.add(n1), d1, vertex.add(n2), d2);
+            const innerMiter = lineLineIntersect(vertex.subtract(n1), d1, vertex.subtract(n2), d2);
+
+            if (!outerMiter || !innerMiter) {
+                return createBevelPath(vertex, n1, n2);
+            }
+
+            const miterLen = outerMiter.subtract(vertex).length;
+            if (miterLimit > 0 && miterLen > miterLimit * radius) {
+                return createBevelPath(vertex, n1, n2);
+            }
+
+            return new scope.Path({
+                segments: [
+                    vertex.add(n1), outerMiter, vertex.add(n2),
+                    vertex.subtract(n2), innerMiter, vertex.subtract(n1)
+                ],
+                closed: true
+            });
+        }
+    }
+}
+
 /**
  * Offsets a shape by a given distance.
- * 
+ *
  * @param shape The input PathShape
  * @param distance The offset distance (positive for outward, negative for inward)
- * @param options Styling options for the offset
+ * @param options Join style and miter limit
  * @returns Array of resulting PathShapes
  */
 export function offsetShape(
     shape: PathShape,
     distance: number,
-    _options: { join?: JoinStyle, limit?: number } = {}
+    options: { join?: JoinStyle, limit?: number } = {}
 ): PathShape[] {
     if (Math.abs(distance) < 1e-5) {
         return [shape.clone()];
     }
 
+    const join = options.join ?? 'round';
+    const miterLimit = options.limit ?? DEFAULT_MITER_LIMIT;
+
     const path = toPaperPath(shape);
     const radius = Math.abs(distance);
 
-    // Manual Stroke Expansion (since path.expand is missing in this paper.js build)
-    // 1. Flatten to convert curves to segments
-    // 0.25 error gives decent curve approximation
     const flatOptions = { insert: false };
     const flat = path.clone(flatOptions) as paper.Path;
     flat.flatten(0.25);
 
     const strokeItems: paper.Item[] = [];
 
-    // 2. Create geometry for stroke
-    // We create a "Sausage" for each segment.
     const segments = flat.segments;
     const len = segments.length;
     const closed = path.closed;
     const loopLimit = closed ? len : len - 1;
 
     for (let i = 0; i < len; i++) {
-        const p1 = segments[i].point;
+        const vertex = segments[i].point;
 
-        // Add round join/cap at vertex
-        // Use a circle for every vertex (simplest "round" join/cap)
-        const circle = new scope.Path.Circle(p1, radius);
-        strokeItems.push(circle);
+        let prevDir: paper.Point | null = null;
+        let nextDir: paper.Point | null = null;
 
-        // Add rect for segment
+        if (closed || i > 0) {
+            const prevIdx = (i - 1 + len) % len;
+            const diff = vertex.subtract(segments[prevIdx].point);
+            if (diff.length >= 1e-4) prevDir = diff;
+        }
+        if (closed || i < len - 1) {
+            const nextIdx = (i + 1) % len;
+            const diff = segments[nextIdx].point.subtract(vertex);
+            if (diff.length >= 1e-4) nextDir = diff;
+        }
+
+        strokeItems.push(createJoinGeometry(vertex, prevDir, nextDir, radius, join, miterLimit));
+
         if (i < loopLimit) {
             const nextIdx = (i + 1) % len;
             const p2 = segments[nextIdx].point;
 
-            // Calculate normal
-            const vec = p2.subtract(p1);
-            if (vec.length < 1e-4) continue; // Skip tiny segments
+            const vec = p2.subtract(vertex);
+            if (vec.length < 1e-4) continue;
 
-            // Normalize then scale (avoids argument count ambiguity in some TS defs)
-            const normal = vec.normalize().multiply(radius).rotate(90, new scope.Point(0, 0));
+            const normal = vec.normalize().multiply(radius).rotate(90, ZERO);
 
-            // 4 corners of the thick line segment
-            const c1 = p1.add(normal);
-            const c2 = p1.subtract(normal);
+            const c1 = vertex.add(normal);
+            const c2 = vertex.subtract(normal);
             const c3 = p2.subtract(normal);
             const c4 = p2.add(normal);
 
