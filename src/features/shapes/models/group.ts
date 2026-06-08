@@ -85,11 +85,16 @@ export class GroupShape implements IShape {
     }
 
     clone(): GroupShape {
-        // Deep clone children
         const newChildren = this.children.map(c => {
             if (typeof c.clone === 'function') return c.clone();
-            // Fallback for plain objects - risky but necessary for now
-            return JSON.parse(JSON.stringify(c)); // Simple clone
+            console.warn(`GroupShape.clone: child ${c.id} has no clone() method, falling back to fromJSON`);
+            if (typeof c.toJSON === 'function') {
+                const json = c.toJSON() as Record<string, unknown>;
+                if (json.type === 'text') return TextObject.fromJSON(json);
+                if (json.type === 'group') return GroupShape.fromJSON(json);
+                return PathShape.fromJSON(json);
+            }
+            throw new Error(`Cannot clone child ${c.id}: no clone() or toJSON() method`);
         });
 
         const clone = new GroupShape(newChildren);
@@ -128,6 +133,8 @@ export class GroupShape implements IShape {
         const group = new GroupShape(children);
         group.id = json.id as string;
         group.layerId = (json.layerId as string) || 'layer-1';
+        if (typeof json.x === 'number') group.x = json.x;
+        if (typeof json.y === 'number') group.y = json.y;
         group.rotation = (json.rotation as number) || 0;
         group.strokeColor = json.strokeColor as string | undefined;
         group.strokeWidth = json.strokeWidth as number | undefined;
