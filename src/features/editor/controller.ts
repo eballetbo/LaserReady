@@ -54,16 +54,15 @@ export class CanvasController {
     constructor(layers: CanvasLayers, options: Partial<RendererConfig> & { onSelectionChange?: (s: IShape[]) => void } = {}) {
         this.canvas = layers.overlay;
         this.ctx = this.canvas.getContext('2d')!;
+        this.config = {
+            ...EDITOR_CONFIG,
+            ...options
+        };
         this.renderer = new CanvasRenderer(layers);
         this.inputManager = new InputManager(this.canvas);
         this.toolManager = new ToolManager(this, this.inputManager);
         this.history = new HistoryManager();
         this.snapManager = new SnapManager(this);
-
-        this.config = {
-            ...EDITOR_CONFIG,
-            ...options
-        };
 
         this.onSelectionChange = options.onSelectionChange || (() => { });
 
