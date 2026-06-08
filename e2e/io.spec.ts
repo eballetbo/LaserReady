@@ -177,7 +177,7 @@ test.describe('IO - SVG Export', () => {
             const { exportToSVG } = (window as any).__io_exports ?? {};
             if (!exportToSVG) {
                 // If not exposed, use the module directly
-                const state = (window as any).store.getState();
+                (window as any).store.getState();
                 // We'll test via the download mechanism instead
                 return null;
             }

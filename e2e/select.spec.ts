@@ -37,7 +37,7 @@ async function getShapeIds(page: Page): Promise<string[]> {
     return page.evaluate(() => (window as any).store.getState().shapes.map((s: any) => s.id));
 }
 
-function canvasPos(box: { x: number; y: number }, x: number, y: number) {
+function _canvasPos(box: { x: number; y: number }, x: number, y: number) {
     return { x: box.x + x, y: box.y + y };
 }
 

@@ -8,7 +8,7 @@ async function setupEditor(page: Page) {
     });
 }
 
-async function createRectangleInStore(page: Page) {
+async function _createRectangleInStore(page: Page) {
     await page.evaluate(() => {
         const store = (window as any).store.getState();
         const PathShape = (window as any).PathShape;

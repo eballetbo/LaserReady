@@ -37,7 +37,7 @@ async function setFilletRadius(page: Page, radiusMm: number) {
     }, radiusMm * PIXELS_PER_MM);
 }
 
-async function getShapeNodes(page: Page, shapeIndex: number = 0) {
+async function _getShapeNodes(page: Page, shapeIndex: number = 0) {
     return page.evaluate((idx) => {
         const shape = (window as any).store.getState().shapes[idx];
         if (!shape || !shape.nodes) return [];

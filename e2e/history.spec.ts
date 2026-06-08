@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test.describe('History (Undo/Redo)', () => {
     test('should undo and redo drawing', async ({ page }) => {
