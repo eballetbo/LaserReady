@@ -188,6 +188,15 @@ export class CanvasRenderer {
             }
         }
 
+        // Selection dimension helpers (width + height)
+        if (selectedShapes.length > 0 && (toolType === 'select' || toolType === 'node-edit')) {
+            const dimBounds = Geometry.getCombinedBounds(selectedShapes);
+            if (dimBounds) {
+                drawDistanceHelper(this.ctx, { x: dimBounds.minX, y: dimBounds.maxY }, { x: dimBounds.maxX, y: dimBounds.maxY }, zoom);
+                drawDistanceHelper(this.ctx, { x: dimBounds.maxX, y: dimBounds.maxY }, { x: dimBounds.maxX, y: dimBounds.minY }, zoom);
+            }
+        }
+
         // Single-selected group bounds
         if (selectedShapes.length === 1 && selectedShapes[0].type === 'group') {
             const group = selectedShapes[0];
