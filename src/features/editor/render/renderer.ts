@@ -50,7 +50,15 @@ import {
     NODE_SKELETON_COLOR,
     NODE_HANDLE_LINE_COLOR,
     NODE_SKELETON_WIDTH,
-    NODE_HANDLE_CIRCLE_RADIUS
+    NODE_HANDLE_CIRCLE_RADIUS,
+    PIXELS_PER_MM,
+    DISTANCE_LABEL_FONT_SIZE,
+    DISTANCE_LABEL_COLOR,
+    DISTANCE_LABEL_BG,
+    DISTANCE_LABEL_BORDER,
+    DISTANCE_ARROW_SIZE,
+    DISTANCE_LINE_OFFSET,
+    DISTANCE_LINE_COLOR
 } from '../../../config/constants';
 
 import { RendererConfig } from './types';
@@ -617,6 +625,124 @@ export class CanvasRenderer {
         this.ctx.lineWidth = DEFAULT_STROKE_WIDTH / zoom;
         this.ctx.stroke();
         this.ctx.setLineDash([]);
+
+        this.drawDistanceHelper(startPoint, previewPoint, zoom);
+    }
+
+    private drawDistanceHelper(
+        from: { x: number; y: number },
+        to: { x: number; y: number },
+        zoom: number
+    ): void {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const lengthPx = Math.sqrt(dx * dx + dy * dy);
+        if (lengthPx < 1 / zoom) return;
+
+        const distMm = lengthPx / PIXELS_PER_MM;
+        const label = distMm.toFixed(2);
+        const angle = Math.atan2(dy, dx);
+
+        // All screen-constant sizes scaled into world space
+        const s = 1 / zoom;
+        const offset = DISTANCE_LINE_OFFSET * s;
+        const arrowSize = DISTANCE_ARROW_SIZE * s;
+        const fontSize = DISTANCE_LABEL_FONT_SIZE * s;
+        const pillPadX = 5 * s;
+        const pillPadY = 2 * s;
+        const pillRadius = 3 * s;
+        const lineWidth = s;
+
+        // Perpendicular unit vector (points "left" of the from→to direction)
+        const nx = -Math.sin(angle);
+        const ny = Math.cos(angle);
+
+        // Offset the dimension line from the actual segment
+        const ox = nx * offset;
+        const oy = ny * offset;
+
+        const fromOff = { x: from.x + ox, y: from.y + oy };
+        const toOff = { x: to.x + ox, y: to.y + oy };
+        const mid = { x: (fromOff.x + toOff.x) / 2, y: (fromOff.y + toOff.y) / 2 };
+
+        this.ctx.save();
+
+        // --- Dimension line ---
+        this.ctx.strokeStyle = DISTANCE_LINE_COLOR;
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.setLineDash([]);
+        this.ctx.beginPath();
+        this.ctx.moveTo(fromOff.x, fromOff.y);
+        this.ctx.lineTo(toOff.x, toOff.y);
+        this.ctx.stroke();
+
+        // --- Arrowheads ---
+        this.ctx.fillStyle = DISTANCE_LINE_COLOR;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+
+        // Arrow at "from" end (points toward "to")
+        this.ctx.beginPath();
+        this.ctx.moveTo(fromOff.x, fromOff.y);
+        this.ctx.lineTo(
+            fromOff.x - arrowSize * cosA + (arrowSize / 2.5) * sinA,
+            fromOff.y - arrowSize * sinA - (arrowSize / 2.5) * cosA
+        );
+        this.ctx.lineTo(
+            fromOff.x - arrowSize * cosA - (arrowSize / 2.5) * sinA,
+            fromOff.y - arrowSize * sinA + (arrowSize / 2.5) * cosA
+        );
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // Arrow at "to" end (points toward "from")
+        this.ctx.beginPath();
+        this.ctx.moveTo(toOff.x, toOff.y);
+        this.ctx.lineTo(
+            toOff.x + arrowSize * cosA + (arrowSize / 2.5) * sinA,
+            toOff.y + arrowSize * sinA - (arrowSize / 2.5) * cosA
+        );
+        this.ctx.lineTo(
+            toOff.x + arrowSize * cosA - (arrowSize / 2.5) * sinA,
+            toOff.y + arrowSize * sinA + (arrowSize / 2.5) * cosA
+        );
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // --- Label pill ---
+        this.ctx.font = `${fontSize}px Arial, sans-serif`;
+        const textMetrics = this.ctx.measureText(label);
+        const textW = textMetrics.width;
+        const textH = fontSize;
+        const pillW = textW + pillPadX * 2;
+        const pillH = textH + pillPadY * 2;
+
+        // Rotate label to match segment; flip if upside-down so text stays readable
+        let labelAngle = angle;
+        if (labelAngle > Math.PI / 2) labelAngle -= Math.PI;
+        if (labelAngle < -Math.PI / 2) labelAngle += Math.PI;
+
+        this.ctx.translate(mid.x, mid.y);
+        this.ctx.rotate(labelAngle);
+
+        // Pill background
+        const rx = -pillW / 2;
+        const ry = -pillH / 2;
+        this.ctx.beginPath();
+        this.ctx.roundRect(rx, ry, pillW, pillH, pillRadius);
+        this.ctx.fillStyle = DISTANCE_LABEL_BG;
+        this.ctx.fill();
+        this.ctx.strokeStyle = DISTANCE_LABEL_BORDER;
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.stroke();
+
+        // Text
+        this.ctx.fillStyle = DISTANCE_LABEL_COLOR;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(label, 0, 0);
+
+        this.ctx.restore();
     }
 
     private drawSelectionBox(box: SelectionBox): void {

@@ -116,6 +116,17 @@ export const EDITOR_CONFIG = {
 } as const;
 
 // ========================================
+// DISTANCE HELPER (pen tool dimension annotation)
+// ========================================
+export const DISTANCE_LABEL_FONT_SIZE = 11;    // screen pixels
+export const DISTANCE_LABEL_COLOR = '#333333';
+export const DISTANCE_LABEL_BG = '#FFFFFF';
+export const DISTANCE_LABEL_BORDER = '#CCCCCC';
+export const DISTANCE_ARROW_SIZE = 6;          // screen pixels
+export const DISTANCE_LINE_OFFSET = 16;        // screen pixels, perpendicular offset
+export const DISTANCE_LINE_COLOR = '#333333';
+
+// ========================================
 // TOLERANCES & THRESHOLDS
 // ========================================
 export const POINT_EQUALITY_THRESHOLD = 0.1;
