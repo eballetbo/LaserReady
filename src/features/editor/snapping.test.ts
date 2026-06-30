@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { SnapManager } from './snapping';
 import { CanvasController } from './controller';
 import { PathNode } from '../shapes/models/node';
+import { MINOR_GRID_SPACING } from '../../config/constants';
 
 // Mock CanvasController
 const mockController = {
@@ -26,48 +27,40 @@ describe('SnapManager', () => {
     });
 
     describe('Grid Snapping', () => {
-        it('should snap to nearest grid point', () => {
-            const candidate = { x: 12, y: 12 }; // Nearest is 10,10
+        it('should snap to nearest 1mm grid point', () => {
+            const g = MINOR_GRID_SPACING;
+            const candidate = { x: g * 3 + g * 0.2, y: g * 5 + g * 0.2 };
             const result = snapManager.snapPoint(candidate);
             expect(result.type).toBe('grid');
-            expect(result.point).toEqual({ x: 10, y: 10 });
+            expect(result.point.x).toBeCloseTo(g * 3, 5);
+            expect(result.point.y).toBeCloseTo(g * 5, 5);
         });
 
         it('should not snap if outside threshold', () => {
-            // const candidate = { x: 16, y: 16 }; // Unused
-            // If threshold is 10, 5.6 is within threshold.
-            // Nearest grid is 20,20. DistSq = 32. 
-            // 10,10 DistSq = 36 + 36 = 72.
-
-            // Let's test explicit outside. 
-            // Grid 10. Point 15,15. Exactly middle.
-            // Point 10 + 6 = 16. Dist to 10 = 6. Dist to 20 = 4. 4 < 10.
-
-            // Set tiny threshold
-            snapManager.settings.threshold = 1;
-            const result = snapManager.snapPoint({ x: 12, y: 12 });
+            const g = MINOR_GRID_SPACING;
+            // Place candidate exactly between two grid lines (max distance)
+            const mid = g * 3 + g * 0.5;
+            // Distance to nearest grid line = g/2 ≈ 1.89
+            // Set threshold smaller than that distance
+            snapManager.settings.threshold = 0.5;
+            const result = snapManager.snapPoint({ x: mid, y: mid });
             expect(result.type).toBe('none');
-            expect(result.point).toEqual({ x: 12, y: 12 });
+            expect(result.point).toEqual({ x: mid, y: mid });
         });
 
         it('should respect zoom for threshold', () => {
-            // Setup: Grid spacing 10.
+            const g = MINOR_GRID_SPACING;
             mockController.zoom = 1;
-            snapManager.settings.threshold = 4; // Pixel threshold 4. World thresh 4.
+            // Place candidate at the midpoint between grid lines
+            const mid = g * 4 + g * 0.5; // distance to nearest = g/2 ≈ 1.89
+            snapManager.settings.threshold = 1; // world threshold = 1 < 1.89 → no snap
 
-            // Candidate at 15, 0.
-            // Nearest grid is 20, 0 (or 10,0). Distance to either is 5.
-            // Dist 5 > Threshold 4. Should NOT snap.
-            expect(snapManager.snapPoint({ x: 15, y: 0 }).type).toBe('none');
+            expect(snapManager.snapPoint({ x: mid, y: 0 }).type).toBe('none');
 
-            // Zoom out.
-            mockController.zoom = 0.5;
-            // Pixel threshold 4 / Zoom 0.5 = World threshold 8.
-            // Dist 5 < World threshold 8. Should SNAP.
-
-            const result = snapManager.snapPoint({ x: 15, y: 0 });
+            // Zoom out → world threshold = 1 / 0.25 = 4 > 1.89 → should snap
+            mockController.zoom = 0.25;
+            const result = snapManager.snapPoint({ x: mid, y: 0 });
             expect(result.type).toBe('grid');
-            // It might snap to 10 or 20 dependent on rounding. 15 rounds to 20 in JS Math.round (1.5->2).
         });
     });
 

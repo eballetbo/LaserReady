@@ -1,6 +1,6 @@
 import { CanvasController } from './controller';
 import { Geometry, Point } from '../../core/math/geometry';
-import { DEFAULT_GRID_SPACING } from '../../config/constants';
+import { MINOR_GRID_SPACING } from '../../config/constants';
 import { useStore } from '../../store/useStore';
 
 export interface SnapResult {
@@ -180,9 +180,9 @@ export class SnapManager {
             }
         }
 
-        // 3. Grid Snap (Low Priority)
+        // 3. Grid Snap (Low Priority) -- snap to 1mm minor grid
         if (this.settings.grid) {
-            const spacing = this.controller.config.gridSpacing || DEFAULT_GRID_SPACING;
+            const spacing = MINOR_GRID_SPACING;
             const snapX = Math.round(candidate.x / spacing) * spacing;
             const snapY = Math.round(candidate.y / spacing) * spacing;
 
