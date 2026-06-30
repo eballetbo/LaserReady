@@ -36,6 +36,9 @@ export interface TextEditingState {
 import {
     DEFAULT_GRID_COLOR,
     DEFAULT_GRID_LINE_WIDTH,
+    MINOR_GRID_SPACING,
+    MINOR_GRID_COLOR,
+    MINOR_GRID_MIN_SCREEN_PX,
     DEFAULT_LAYER_COLOR,
     DEFAULT_STROKE_WIDTH,
     PEN_PREVIEW_COLOR,
@@ -380,8 +383,32 @@ export class CanvasRenderer {
         const effectiveMaxX = materialWidth !== undefined ? materialWidth : (width - pan.x) / zoom;
         const effectiveMinY = materialHeight !== undefined ? 0 : -pan.y / zoom;
         const effectiveMaxY = materialHeight !== undefined ? materialHeight : (height - pan.y) / zoom;
-        const step = spacing;
 
+        // Minor grid (1mm) -- only when zoomed in enough to be visible
+        const minorScreenPx = MINOR_GRID_SPACING * zoom;
+        if (minorScreenPx >= MINOR_GRID_MIN_SCREEN_PX) {
+            const minorStep = MINOR_GRID_SPACING;
+            this.ctx.strokeStyle = MINOR_GRID_COLOR;
+            this.ctx.lineWidth = 0.5 / zoom;
+            this.ctx.beginPath();
+
+            const minorStartX = Math.ceil(effectiveMinX / minorStep) * minorStep;
+            for (let x = minorStartX; x <= effectiveMaxX; x += minorStep) {
+                this.ctx.moveTo(x, effectiveMinY);
+                this.ctx.lineTo(x, effectiveMaxY);
+            }
+
+            const minorStartY = Math.ceil(effectiveMinY / minorStep) * minorStep;
+            for (let y = minorStartY; y <= effectiveMaxY; y += minorStep) {
+                this.ctx.moveTo(effectiveMinX, y);
+                this.ctx.lineTo(effectiveMaxX, y);
+            }
+
+            this.ctx.stroke();
+        }
+
+        // Major grid (10mm)
+        const step = spacing;
         this.ctx.strokeStyle = DEFAULT_GRID_COLOR;
         this.ctx.lineWidth = DEFAULT_STROKE_WIDTH / zoom;
         this.ctx.beginPath();

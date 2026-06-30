@@ -7,9 +7,12 @@
 // GRID & CANVAS
 // ========================================
 export const PIXELS_PER_MM = 3.779527559; // 96 DPI
-export const DEFAULT_GRID_SPACING = 10 * PIXELS_PER_MM; // 10mm (1cm) grids
-export const DEFAULT_GRID_COLOR = '#f0f0f0';
+export const DEFAULT_GRID_SPACING = 10 * PIXELS_PER_MM; // 10mm (1cm) major grids
+export const MINOR_GRID_SPACING = 1 * PIXELS_PER_MM;   // 1mm minor grids
+export const DEFAULT_GRID_COLOR = '#e8e8e8';
+export const MINOR_GRID_COLOR = '#f3f3f3';
 export const DEFAULT_GRID_LINE_WIDTH = 1;
+export const MINOR_GRID_MIN_SCREEN_PX = 4; // hide minor grid when lines are closer than this
 
 // ========================================
 // COLORS
