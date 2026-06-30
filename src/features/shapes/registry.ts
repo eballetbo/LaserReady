@@ -3,10 +3,41 @@ import { PathNode } from './models/node';
 import { PathShape } from './models/path';
 import { CreateShapeCommand } from './commands/create';
 import { useStore } from '../../store/useStore';
+import { drawDistanceHelper } from '../editor/render/distance-helper';
 
 interface Point {
     x: number;
     y: number;
+}
+
+function drawShapeDimensions(
+    ctx: CanvasRenderingContext2D,
+    nodes: PathNode[],
+    editor: { zoom: number; pan: Point }
+): void {
+    if (nodes.length < 2) return;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const n of nodes) {
+        if (n.x < minX) minX = n.x;
+        if (n.y < minY) minY = n.y;
+        if (n.x > maxX) maxX = n.x;
+        if (n.y > maxY) maxY = n.y;
+    }
+
+    if (maxX - minX < 0.1 && maxY - minY < 0.1) return;
+
+    const { zoom, pan } = editor;
+    ctx.save();
+    ctx.translate(pan.x, pan.y);
+    ctx.scale(zoom, zoom);
+
+    // Width: along the bottom edge
+    drawDistanceHelper(ctx, { x: minX, y: maxY }, { x: maxX, y: maxY }, zoom);
+    // Height: along the right edge (bottom-to-top so offset goes outward)
+    drawDistanceHelper(ctx, { x: maxX, y: maxY }, { x: maxX, y: minY }, zoom);
+
+    ctx.restore();
 }
 
 export class RectTool extends BaseTool {
@@ -59,6 +90,11 @@ export class RectTool extends BaseTool {
             node.cpOut.x = node.x; node.cpOut.y = node.y;
         });
         this.editor.render();
+    }
+
+    drawOverlay(ctx: CanvasRenderingContext2D): void {
+        if (!this.isDragging || !this.editor.selectedShape) return;
+        drawShapeDimensions(ctx, this.editor.selectedShape.nodes, this.editor);
     }
 
     onMouseUp(_e: MouseEvent): void {
@@ -140,6 +176,11 @@ export class CircleTool extends BaseTool {
         n[3].cpOut = { x: cx - rx, y: cy - oy };
 
         this.editor.render();
+    }
+
+    drawOverlay(ctx: CanvasRenderingContext2D): void {
+        if (!this.isDragging || !this.editor.selectedShape) return;
+        drawShapeDimensions(ctx, this.editor.selectedShape.nodes, this.editor);
     }
 
     onMouseUp(_: MouseEvent): void {
@@ -237,6 +278,11 @@ export class PolygonTool extends BaseTool {
         this.editor.render();
     }
 
+    drawOverlay(ctx: CanvasRenderingContext2D): void {
+        if (!this.isDragging || !this.editor.selectedShape) return;
+        drawShapeDimensions(ctx, this.editor.selectedShape.nodes, this.editor);
+    }
+
     onMouseUp(_: MouseEvent): void {
         this.isDragging = false;
         this.dragStart = null;
@@ -323,6 +369,11 @@ export class StarTool extends BaseTool {
         }
 
         this.editor.render();
+    }
+
+    drawOverlay(ctx: CanvasRenderingContext2D): void {
+        if (!this.isDragging || !this.editor.selectedShape) return;
+        drawShapeDimensions(ctx, this.editor.selectedShape.nodes, this.editor);
     }
 
     onMouseUp(_: MouseEvent): void {
