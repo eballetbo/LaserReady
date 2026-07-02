@@ -35,7 +35,10 @@ export class NodeEditTool extends BaseTool {
         this.state = { kind: 'idle' };
         this.editor.canvas.style.cursor = 'default';
         this.editor.selectedNodeIndices = [];
-        useStore.getState().setHoveredNodeIndex(-1);
+        const store = useStore.getState();
+        store.setHoveredNodeIndex(-1);
+        store.setHoveredSegmentIndex(-1);
+        store.setSelectedSegmentIndices([]);
         this.editor.selectionBox = null;
         this.editor.render();
     }
@@ -69,6 +72,7 @@ export class NodeEditTool extends BaseTool {
             if (isDoubleClick) {
                 this.editor.history.execute(new DeleteNodeCommand(shape.id, anchorIndex));
                 this.editor.selectedNodeIndices = [];
+                useStore.getState().setSelectedSegmentIndices([]);
                 this.editor.render();
                 return;
             }
@@ -86,6 +90,7 @@ export class NodeEditTool extends BaseTool {
                     this.editor.selectedNodeIndices = [anchorIndex];
                 }
             }
+            useStore.getState().setSelectedSegmentIndices([]);
 
             const initialNodes = new Map<number, PathNode>();
             this.editor.selectedNodeIndices.forEach(idx => {
@@ -125,11 +130,27 @@ export class NodeEditTool extends BaseTool {
             if (isDoubleClick) {
                 this.editor.history.execute(new InsertNodeCommand(shape.id, hitSegment.index, hitSegment.t));
                 this.editor.selectedNodeIndices = [hitSegment.index + 1];
+                useStore.getState().setSelectedSegmentIndices([]);
                 this.editor.render();
                 return;
             }
 
-            const i1 = hitSegment.index;
+            const segIdx = hitSegment.index;
+            const store = useStore.getState();
+            if (isShift) {
+                const current = new Set(store.selectedSegmentIndices);
+                if (current.has(segIdx)) {
+                    current.delete(segIdx);
+                } else {
+                    current.add(segIdx);
+                }
+                store.setSelectedSegmentIndices(Array.from(current));
+            } else {
+                store.setSelectedSegmentIndices([segIdx]);
+                this.editor.selectedNodeIndices = [];
+            }
+
+            const i1 = segIdx;
             const i2 = (i1 + 1) % shape.nodes.length;
             const initialNodes = new Map<number, PathNode>();
             if (shape.nodes[i1]) initialNodes.set(i1, shape.nodes[i1].clone());
@@ -149,6 +170,7 @@ export class NodeEditTool extends BaseTool {
         // 4. Rubberband or deselect
         if (!isShift) {
             this.editor.selectedNodeIndices = [];
+            useStore.getState().setSelectedSegmentIndices([]);
         }
         this.state = { kind: 'rubberband', origin: { x, y } };
         this.editor.render();
@@ -403,19 +425,34 @@ export class NodeEditTool extends BaseTool {
         const store = useStore.getState();
         if (this.editor.selectedShapes.length !== 1) {
             if (store.hoveredNodeIndex !== -1) store.setHoveredNodeIndex(-1);
+            if (store.hoveredSegmentIndex !== -1) store.setHoveredSegmentIndex(-1);
             return;
         }
         const shape = this.editor.selectedShapes[0];
         if (!shape.nodes) {
             if (store.hoveredNodeIndex !== -1) store.setHoveredNodeIndex(-1);
+            if (store.hoveredSegmentIndex !== -1) store.setHoveredSegmentIndex(-1);
             return;
         }
         this.hitTester.update(this.editor.zoom);
-        const hit = this.hitTester.getHitAnchor(x, y, shape);
-        if (hit !== store.hoveredNodeIndex) {
-            store.setHoveredNodeIndex(hit);
-            this.editor.render();
+
+        let changed = false;
+
+        const hitNode = this.hitTester.getHitAnchor(x, y, shape);
+        if (hitNode !== store.hoveredNodeIndex) {
+            store.setHoveredNodeIndex(hitNode);
+            changed = true;
         }
+
+        // Only check segment hover when no node or handle is hovered
+        const segHit = hitNode === -1 ? this.hitTester.getHitSegment(x, y, shape) : null;
+        const segIdx = segHit ? segHit.index : -1;
+        if (segIdx !== store.hoveredSegmentIndex) {
+            store.setHoveredSegmentIndex(segIdx);
+            changed = true;
+        }
+
+        if (changed) this.editor.render();
     }
 
     private updateCursor(x: number, y: number) {

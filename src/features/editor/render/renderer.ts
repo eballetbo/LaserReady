@@ -60,7 +60,10 @@ import {
     NODE_SELECTED_FILL,
     NODE_SELECTED_STROKE,
     NODE_HOVER_RING_OFFSET,
-    NODE_HOVER_RING_COLOR
+    NODE_HOVER_RING_COLOR,
+    SEGMENT_HOVER_COLOR,
+    SEGMENT_SELECTED_COLOR,
+    SEGMENT_HOVER_WIDTH
 } from '../../../config/constants';
 
 import { drawDistanceHelper } from './distance-helper';
@@ -168,7 +171,9 @@ export class CanvasRenderer {
         zoom: number,
         pan: { x: number; y: number },
         selectedNodeIndices: number[],
+        selectedSegmentIndices: number[],
         hoveredNodeIndex: number,
+        hoveredSegmentIndex: number,
         previewOrigin: { x: number; y: number } | null,
         textEditing: TextEditingState | null,
         snapResult: SnapResult | null
@@ -231,7 +236,7 @@ export class CanvasRenderer {
 
         // Node edit overlay
         if (toolType === 'node-edit') {
-            this.drawNodeOverlay(selectedShapes, selectedNodeIndices, hoveredNodeIndex, zoom, config);
+            this.drawNodeOverlay(selectedShapes, selectedNodeIndices, selectedSegmentIndices, hoveredNodeIndex, hoveredSegmentIndex, zoom, config);
         }
 
         // Text cursor
@@ -272,7 +277,7 @@ export class CanvasRenderer {
         this.drawOverlay(
             shapes, selectedShapes, layers, config, toolType,
             activePath, previewPoint, selectionBox, zoom, pan,
-            selectedNodeIndices, -1, previewOrigin, textEditing, null
+            selectedNodeIndices, [], -1, -1, previewOrigin, textEditing, null
         );
     }
 
@@ -500,7 +505,7 @@ export class CanvasRenderer {
         this.ctx.setLineDash([]);
     }
 
-    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndices: number[], hoveredNodeIndex: number, zoom: number, config: RendererConfig): void {
+    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndices: number[], selectedSegmentIndices: number[], hoveredNodeIndex: number, hoveredSegmentIndex: number, zoom: number, config: RendererConfig): void {
         const skeletonWidth = NODE_SKELETON_WIDTH / zoom;
         const handleCircleRadius = NODE_HANDLE_CIRCLE_RADIUS / zoom;
         const lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
@@ -533,7 +538,37 @@ export class CanvasRenderer {
             this.ctx.lineWidth = skeletonWidth;
             this.ctx.stroke();
 
+            // Hovered segment highlight
+            if (hoveredSegmentIndex >= 0 && hoveredSegmentIndex < shape.nodes.length) {
+                const segEnd = shape.closed || hoveredSegmentIndex < shape.nodes.length - 1;
+                if (segEnd) {
+                    const n0 = shape.nodes[hoveredSegmentIndex];
+                    const n1 = shape.nodes[(hoveredSegmentIndex + 1) % shape.nodes.length];
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(n0.x, n0.y);
+                    this.ctx.bezierCurveTo(n0.cpOut.x, n0.cpOut.y, n1.cpIn.x, n1.cpIn.y, n1.x, n1.y);
+                    this.ctx.strokeStyle = SEGMENT_HOVER_COLOR;
+                    this.ctx.lineWidth = SEGMENT_HOVER_WIDTH / zoom;
+                    this.ctx.stroke();
+                }
+            }
+
             const indicesSet = new Set(selectedNodeIndices);
+            const selSegSet = new Set(selectedSegmentIndices);
+
+            // Selected segments
+            selSegSet.forEach(segIdx => {
+                if (segIdx < 0 || segIdx >= shape.nodes.length) return;
+                if (segIdx === shape.nodes.length - 1 && !shape.closed) return;
+                const n0 = shape.nodes[segIdx];
+                const n1 = shape.nodes[(segIdx + 1) % shape.nodes.length];
+                this.ctx.beginPath();
+                this.ctx.moveTo(n0.x, n0.y);
+                this.ctx.bezierCurveTo(n0.cpOut.x, n0.cpOut.y, n1.cpIn.x, n1.cpIn.y, n1.x, n1.y);
+                this.ctx.strokeStyle = SEGMENT_SELECTED_COLOR;
+                this.ctx.lineWidth = SEGMENT_HOVER_WIDTH / zoom;
+                this.ctx.stroke();
+            });
 
             // Control handles (only for selected nodes)
             shape.nodes.forEach((n: PathNode, i: number) => {

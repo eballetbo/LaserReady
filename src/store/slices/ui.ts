@@ -9,7 +9,9 @@ export interface UiSlice {
     isDarkMode: boolean;
     material: { width: number; height: number };
     selectedNodeIndices: number[];
+    selectedSegmentIndices: number[];
     hoveredNodeIndex: number;
+    hoveredSegmentIndex: number;
     isSnappingEnabled: boolean;
     filletRadius: number;
     setTool: (tool: ToolType) => void;
@@ -18,7 +20,9 @@ export interface UiSlice {
     setDarkMode: (isDarkMode: boolean) => void;
     setMaterial: (material: { width: number; height: number }) => void;
     setSelectedNodeIndices: (indices: number[]) => void;
+    setSelectedSegmentIndices: (indices: number[]) => void;
     setHoveredNodeIndex: (index: number) => void;
+    setHoveredSegmentIndex: (index: number) => void;
     setSnappingEnabled: (enabled: boolean) => void;
     setFilletRadius: (radius: number) => void;
     offsetDistance: number;
@@ -35,7 +39,9 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     isDarkMode: false,
     material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
     selectedNodeIndices: [],
+    selectedSegmentIndices: [],
     hoveredNodeIndex: -1,
+    hoveredSegmentIndex: -1,
     isSnappingEnabled: false,
     filletRadius: 5 * PIXELS_PER_MM,
     offsetDistance: 5 * PIXELS_PER_MM, // Default 5mm
@@ -46,7 +52,9 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     setDarkMode: (isDarkMode) => set({ isDarkMode }),
     setMaterial: (material) => set({ material }),
     setSelectedNodeIndices: (selectedNodeIndices) => set({ selectedNodeIndices }),
+    setSelectedSegmentIndices: (selectedSegmentIndices) => set({ selectedSegmentIndices }),
     setHoveredNodeIndex: (hoveredNodeIndex) => set({ hoveredNodeIndex }),
+    setHoveredSegmentIndex: (hoveredSegmentIndex) => set({ hoveredSegmentIndex }),
     setSnappingEnabled: (isSnappingEnabled) => set({ isSnappingEnabled }),
     setFilletRadius: (filletRadius) => set({ filletRadius }),
     setOffsetDistance: (offsetDistance) => set({ offsetDistance }),
