@@ -247,17 +247,17 @@ export class NodeEditTool extends BaseTool {
                     const dx = x - startMouse.x;
                     const dy = y - startMouse.y;
 
-                    const i1 = nodeIndex;
-                    const i2 = (i1 + 1) % shape.nodes.length;
-                    const initialNode1 = initialNodes.get(i1);
-                    const initialNode2 = initialNodes.get(i2);
-
-                    if (initialNode1 && initialNode2) {
-                        nodes[i1].cpOut.x = initialNode1.cpOut.x + dx;
-                        nodes[i1].cpOut.y = initialNode1.cpOut.y + dy;
-                        nodes[i2].cpIn.x = initialNode2.cpIn.x + dx;
-                        nodes[i2].cpIn.y = initialNode2.cpIn.y + dy;
-                    }
+                    initialNodes.forEach((initialNode, index) => {
+                        const node = nodes[index];
+                        if (node) {
+                            node.x = initialNode.x + dx;
+                            node.y = initialNode.y + dy;
+                            node.cpIn.x = initialNode.cpIn.x + dx;
+                            node.cpIn.y = initialNode.cpIn.y + dy;
+                            node.cpOut.x = initialNode.cpOut.x + dx;
+                            node.cpOut.y = initialNode.cpOut.y + dy;
+                        }
+                    });
                 }
 
                 this.editor.render();
