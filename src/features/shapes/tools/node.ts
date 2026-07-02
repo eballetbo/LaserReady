@@ -4,6 +4,7 @@ import { MoveNodeCommand, ChangeNodeTypeCommand, InsertNodeCommand, DeleteNodeCo
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from '../commands/segment';
 import { PathNode } from '../models/node';
 import { NodeHitTester } from './node-hit-test';
+import { useStore } from '../../../store/useStore';
 
 type DragTargetType = 'ANCHOR' | 'HANDLE_IN' | 'HANDLE_OUT' | 'SEGMENT';
 
@@ -34,6 +35,7 @@ export class NodeEditTool extends BaseTool {
         this.state = { kind: 'idle' };
         this.editor.canvas.style.cursor = 'default';
         this.editor.selectedNodeIndices = [];
+        useStore.getState().setHoveredNodeIndex(-1);
         this.editor.selectionBox = null;
         this.editor.render();
     }
@@ -258,6 +260,7 @@ export class NodeEditTool extends BaseTool {
             }
 
             case 'idle': {
+                this.updateHoveredNode(x, y);
                 this.updateCursor(x, y);
                 return;
             }
@@ -394,6 +397,25 @@ export class NodeEditTool extends BaseTool {
             this.editor.selectedNodeIndices = [];
         }
         this.editor.render();
+    }
+
+    private updateHoveredNode(x: number, y: number) {
+        const store = useStore.getState();
+        if (this.editor.selectedShapes.length !== 1) {
+            if (store.hoveredNodeIndex !== -1) store.setHoveredNodeIndex(-1);
+            return;
+        }
+        const shape = this.editor.selectedShapes[0];
+        if (!shape.nodes) {
+            if (store.hoveredNodeIndex !== -1) store.setHoveredNodeIndex(-1);
+            return;
+        }
+        this.hitTester.update(this.editor.zoom);
+        const hit = this.hitTester.getHitAnchor(x, y, shape);
+        if (hit !== store.hoveredNodeIndex) {
+            store.setHoveredNodeIndex(hit);
+            this.editor.render();
+        }
     }
 
     private updateCursor(x: number, y: number) {

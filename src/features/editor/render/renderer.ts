@@ -53,7 +53,14 @@ import {
     NODE_SKELETON_COLOR,
     NODE_HANDLE_LINE_COLOR,
     NODE_SKELETON_WIDTH,
-    NODE_HANDLE_CIRCLE_RADIUS
+    NODE_HANDLE_CIRCLE_RADIUS,
+    NODE_CIRCLE_RADIUS,
+    NODE_CIRCLE_STROKE,
+    NODE_CIRCLE_FILL,
+    NODE_SELECTED_FILL,
+    NODE_SELECTED_STROKE,
+    NODE_HOVER_RING_OFFSET,
+    NODE_HOVER_RING_COLOR
 } from '../../../config/constants';
 
 import { drawDistanceHelper } from './distance-helper';
@@ -161,6 +168,7 @@ export class CanvasRenderer {
         zoom: number,
         pan: { x: number; y: number },
         selectedNodeIndices: number[],
+        hoveredNodeIndex: number,
         previewOrigin: { x: number; y: number } | null,
         textEditing: TextEditingState | null,
         snapResult: SnapResult | null
@@ -223,7 +231,7 @@ export class CanvasRenderer {
 
         // Node edit overlay
         if (toolType === 'node-edit') {
-            this.drawNodeOverlay(selectedShapes, selectedNodeIndices, zoom, config);
+            this.drawNodeOverlay(selectedShapes, selectedNodeIndices, hoveredNodeIndex, zoom, config);
         }
 
         // Text cursor
@@ -264,7 +272,7 @@ export class CanvasRenderer {
         this.drawOverlay(
             shapes, selectedShapes, layers, config, toolType,
             activePath, previewPoint, selectionBox, zoom, pan,
-            selectedNodeIndices, previewOrigin, textEditing, null
+            selectedNodeIndices, -1, previewOrigin, textEditing, null
         );
     }
 
@@ -492,15 +500,17 @@ export class CanvasRenderer {
         this.ctx.setLineDash([]);
     }
 
-    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndices: number[], zoom: number, config: RendererConfig): void {
-        const anchorSize = config.anchorSize / zoom;
+    drawNodeOverlay(selectedShapes: IShape[], selectedNodeIndices: number[], hoveredNodeIndex: number, zoom: number, config: RendererConfig): void {
         const skeletonWidth = NODE_SKELETON_WIDTH / zoom;
         const handleCircleRadius = NODE_HANDLE_CIRCLE_RADIUS / zoom;
         const lineWidth = DEFAULT_GRID_LINE_WIDTH / zoom;
+        const nodeRadius = NODE_CIRCLE_RADIUS / zoom;
+        const hoverRingRadius = (NODE_CIRCLE_RADIUS + NODE_HOVER_RING_OFFSET) / zoom;
 
         selectedShapes.forEach(shape => {
             if (!shape.nodes || shape.nodes.length < 2) return;
 
+            // Path skeleton
             this.ctx.beginPath();
             this.ctx.moveTo(shape.nodes[0].x, shape.nodes[0].y);
             for (let i = 0; i < shape.nodes.length; i++) {
@@ -525,6 +535,7 @@ export class CanvasRenderer {
 
             const indicesSet = new Set(selectedNodeIndices);
 
+            // Control handles (only for selected nodes)
             shape.nodes.forEach((n: PathNode, i: number) => {
                 if (indicesSet.has(i)) {
                     const isAtAnchor = (p: Point) => Math.abs(p.x - n.x) < POINT_EQUALITY_THRESHOLD && Math.abs(p.y - n.y) < POINT_EQUALITY_THRESHOLD;
@@ -550,35 +561,35 @@ export class CanvasRenderer {
                 }
             });
 
+            // Node circles
             shape.nodes.forEach((n: PathNode, i: number) => {
-                const isNodeSelected = indicesSet.has(i);
-                let fillColor = '#FFFFFF';
-                let strokeColor = '#666666';
+                const isSelected = indicesSet.has(i);
+                const isHovered = !isSelected && i === hoveredNodeIndex;
 
-                if (isNodeSelected) {
-                    fillColor = '#FF0000';
-                    strokeColor = '#AA0000';
+                // Hover ring (outer circle, only when not selected)
+                if (isHovered) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(n.x, n.y, hoverRingRadius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = NODE_HOVER_RING_COLOR;
+                    this.ctx.lineWidth = 1.5 / zoom;
+                    this.ctx.stroke();
                 }
 
-                const type = n.type || 'corner';
-
-                this.ctx.fillStyle = fillColor;
-                this.ctx.strokeStyle = strokeColor;
+                // Node circle
+                this.ctx.beginPath();
+                this.ctx.arc(n.x, n.y, nodeRadius, 0, Math.PI * 2);
                 this.ctx.lineWidth = lineWidth;
 
-                if (type === 'corner') {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(n.x, n.y - anchorSize / 2);
-                    this.ctx.lineTo(n.x + anchorSize / 2, n.y);
-                    this.ctx.lineTo(n.x, n.y + anchorSize / 2);
-                    this.ctx.lineTo(n.x - anchorSize / 2, n.y);
-                    this.ctx.closePath();
+                if (isSelected) {
+                    this.ctx.fillStyle = NODE_SELECTED_FILL;
+                    this.ctx.strokeStyle = NODE_SELECTED_STROKE;
                     this.ctx.fill();
-                    this.ctx.stroke();
                 } else {
-                    this.ctx.fillRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
-                    this.ctx.strokeRect(n.x - anchorSize / 2, n.y - anchorSize / 2, anchorSize, anchorSize);
+                    this.ctx.fillStyle = NODE_CIRCLE_FILL;
+                    this.ctx.strokeStyle = NODE_CIRCLE_STROKE;
+                    this.ctx.fill();
                 }
+                this.ctx.stroke();
             });
         });
     }

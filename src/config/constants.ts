@@ -39,6 +39,13 @@ export const NODE_HANDLE_LINE_DASH = [2, 2] as const;
 // SIZES & DIMENSIONS
 // ========================================
 export const ANCHOR_SIZE = 8;
+export const NODE_CIRCLE_RADIUS = 4;          // anchor circle radius (screen px)
+export const NODE_CIRCLE_STROKE = '#666666';
+export const NODE_CIRCLE_FILL = '#FFFFFF';    // empty circle (unselected)
+export const NODE_SELECTED_FILL = '#FF0000';
+export const NODE_SELECTED_STROKE = '#AA0000';
+export const NODE_HOVER_RING_OFFSET = 3;      // extra radius for hover ring (screen px)
+export const NODE_HOVER_RING_COLOR = 'rgba(0, 102, 255, 0.4)';
 export const HANDLE_RADIUS = 5;
 export const NODE_SKELETON_WIDTH = 0.5;
 export const NODE_HANDLE_CIRCLE_RADIUS = 3;

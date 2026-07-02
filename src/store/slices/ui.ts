@@ -9,6 +9,7 @@ export interface UiSlice {
     isDarkMode: boolean;
     material: { width: number; height: number };
     selectedNodeIndices: number[];
+    hoveredNodeIndex: number;
     isSnappingEnabled: boolean;
     filletRadius: number;
     setTool: (tool: ToolType) => void;
@@ -17,6 +18,7 @@ export interface UiSlice {
     setDarkMode: (isDarkMode: boolean) => void;
     setMaterial: (material: { width: number; height: number }) => void;
     setSelectedNodeIndices: (indices: number[]) => void;
+    setHoveredNodeIndex: (index: number) => void;
     setSnappingEnabled: (enabled: boolean) => void;
     setFilletRadius: (radius: number) => void;
     offsetDistance: number;
@@ -33,6 +35,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     isDarkMode: false,
     material: { width: 1000 * PIXELS_PER_MM, height: 800 * PIXELS_PER_MM },
     selectedNodeIndices: [],
+    hoveredNodeIndex: -1,
     isSnappingEnabled: false,
     filletRadius: 5 * PIXELS_PER_MM,
     offsetDistance: 5 * PIXELS_PER_MM, // Default 5mm
@@ -43,6 +46,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     setDarkMode: (isDarkMode) => set({ isDarkMode }),
     setMaterial: (material) => set({ material }),
     setSelectedNodeIndices: (selectedNodeIndices) => set({ selectedNodeIndices }),
+    setHoveredNodeIndex: (hoveredNodeIndex) => set({ hoveredNodeIndex }),
     setSnappingEnabled: (isSnappingEnabled) => set({ isSnappingEnabled }),
     setFilletRadius: (filletRadius) => set({ filletRadius }),
     setOffsetDistance: (offsetDistance) => set({ offsetDistance }),

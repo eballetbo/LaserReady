@@ -228,7 +228,7 @@ export class CanvasController {
     }
 
     renderImmediate() {
-        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndices } = useStore.getState();
+        const { shapes, selectedShapes: selectedIds, tool, zoom, pan, layers, selectedNodeIndices, hoveredNodeIndex } = useStore.getState();
         const selectedObjects = shapes.filter(s => selectedIds.includes(s.id));
 
         let textEditing: TextEditingState | null = null;
@@ -270,6 +270,7 @@ export class CanvasController {
                 zoom,
                 pan,
                 selectedNodeIndices,
+                hoveredNodeIndex,
                 this.previewOrigin,
                 textEditing,
                 snapResult
