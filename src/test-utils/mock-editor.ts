@@ -3,27 +3,52 @@ import { IEditorContext } from '../core/tools/base';
 import { useStore } from '../store/useStore';
 import { HistoryManager } from '../features/editor/history';
 
+/**
+ * Creates a mock CanvasRenderingContext2D covering every Canvas2D method used
+ * anywhere in the render pipeline (see renderer.ts, distance-helper.ts,
+ * registry.ts, tools/*.ts, models/text.ts). jsdom's own canvas mock does not
+ * implement most drawing methods, so any test that exercises real rendering
+ * (directly or via CanvasController.renderImmediate) needs this instead of
+ * an ad-hoc, partial mock — otherwise missing methods throw
+ * "this.ctx.xxx is not a function" during the test run.
+ */
 export function createMockContext(): CanvasRenderingContext2D {
     return {
         save: vi.fn(),
         restore: vi.fn(),
         beginPath: vi.fn(),
+        closePath: vi.fn(),
         moveTo: vi.fn(),
         lineTo: vi.fn(),
         bezierCurveTo: vi.fn(),
-        closePath: vi.fn(),
-        isPointInPath: vi.fn(() => true),
-        isPointInStroke: vi.fn(() => false),
+        quadraticCurveTo: vi.fn(),
+        arc: vi.fn(),
+        roundRect: vi.fn(),
+        rect: vi.fn(),
+        clip: vi.fn(),
         fill: vi.fn(),
         stroke: vi.fn(),
+        clearRect: vi.fn(),
+        fillRect: vi.fn(),
+        strokeRect: vi.fn(),
+        fillText: vi.fn(),
+        strokeText: vi.fn(),
+        measureText: vi.fn(() => ({ width: 0 }) as TextMetrics),
+        isPointInPath: vi.fn(() => true),
+        isPointInStroke: vi.fn(() => false),
         translate: vi.fn(),
         rotate: vi.fn(),
         scale: vi.fn(),
-        lineWidth: 1,
-        strokeStyle: '',
-        fillStyle: '',
+        setTransform: vi.fn(),
         setLineDash: vi.fn(),
         getLineDash: vi.fn(() => []),
+        lineWidth: 1,
+        lineDashOffset: 0,
+        strokeStyle: '',
+        fillStyle: '',
+        font: '',
+        textAlign: 'left',
+        textBaseline: 'alphabetic',
     } as unknown as CanvasRenderingContext2D;
 }
 

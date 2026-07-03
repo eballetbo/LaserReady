@@ -4,26 +4,13 @@ import { NodeEditTool } from './node';
 import { CanvasController } from '../../editor/controller';
 import { PathShape } from '../models/path';
 import { PathNode } from '../models/node';
+import { createMockContext } from '../../../test-utils/mock-editor';
 
 // Mock CanvasController
 class MockEditor extends CanvasController {
     constructor() {
         const mockCanvas = {
-            getContext: vi.fn(() => ({
-                save: vi.fn(),
-                restore: vi.fn(),
-                beginPath: vi.fn(),
-                moveTo: vi.fn(),
-                bezierCurveTo: vi.fn(),
-                isPointInPath: vi.fn(() => false),
-                isPointInStroke: vi.fn(() => false),
-                clearRect: vi.fn(),
-                fillRect: vi.fn(),
-                strokeRect: vi.fn(),
-                scale: vi.fn(),
-                translate: vi.fn(),
-                setTransform: vi.fn()
-            })),
+            getContext: vi.fn(() => createMockContext()),
             style: {},
             width: 800,
             height: 600,
