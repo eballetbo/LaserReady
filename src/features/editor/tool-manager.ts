@@ -9,10 +9,7 @@ import { PenTool } from '../shapes/tools/pen';
 import { NodeEditTool } from '../shapes/tools/node';
 import { FilletTool } from '../shapes/tools/fillet';
 import { OffsetTool } from '../shapes/tools/offset';
-
-// ToolType is likely defined in types.ts or inferred, but let's define it here or import if found.
-// Based on controller, it uses string literals.
-export type ToolType = 'select' | 'rect' | 'circle' | 'triangle' | 'pentagon' | 'polygon' | 'star' | 'pen' | 'text' | 'node-edit' | 'fillet' | 'hand' | 'offset';
+import { ToolType } from '../../config/shortcuts';
 
 export class ToolManager {
     private editor: CanvasController;
@@ -72,8 +69,7 @@ export class ToolManager {
         }
 
         // Update Zustand store to trigger UI updates
-        // Cast to any if store type doesn't match exactly our local definition yet
-        useStore.getState().setTool(type as any);
+        useStore.getState().setTool(type);
     }
 
     private initEvents() {

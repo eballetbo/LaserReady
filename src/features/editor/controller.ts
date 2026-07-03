@@ -3,6 +3,7 @@ import { CanvasRenderer, CanvasLayers, TextEditingState } from './render/rendere
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
 import { ToolManager } from './tool-manager';
+import { ToolType } from '../../config/shortcuts';
 import { PathShape } from '../shapes/models/path';
 import { IShape } from '../shapes/types';
 import { SVGImportService } from '../../features/io/svg-import';
@@ -145,7 +146,7 @@ export class CanvasController {
         useStore.getState().setSelectedShapes(ids);
     }
 
-    set tool(value: any) {
+    set tool(value: ToolType) {
         this.toolManager.setTool(value);
     }
 

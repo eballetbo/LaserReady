@@ -14,6 +14,8 @@ export type ToolType =
     | 'fillet'
     | 'star'
     | 'hand'
+    | 'triangle'
+    | 'pentagon'
     | 'polygon';
 
 export const TOOL_SHORTCUTS: Record<string, ToolType> = {

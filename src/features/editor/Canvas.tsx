@@ -3,10 +3,11 @@ import { CanvasController } from './controller';
 import { DEFAULT_GRID_SPACING } from '../../config/constants';
 import { Ruler } from '../ui/Ruler';
 import { IShape } from '../shapes/types';
+import { ToolType } from '../../config/shortcuts';
 
 interface CanvasProps {
     material: { width: number; height: number };
-    tool: string;
+    tool: ToolType;
     onInit: (editor: CanvasController) => void;
     onSelectionChange?: (selection: IShape[]) => void;
 }
