@@ -281,16 +281,6 @@ export class CanvasRenderer {
     }
 
     private drawSelectionOutline(shape: IShape, config: RendererConfig, zoom: number): void {
-        if (shape.type === 'text') {
-            const bounds = shape.getBounds ? shape.getBounds() : null;
-            if (bounds) {
-                this.setSelectionStyle(zoom, config.colorSelection);
-                this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
-                this.ctx.setLineDash([]);
-            }
-            return;
-        }
-
         if (shape.type === 'group' && shape.children) {
             shape.children.forEach((child: IShape) => {
                 this.drawSelectionOutline(child, config, zoom);
@@ -298,28 +288,11 @@ export class CanvasRenderer {
             return;
         }
 
-        if (!shape.nodes || shape.nodes.length < 2) return;
-
-        this.ctx.beginPath();
-        this.ctx.moveTo(shape.nodes[0].x, shape.nodes[0].y);
-        for (let i = 0; i < shape.nodes.length; i++) {
-            let nextNode;
-            if (i === shape.nodes.length - 1) {
-                if (!shape.closed) break;
-                nextNode = shape.nodes[0];
-            } else {
-                nextNode = shape.nodes[i + 1];
-            }
-            this.ctx.bezierCurveTo(
-                shape.nodes[i].cpOut.x, shape.nodes[i].cpOut.y,
-                nextNode.cpIn.x, nextNode.cpIn.y,
-                nextNode.x, nextNode.y
-            );
-        }
-        if (shape.closed) this.ctx.closePath();
+        const bounds = shape.getBounds ? shape.getBounds() : null;
+        if (!bounds) return;
 
         this.setSelectionStyle(zoom, config.colorSelection);
-        this.ctx.stroke();
+        this.ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
         this.ctx.setLineDash([]);
     }
 
