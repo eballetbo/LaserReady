@@ -102,7 +102,9 @@ export function useGlobalShortcuts(deps: ShortcutDeps) {
             }
 
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                if (editor && editor.selectedShapes.length > 0) {
+                // In node-edit mode, NodeEditTool.onKeyDown nudges the selected
+                // nodes directly; nudging the whole shape here would double-move it.
+                if (editor && tool !== 'node-edit' && editor.selectedShapes.length > 0) {
                     e.preventDefault();
                     const step = e.shiftKey ? 10 : 1;
                     const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;

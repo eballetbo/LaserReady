@@ -354,6 +354,35 @@ export class NodeEditTool extends BaseTool {
             return;
         }
 
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            if (indices.length === 0) return;
+            e.preventDefault();
+
+            const step = e.shiftKey ? 10 : 1;
+            const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
+            const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0;
+
+            const changes: { index: number; oldNode: PathNode; newNode: PathNode }[] = [];
+            indices.forEach(idx => {
+                const node = shape.nodes[idx];
+                if (!node) return;
+                const oldNode = node.clone();
+                node.x += dx;
+                node.y += dy;
+                node.cpIn.x += dx;
+                node.cpIn.y += dy;
+                node.cpOut.x += dx;
+                node.cpOut.y += dy;
+                changes.push({ index: idx, oldNode, newNode: node.clone() });
+            });
+
+            if (changes.length > 0) {
+                this.editor.history.execute(new MoveNodeCommand(shape.id, changes));
+                this.editor.render();
+            }
+            return;
+        }
+
         if (e.key.toLowerCase() === 's') {
             if (indices.length === 0) return;
             indices.forEach(idx => {

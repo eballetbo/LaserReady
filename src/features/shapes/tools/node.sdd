@@ -4,19 +4,25 @@ Purpose:
   Direct manipulation of individual anchor points and control handles on paths.
 
 Owns:
-  ./node-edit.ts
-  ./node-edit.test.ts
+  ./node.ts
+  ./node.test.ts
 
 Must:
   Click selects a single node.
   Shift+click adds/removes from node selection.
   Drag moves selected nodes.
-  Arrow keys nudge nodes by 1px (Shift+Arrow for 10px).
+  Arrow keys nudge selected nodes by 1px (Shift+Arrow for 10px).
   C key sets node type to Corner.
   S key sets node type to Smooth (colinear handles, independent lengths).
   Y key sets node type to Symmetric (colinear handles, equal lengths).
   Delete removes selected nodes from path.
   Double-click on segment inserts a new node.
+  Click on a segment (away from its endpoint nodes) selects the segment,
+    independent of node selection.
+  Hovering a node or segment highlights it (ring on node, colored stroke on
+    segment) before it is clicked.
+  Dragging a selected segment translates it rigidly (both endpoint nodes and
+    their control handles move together), rather than reshaping it into a curve.
   All node edits are undoable.
 
 Must not:
@@ -90,13 +96,35 @@ Scenario: break path at node
   When the user triggers "Break Path" at that node
   Then the path becomes open at that point
 
+Scenario: click segment to select it
+  Given a rectangle path is selected and NodeEdit tool is active
+  When the user clicks the middle of the top edge (away from its endpoints)
+  Then that segment is selected
+  And no nodes are selected
+
+Scenario: hover highlights node or segment
+  Given NodeEdit tool is active on a selected path
+  When the mouse moves over a node without clicking
+  Then that node is rendered with a hover ring
+  When the mouse moves over a segment without clicking
+  Then that segment is rendered highlighted
+
+Scenario: drag segment translates it
+  Given a segment is selected in NodeEdit mode
+  When the user drags the segment by (+0px, +20px)
+  Then both endpoint nodes and their control handles move by that delta
+  And the segment does not bow into a curve
+
 Tasks:
   [x] Click to select node.
   [x] Multi-select with Shift.
   [x] Drag to move nodes.
-  [x] Arrow nudge.
+  [x] Arrow nudge (nudges selected nodes, not the whole shape).
   [x] Node type switching (C/S/Y).
   [x] Delete node.
   [x] Insert node on segment.
   [x] Segment to Line / Curve conversion.
   [x] Break path at node.
+  [x] Click segment (independent of nodes) to select it.
+  [x] Hover highlight for nodes and segments.
+  [x] Segment drag translates rigidly instead of curving.
