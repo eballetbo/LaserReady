@@ -28,7 +28,7 @@ describe('ToolManager', () => {
         mockEditor = {
             canvas,
             ctx,
-            renderer: { drawScene: vi.fn(), drawSnapMarker: vi.fn(), updateDashAnimation: vi.fn() },
+            renderer: { drawScene: vi.fn(), drawSnapMarker: vi.fn() },
             inputManager,
             history: { execute: vi.fn((cmd) => cmd.execute()), undo: vi.fn(), redo: vi.fn() },
             activeLayerId: 'layer-1',

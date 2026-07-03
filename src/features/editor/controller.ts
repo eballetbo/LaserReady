@@ -1,4 +1,4 @@
-import { EDITOR_CONFIG, MIN_ZOOM, MAX_ZOOM } from '../../config/constants';
+import { EDITOR_CONFIG, MIN_ZOOM, MAX_ZOOM, TEXT_CURSOR_BLINK_INTERVAL_MS } from '../../config/constants';
 import { CanvasRenderer, CanvasLayers, TextEditingState } from './render/renderer';
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
@@ -40,8 +40,7 @@ export class CanvasController {
     pan: { x: number; y: number };
     unsubscribe: () => void;
     selectedShape?: IShape;
-    private animationFrameId: number | null = null;
-    private lastFrameTime: number = 0;
+    private textCursorBlinkTimerId: ReturnType<typeof setTimeout> | null = null;
     private renderPending: boolean = false;
     private lastSelectionIds: string = '';
     private renderFrameId: number | null = null;
@@ -107,13 +106,6 @@ export class CanvasController {
                 this.dirtyFlags.background = true;
             }
 
-            const hasSelection = state.selectedShapes.length > 0 && state.tool === 'select';
-            if (hasSelection && !this.animationFrameId) {
-                this.startSelectionAnimation();
-            } else if (!hasSelection && this.animationFrameId && !this.isEditingText()) {
-                this.stopSelectionAnimation();
-            }
-
             const anyDirty = this.dirtyFlags.background || this.dirtyFlags.content || this.dirtyFlags.overlay;
 
             prevState = state;
@@ -167,30 +159,26 @@ export class CanvasController {
     }
 
     dispose() {
-        this.stopSelectionAnimation();
+        this.stopTextCursorBlink();
         if (this.renderFrameId) cancelAnimationFrame(this.renderFrameId);
         this.inputManager.dispose();
         if (this.unsubscribe) this.unsubscribe();
     }
 
-    private startSelectionAnimation(): void {
-        if (this.animationFrameId) return;
-        this.lastFrameTime = performance.now();
-        const animate = (currentTime: number) => {
-            const deltaTime = currentTime - this.lastFrameTime;
-            this.lastFrameTime = currentTime;
-            this.renderer.updateDashAnimation(deltaTime);
+    private startTextCursorBlink(): void {
+        if (this.textCursorBlinkTimerId) return;
+        const tick = () => {
             this.dirtyFlags.overlay = true;
             this.renderImmediate();
-            this.animationFrameId = requestAnimationFrame(animate);
+            this.textCursorBlinkTimerId = setTimeout(tick, TEXT_CURSOR_BLINK_INTERVAL_MS - (Date.now() % TEXT_CURSOR_BLINK_INTERVAL_MS));
         };
-        this.animationFrameId = requestAnimationFrame(animate);
+        this.textCursorBlinkTimerId = setTimeout(tick, TEXT_CURSOR_BLINK_INTERVAL_MS - (Date.now() % TEXT_CURSOR_BLINK_INTERVAL_MS));
     }
 
-    private stopSelectionAnimation(): void {
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
+    private stopTextCursorBlink(): void {
+        if (this.textCursorBlinkTimerId) {
+            clearTimeout(this.textCursorBlinkTimerId);
+            this.textCursorBlinkTimerId = null;
         }
     }
 
@@ -239,11 +227,11 @@ export class CanvasController {
                 textId: textTool.activeText.id,
                 cursorPosition: textTool.cursorPosition ?? 0
             };
-            if (!this.animationFrameId) {
-                this.startSelectionAnimation();
+            if (!this.textCursorBlinkTimerId) {
+                this.startTextCursorBlink();
             }
-        } else if (this.animationFrameId && !(selectedIds.length > 0 && tool === 'select')) {
-            this.stopSelectionAnimation();
+        } else if (this.textCursorBlinkTimerId) {
+            this.stopTextCursorBlink();
         }
 
         if (this.dirtyFlags.background) {

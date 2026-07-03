@@ -43,7 +43,7 @@ import {
     DEFAULT_STROKE_WIDTH,
     PEN_PREVIEW_COLOR,
     SELECTION_DASH_PATTERN,
-    SELECTION_DASH_SPEED,
+    TEXT_CURSOR_BLINK_INTERVAL_MS,
     ROTATION_HANDLE_OFFSET,
     DEFAULT_FONT_SIZE,
     DEFAULT_FONT_FAMILY,
@@ -85,7 +85,6 @@ export class CanvasRenderer {
     private overlayCtx: CanvasRenderingContext2D;
 
     private ctx!: CanvasRenderingContext2D;
-    private lineDashOffset: number = 0;
     private textEditing: TextEditingState | null = null;
 
     constructor(layers: CanvasLayers) {
@@ -344,7 +343,7 @@ export class CanvasRenderer {
             ? textObject.getLineHeight()
             : fontSize * TEXT_LINE_HEIGHT_MULTIPLIER * (1 + (textObject.vSpace || 0) / 100);
 
-        const blinkOn = Math.floor(Date.now() / 530) % 2 === 0;
+        const blinkOn = Math.floor(Date.now() / TEXT_CURSOR_BLINK_INTERVAL_MS) % 2 === 0;
         if (blinkOn) {
             this.drawTextCursor(textObject, cursorPos, fontSize, lineHeight, hSpace, alignX);
         }
@@ -633,15 +632,7 @@ export class CanvasRenderer {
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = DEFAULT_STROKE_WIDTH / zoom;
         this.ctx.setLineDash(SELECTION_DASH_PATTERN.map(v => v / zoom));
-        this.ctx.lineDashOffset = -this.lineDashOffset / zoom;
-    }
-
-    updateDashAnimation(deltaTime: number): void {
-        this.lineDashOffset += (SELECTION_DASH_SPEED * deltaTime) / 1000;
-        const patternSum = SELECTION_DASH_PATTERN[0] + SELECTION_DASH_PATTERN[1];
-        if (this.lineDashOffset >= patternSum) {
-            this.lineDashOffset -= patternSum;
-        }
+        this.ctx.lineDashOffset = 0;
     }
 
     drawSelectionBounds(bounds: Rect, config: RendererConfig, zoom: number): void {

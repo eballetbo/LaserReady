@@ -54,8 +54,8 @@ export const NODE_SKELETON_WIDTH = 0.5;
 export const NODE_HANDLE_CIRCLE_RADIUS = 3;
 export const DEFAULT_STROKE_WIDTH = 1;
 export const SELECTION_DASH_PATTERN = [8, 12] as const;
-export const SELECTION_DASH_SPEED = 25; // pixels per second
 export const PEN_DASH_PATTERN = [5, 5] as const;
+export const TEXT_CURSOR_BLINK_INTERVAL_MS = 530;
 export const ROTATION_HANDLE_OFFSET = 20;
 
 // ========================================
