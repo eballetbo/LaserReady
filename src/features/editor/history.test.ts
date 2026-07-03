@@ -184,6 +184,23 @@ describe('Undo/Redo Integration Tests', () => {
         expect(mockEditor.shapes.find((s: any) => s.id === shape1.id)).toBeDefined();
     });
 
+    it('should retain only the last 50 entries after 60 actions (history stack limit)', () => {
+        for (let i = 0; i < 60; i++) {
+            const shape = new PathShape([new PathNode(i, i), new PathNode(i + 1, i + 1)], true, 'layer-1');
+            useStore.getState().setShapes([...useStore.getState().shapes, shape]);
+            history.execute(new DeleteShapeCommand([shape]));
+        }
+
+        expect(history['undoStack'].length).toBe(50);
+
+        for (let i = 0; i < 51; i++) {
+            history.undo();
+        }
+
+        // Only 50 of the 60 deletions could be undone; the oldest 10 were evicted.
+        expect(mockEditor.shapes.length).toBe(50);
+    });
+
     it('should undo clear (all shapes restored after Ctrl+Z)', () => {
         const shapes = [
             new PathShape([new PathNode(0, 0), new PathNode(10, 10)], true, 'layer-1'),

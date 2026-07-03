@@ -10,7 +10,7 @@ export class HistoryManager {
     private undoStack: Command[];
     private redoStack: Command[];
 
-    constructor(limit: number = 100) {
+    constructor(limit: number = 50) {
         this.limit = limit;
         this.undoStack = [];
         this.redoStack = [];
