@@ -30,7 +30,6 @@ type Theme = ThemeColors;
 
 interface PropertiesPanelProps {
     theme: Theme;
-    selection?: any[];
     editor: CanvasController | null;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;

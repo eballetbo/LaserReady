@@ -10,7 +10,6 @@ type Theme = ThemeColors;
 
 interface RightSidebarProps {
     theme: Theme;
-    selection?: any[];
     editor: CanvasController | null;
     applyLaserMode: (mode: string) => void;
     deleteSelected: () => void;
