@@ -50,7 +50,7 @@ export class PenTool extends BaseTool {
             // Check for path continuation (unless Ctrl/Cmd is held)
             const snapRadius = e.altKey ? 100 : 25;
             const snapRadiusSq = snapRadius * snapRadius;
-            let pathToContinue: any = null;
+            let pathToContinue: PathShape | null = null;
             let continueFromEnd = true;
 
             if (!(e.ctrlKey || e.metaKey)) {
@@ -62,11 +62,11 @@ export class PenTool extends BaseTool {
                         const distToLast = Geometry.getDistance({ x, y }, { x: lastNode.x, y: lastNode.y });
 
                         if (distToFirst <= snapRadiusSq) {
-                            pathToContinue = shape;
+                            pathToContinue = shape instanceof PathShape ? shape : null;
                             continueFromEnd = false; // Prepend
                             break;
                         } else if (distToLast <= snapRadiusSq) {
-                            pathToContinue = shape;
+                            pathToContinue = shape instanceof PathShape ? shape : null;
                             continueFromEnd = true; // Append
                             break;
                         }
