@@ -1,4 +1,5 @@
 import { EDITOR_CONFIG, MIN_ZOOM, MAX_ZOOM, TEXT_CURSOR_BLINK_INTERVAL_MS } from '../../config/constants';
+import { SelectionBox } from '../../core/tools/base';
 import { CanvasRenderer, CanvasLayers, TextEditingState } from './render/renderer';
 import { RendererConfig } from './render/types';
 import { InputManager } from './input';
@@ -16,6 +17,7 @@ import { UpdateStyleCommand } from '../shapes/commands/style';
 import { BooleanCommand } from '../shapes/commands/boolean';
 import { GroupCommand } from '../shapes/commands/group';
 import { UngroupCommand } from '../shapes/commands/ungroup';
+import { GroupShape } from '../shapes/models/group';
 import { ImportShapesCommand } from '../shapes/commands/import';
 import { DuplicateCommand } from '../shapes/commands/duplicate';
 import { ZOrderCommand } from '../shapes/commands/zorder';
@@ -34,7 +36,7 @@ export class CanvasController {
     onSelectionChange: (selection: IShape[]) => void;
     activePath: PathShape | null;
     previewPoint: { x: number; y: number } | null;
-    selectionBox: any | null;
+    selectionBox: SelectionBox | null;
     previewOrigin: { x: number; y: number } | null;
     zoom: number;
     pan: { x: number; y: number };
@@ -212,7 +214,7 @@ export class CanvasController {
     }
 
     private isEditingText(): boolean {
-        const textTool = this.toolManager.tools['text'] as any;
+        const textTool = this.toolManager.tools['text'] as { activeText?: { id: string } } | undefined;
         return !!(textTool?.activeText);
     }
 
@@ -222,7 +224,7 @@ export class CanvasController {
 
         let textEditing: TextEditingState | null = null;
         if (tool === 'text' && this.isEditingText()) {
-            const textTool = this.toolManager.tools['text'] as any;
+            const textTool = this.toolManager.tools['text'] as { activeText: { id: string }; cursorPosition?: number };
             textEditing = {
                 textId: textTool.activeText.id,
                 cursorPosition: textTool.cursorPosition ?? 0
@@ -268,7 +270,7 @@ export class CanvasController {
             );
 
             if (this.toolManager.activeTool && 'drawOverlay' in this.toolManager.activeTool) {
-                (this.toolManager.activeTool as any).drawOverlay(this.ctx);
+                (this.toolManager.activeTool as { drawOverlay: (ctx: CanvasRenderingContext2D) => void }).drawOverlay(this.ctx);
             }
 
             this.dirtyFlags.overlay = false;
@@ -315,9 +317,10 @@ export class CanvasController {
             const command = new ImportShapesCommand(shapes);
             this.history.execute(command);
             this.render();
-        } catch (e: any) {
-            console.error("SVG Import Error:", e);
-            notify(e.message || "Error importing SVG", 'error');
+        } catch (e: unknown) {
+            const err = e as Error;
+            console.error("SVG Import Error:", err);
+            notify(err.message || "Error importing SVG", 'error');
         }
     }
 
@@ -342,9 +345,9 @@ export class CanvasController {
 
     ungroupSelected() {
         if (this.selectedShapes.length === 0) return;
-        const groups = this.selectedShapes.filter(s => s.type === 'group');
+        const groups = this.selectedShapes.filter((s): s is GroupShape => s.type === 'group');
         if (groups.length === 0) return;
-        const command = new UngroupCommand(groups as any);
+        const command = new UngroupCommand(groups);
         this.history.execute(command);
     }
 
