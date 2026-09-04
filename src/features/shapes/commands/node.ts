@@ -2,6 +2,7 @@ import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { PathNode, NodeType } from '../models/node';
 import { Geometry } from '../../../core/math/geometry';
+import { IShape } from '../types';
 
 export class MoveNodeCommand implements Command {
     private shapeId: string;
@@ -102,12 +103,12 @@ export class InsertNodeCommand implements Command {
             throw new Error('Shape or nodes not found');
         }
 
-        this.oldNodes = shape.nodes.map((n: any) => n.clone());
+        this.oldNodes = shape.nodes.map(n => n.clone());
         this.newNodes = this.calculateNewNodes(shape, segmentIndex, t);
     }
 
-    private calculateNewNodes(shape: any, index: number, t: number): PathNode[] {
-        const nodes = shape.nodes.map((n: any) => PathNode.fromJSON(n));
+    private calculateNewNodes(shape: IShape, index: number, t: number): PathNode[] {
+        const nodes = (shape.nodes || []).map(n => PathNode.fromJSON(n));
 
         const i = index;
         const nextI = (i + 1) % nodes.length;
@@ -325,11 +326,11 @@ export class DeleteNodeCommand implements Command {
             throw new Error('Shape or nodes not found');
         }
 
-        this.oldNodes = shape.nodes.map((n: any) => n.clone());
+        this.oldNodes = shape.nodes.map(n => n.clone());
         // Remove nodes at specified indices
         // Important: When deleting multiple, indices shift? 
         // No, we filter based on inclusion in indices list.
-        this.newNodes = shape.nodes.filter((_: any, i: number) => !this.indices.includes(i));
+        this.newNodes = shape.nodes.filter((_, i) => !this.indices.includes(i));
     }
 
     execute() {
