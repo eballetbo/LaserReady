@@ -24,7 +24,6 @@ interface ToolbarProps {
     tool: string;
     setTool: (tool: string) => void;
     theme: Theme;
-    addText?: any; // Unused but kept for API compatibility
 }
 
 export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
