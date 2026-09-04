@@ -1,4 +1,4 @@
-import { BaseTool } from '../../core/tools/base';
+import { BaseTool, IEditorContext } from '../../core/tools/base';
 import { PathNode } from './models/node';
 import { PathShape } from './models/path';
 import { CreateShapeCommand } from './commands/create';
@@ -44,7 +44,7 @@ export class RectTool extends BaseTool {
     isDragging: boolean;
     dragStart: Point | null;
 
-    constructor(editor: any) {
+    constructor(editor: IEditorContext) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
@@ -114,7 +114,7 @@ export class CircleTool extends BaseTool {
     isDragging: boolean;
     dragStart: Point | null;
 
-    constructor(editor: any) {
+    constructor(editor: IEditorContext) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
@@ -200,7 +200,7 @@ export class PolygonTool extends BaseTool {
     dragStart: Point | null;
     sides: number;
 
-    constructor(editor: any, sides: number = 6) {
+    constructor(editor: IEditorContext, sides: number = 6) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
@@ -301,7 +301,7 @@ export class StarTool extends BaseTool {
     points: number;
     innerRadius: number;
 
-    constructor(editor: any, points: number = 5, innerRadius: number = 0.382) {
+    constructor(editor: IEditorContext, points: number = 5, innerRadius: number = 0.382) {
         super(editor);
         this.isDragging = false;
         this.dragStart = null;
