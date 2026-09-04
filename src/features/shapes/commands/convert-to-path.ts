@@ -67,12 +67,6 @@ export async function loadFontForConversion(fontFamily: string): Promise<opentyp
     }
 }
 
-/**
- * @deprecated Use loadFontForConversion instead
- */
-export async function preloadConversionFont(): Promise<opentype.Font | null> {
-    return loadFontForConversion('Roboto');
-}
 
 export class ConvertToPathCommand implements Command {
     private textObject: TextObject;

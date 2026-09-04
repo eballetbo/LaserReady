@@ -193,19 +193,10 @@ export class PenTool extends BaseTool {
         if (this.editor.activePath) {
 
             // Remove preview shape from store before committing command
-            // Remove preview shape from store before committing command
             useStore.getState().removeShapes([this.editor.activePath.id]);
 
-            if (this.editor.activePath.nodes.length < 2) {
-                // If single node, maybe just remove it? 
-                // But original logic kept it. We'll stick to Commit.
-                const cmd = new CreateShapeCommand(this.editor.activePath);
-                this.editor.history.execute(cmd);
-            } else {
-                // Regular commit
-                const cmd = new CreateShapeCommand(this.editor.activePath);
-                this.editor.history.execute(cmd);
-            }
+            const cmd = new CreateShapeCommand(this.editor.activePath);
+            this.editor.history.execute(cmd);
 
             this.editor.activePath = null;
             this.editor.previewPoint = null;
