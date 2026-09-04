@@ -250,7 +250,7 @@ export class WeldTextCommand implements Command {
             const svgPath = charPath.toPathData(5);
             if (svgPath && svgPath !== 'M0 0') {
                 const paperPath = new paper.CompoundPath(svgPath);
-                if (paperPath.children.length > 0 || (paperPath as any).segments?.length > 0) {
+                if (paperPath.children.length > 0) {
                     charPaths.push(paperPath);
                 } else {
                     paperPath.remove();
