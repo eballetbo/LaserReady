@@ -62,7 +62,7 @@ export class SnapManager {
 
             shapes.forEach(shape => {
                 if (excludeShapeIds.includes(shape.id)) return;
-                if ((shape as any).visible === false) return;
+                if (shape.visible === false) return;
 
                 // A. Vertices (Endpoints)
                 if (shape.nodes) {

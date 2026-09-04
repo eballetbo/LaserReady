@@ -27,6 +27,7 @@ export interface IShape {
     fillColor?: string;
     dashArray?: number[];
     opacity?: number;
+    visible?: boolean;
 
     move?(dx: number, dy: number): void;
     getBounds?(): Rect;
