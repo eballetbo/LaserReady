@@ -12,12 +12,12 @@ export function updatePolygonGeometry(shape: IShape): void {
 
     // Calculate center from existing nodes
     let cx = 0, cy = 0;
-    shape.nodes.forEach((n: any) => { cx += n.x; cy += n.y; });
+    shape.nodes.forEach(n => { cx += n.x; cy += n.y; });
     const center = { x: cx / shape.nodes.length, y: cy / shape.nodes.length };
 
     // Calculate average radius
     let totalRadius = 0;
-    shape.nodes.forEach((n: any) => {
+    shape.nodes.forEach(n => {
         const dx = n.x - center.x;
         const dy = n.y - center.y;
         totalRadius += Math.sqrt(dx * dx + dy * dy);
@@ -51,12 +51,12 @@ export function updateStarGeometry(shape: IShape): void {
 
     // Calculate center from existing nodes
     let cx = 0, cy = 0;
-    shape.nodes.forEach((n: any) => { cx += n.x; cy += n.y; });
+    shape.nodes.forEach(n => { cx += n.x; cy += n.y; });
     const center = { x: cx / shape.nodes.length, y: cy / shape.nodes.length };
 
     // Find maximum distance (outer radius)
     let maxDist = 0;
-    shape.nodes.forEach((n: any) => {
+    shape.nodes.forEach(n => {
         const dx = n.x - center.x;
         const dy = n.y - center.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
