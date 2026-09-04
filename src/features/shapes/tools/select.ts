@@ -352,8 +352,8 @@ export class SelectTool extends BaseTool {
                     if (snapshot.type === 'path' && snapshot.nodes) {
                         const currentBounds = shape.getBounds ? shape.getBounds() : { minX: shape.x ?? 0, minY: shape.y ?? 0 };
                         const originalBounds = {
-                            minX: Math.min(...snapshot.nodes.map((n: any) => n.x)),
-                            minY: Math.min(...snapshot.nodes.map((n: any) => n.y))
+                            minX: Math.min(...snapshot.nodes.map(n => n.x)),
+                            minY: Math.min(...snapshot.nodes.map(n => n.y))
                         };
                         totalDx = (currentBounds.minX ?? 0) - originalBounds.minX;
                         totalDy = (currentBounds.minY ?? 0) - originalBounds.minY;
