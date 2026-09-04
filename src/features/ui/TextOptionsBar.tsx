@@ -6,15 +6,16 @@ import {
 } from 'lucide-react';
 import { NumberInput, SectionHeader } from './components';
 import { CanvasController } from '../editor/controller';
-import { ChangeTextStyleCommand } from '../shapes/commands/text';
+import { ChangeTextStyleCommand, TextStyleProps } from '../shapes/commands/text';
 import { loadFontForConversion, WeldTextCommand } from '../shapes/commands/convert-to-path';
 import { ThemeColors } from '../../config/themes';
 import { useLanguage } from '../../contexts/useLanguage';
+import { TextObject } from '../shapes/models/text';
 
 type Theme = ThemeColors;
 
 interface TextOptionsBarProps {
-    selectedObject: any;
+    selectedObject: TextObject;
     editor: CanvasController | null;
     theme: Theme;
 }
@@ -22,12 +23,12 @@ interface TextOptionsBarProps {
 export const TextOptionsBar: React.FC<TextOptionsBarProps> = ({ selectedObject, editor, theme }) => {
     const { t } = useLanguage();
 
-    const executeStyleChange = (prop: string, oldVal: unknown, newVal: unknown) => {
+    const executeStyleChange = (prop: keyof TextStyleProps, oldVal: unknown, newVal: unknown) => {
         if (!editor) return;
         const cmd = new ChangeTextStyleCommand(
             selectedObject.id,
-            { [prop]: oldVal } as any,
-            { [prop]: newVal } as any
+            { [prop]: oldVal } as Partial<TextStyleProps>,
+            { [prop]: newVal } as Partial<TextStyleProps>
         );
         editor.history.execute(cmd);
         editor.render();

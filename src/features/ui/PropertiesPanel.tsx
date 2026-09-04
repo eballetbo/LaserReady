@@ -24,6 +24,7 @@ import { UpdateParamsCommand } from '../shapes/commands/update-params';
 import { PIXELS_PER_MM, AVAILABLE_FONTS } from '../../config/constants';
 import { Geometry } from '../../core/math/geometry';
 import { ThemeColors } from '../../config/themes';
+import { TextObject } from '../shapes/models/text';
 
 type Theme = ThemeColors;
 
@@ -287,7 +288,7 @@ export default function PropertiesPanel({ theme, editor, applyLaserMode, deleteS
                                     editor.render();
                                 }} theme={theme} />
                             </div>
-                            <TextOptionsBar selectedObject={selectedObject} editor={editor} theme={theme} />
+                            <TextOptionsBar selectedObject={selectedObject as TextObject} editor={editor} theme={theme} />
                             <div className="mt-2">
                                 <Button
                                     variant="primary"
