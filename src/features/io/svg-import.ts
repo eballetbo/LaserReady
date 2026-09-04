@@ -177,12 +177,9 @@ export const SVGImportService = {
                         });
                     }
 
-                    // PathShape logic for style scaling
-                    // Cast to any to safely access potentially optional or specific properties 
-                    // without complex type guards for this patch.
-                    const s = shape as any;
-                    if (s.style && typeof s.style.strokeWidth === 'number') {
-                        s.style.strokeWidth *= scaleFactor;
+                    // Scale stroke width proportionally with the shape geometry
+                    if (typeof shape.strokeWidth === 'number') {
+                        shape.strokeWidth *= scaleFactor;
                     }
                 });
             }
