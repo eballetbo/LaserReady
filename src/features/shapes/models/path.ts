@@ -92,7 +92,7 @@ export class PathShape {
         );
     }
 
-    toJSON(): Record<string, any> {
+    toJSON(): Record<string, unknown> {
         return {
             id: this.id,
             type: this.type,
@@ -111,21 +111,21 @@ export class PathShape {
         };
     }
 
-    static fromJSON(json: any): PathShape {
-        const nodes = (json.nodes || []).map((n: any) => PathNode.fromJSON(n));
+    static fromJSON(json: Record<string, unknown>): PathShape {
+        const nodes = ((json.nodes as Record<string, unknown>[]) || []).map(n => PathNode.fromJSON(n));
         // Fallback: if json.layerId exists use it, else default 'layer-1'
         // If we wanted to preserve old colors we'd need a more complex migration strategy.
-        const layerId = json.layerId || 'layer-1';
+        const layerId = (json.layerId as string) || 'layer-1';
         return new PathShape(
             nodes,
-            json.closed,
+            json.closed as boolean,
             layerId,
-            json.type,
-            json.params,
-            json.id,
-            json.strokeColor,
-            json.strokeWidth,
-            json.fillColor
+            json.type as string,
+            json.params as Record<string, number | string | boolean | undefined> | undefined,
+            json.id as string | undefined,
+            json.strokeColor as string | undefined,
+            json.strokeWidth as number | undefined,
+            json.fillColor as string | undefined
         );
     }
 }
