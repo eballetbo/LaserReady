@@ -148,9 +148,8 @@ export class OffsetTool extends BaseTool {
 
     private hitTestShape(shape: IShape, x: number, y: number): boolean {
         if (shape.type === 'group') {
-            const group = shape as any;
-            if (group.children) {
-                return group.children.some((c: any) => this.hitTestShape(c, x, y));
+            if (shape.children) {
+                return shape.children.some(c => this.hitTestShape(c, x, y));
             }
             return false;
         }
