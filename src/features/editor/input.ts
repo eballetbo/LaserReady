@@ -70,7 +70,7 @@ export class InputManager {
 
     on(event: 'down' | 'move' | 'up' | 'contextmenu', callback: (x: number, y: number, event: MouseEvent) => void): void;
     on(event: 'keydown', callback: (event: KeyboardEvent) => void): void;
-    on(event: string, callback: any) {
+    on(event: string, callback: ((x: number, y: number, event: MouseEvent) => void) | ((event: KeyboardEvent) => void)) {
         if (event === 'down') this.listeners.down = callback;
         if (event === 'move') this.listeners.move = callback;
         if (event === 'up') this.listeners.up = callback;
