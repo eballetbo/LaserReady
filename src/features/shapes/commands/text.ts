@@ -71,8 +71,9 @@ export class ChangeTextCommand implements Command {
     private applyText(text: string): void {
         const { shapes, setShapes } = useStore.getState();
         const shape = shapes.find(s => s.id === this.shapeId);
-        if (!shape) return;
-        (shape as any).text = text;
+        if ('text' in shape) {
+            (shape as { text: string }).text = text;
+        }
         setShapes([...shapes]);
     }
 }
