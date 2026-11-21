@@ -35,6 +35,45 @@ export default defineConfig([
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-globals': ['error', 'alert', 'confirm', 'prompt'],
+    },
+  },
+  {
+    files: ['src/features/shapes/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['**/ui', '**/ui/*', '**/ui/**', '**/persistence', '**/persistence/*', '**/persistence/**'],
+          message: 'shapes.sdd: shapes module must not import from ui or persistence.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['src/features/io/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['**/store', '**/store/*', '**/store/**', '**/ui', '**/ui/*', '**/ui/**', '**/persistence', '**/persistence/*', '**/persistence/**'],
+          message: 'io.sdd: io module must not import from store, ui, or persistence.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['src/core/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['**/store/**', '**/ui/**', '**/persistence/**'],
+          message: 'core module must not import from store, ui, or persistence.',
+        }],
+      }],
+    },
+  },
+  {
     files: ['vite.config.*', 'eslint.config.*', 'electron/**'],
     languageOptions: {
       globals: globals.node,
