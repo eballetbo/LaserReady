@@ -1,4 +1,4 @@
-import { IShape } from '../types';
+import { IShape, isGroupShape, isTextShape } from '../types';
 import { PathNode } from '../models/node';
 
 /**
@@ -18,7 +18,7 @@ export interface ShapeSnapshot {
 }
 
 export function captureSnapshot(shape: IShape): ShapeSnapshot {
-    if (shape.type === 'group') {
+    if (isGroupShape(shape)) {
         return {
             type: 'group',
             children: shape.children ? shape.children.map(c => {
@@ -32,16 +32,15 @@ export function captureSnapshot(shape: IShape): ShapeSnapshot {
         };
     }
 
-    if (shape.type === 'text') {
-        const t = shape as IShape & { fontSize?: number; scaleX?: number; scaleY?: number };
+    if (isTextShape(shape)) {
         return {
             type: 'text',
-            x: t.x,
-            y: t.y,
-            rotation: t.rotation,
-            fontSize: t.fontSize,
-            scaleX: t.scaleX,
-            scaleY: t.scaleY,
+            x: shape.x,
+            y: shape.y,
+            rotation: shape.rotation,
+            fontSize: shape.fontSize,
+            scaleX: shape.scaleX,
+            scaleY: shape.scaleY,
         };
     }
 
@@ -59,7 +58,7 @@ export function captureSnapshot(shape: IShape): ShapeSnapshot {
 }
 
 export function restoreSnapshot(shape: IShape, snapshot: ShapeSnapshot): void {
-    if (snapshot.type === 'group' && shape.type === 'group') {
+    if (snapshot.type === 'group' && isGroupShape(shape)) {
         shape.children = snapshot.children!.map(c => {
             const clone = c.clone ? c.clone() : JSON.parse(JSON.stringify(c));
             clone.id = c.id;
@@ -68,14 +67,13 @@ export function restoreSnapshot(shape: IShape, snapshot: ShapeSnapshot): void {
         shape.x = snapshot.x;
         shape.y = snapshot.y;
         shape.rotation = snapshot.rotation;
-    } else if (snapshot.type === 'text') {
-        const t = shape as IShape & { fontSize?: number; scaleX?: number; scaleY?: number };
-        t.x = snapshot.x;
-        t.y = snapshot.y;
-        t.rotation = snapshot.rotation;
-        t.fontSize = snapshot.fontSize;
-        t.scaleX = snapshot.scaleX;
-        t.scaleY = snapshot.scaleY;
+    } else if (snapshot.type === 'text' && isTextShape(shape)) {
+        shape.x = snapshot.x;
+        shape.y = snapshot.y;
+        shape.rotation = snapshot.rotation;
+        if (snapshot.fontSize !== undefined) shape.fontSize = snapshot.fontSize;
+        shape.scaleX = snapshot.scaleX;
+        shape.scaleY = snapshot.scaleY;
     } else if (snapshot.type === 'path' && snapshot.nodes && shape.nodes) {
         shape.nodes = snapshot.nodes.map(n => n.clone());
         shape.x = snapshot.x;

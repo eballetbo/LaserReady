@@ -5,32 +5,17 @@ import { LASER_MODES } from '../../config/laser-modes';
 import { loadFont } from '../../core/fonts';
 import { scope } from '../../core/math/paper-scope';
 import { PathNode } from '../../features/shapes/models/node';
-import { IShape } from '../../features/shapes/types';
+import { IShape, isGroupShape, isTextShape } from '../../features/shapes/types';
 import { LaserLayer } from '../../types/layer';
 
 function collectFontFamilies(shapes: IShape[], families: Set<string>): void {
     for (const shape of shapes) {
-        if (shape.type === 'group' && shape.children) {
+        if (isGroupShape(shape) && shape.children) {
             collectFontFamilies(shape.children, families);
-        } else if (shape.type === 'text') {
-            const t = shape as unknown as TextShapeView;
-            families.add(t.fontFamily || 'Roboto');
+        } else if (isTextShape(shape)) {
+            families.add(shape.fontFamily || 'Roboto');
         }
     }
-}
-
-interface TextShapeView {
-    x?: number;
-    y?: number;
-    text?: string;
-    fontFamily?: string;
-    fontSize?: number;
-    fontWeight?: string;
-    fontStyle?: string;
-    fillColor?: string;
-    rotation?: number;
-    scaleX?: number;
-    scaleY?: number;
 }
 
 function shapeToPaperPath(shape: IShape): paper.Path | null {
@@ -68,7 +53,7 @@ export const exportToSVG = (
     scope.view.viewSize = new paper.Size(width, height);
 
     const addShapeToProject = (shape: IShape): void => {
-        if (shape.type === 'group') {
+        if (isGroupShape(shape)) {
             if (shape.children) {
                 shape.children.forEach(child => addShapeToProject(child));
             }
@@ -77,31 +62,30 @@ export const exportToSVG = (
 
         let item: paper.Item | null = null;
 
-        if (shape.type === 'text') {
-            const t = shape as unknown as TextShapeView;
-            const font = fonts?.get(t.fontFamily || 'Roboto');
+        if (isTextShape(shape)) {
+            const font = fonts?.get(shape.fontFamily || 'Roboto');
             if (font) {
-                const pathData = font.getPath(t.text ?? '', t.x ?? 0, t.y ?? 0, t.fontSize ?? 24).toPathData(4);
+                const pathData = font.getPath(shape.text ?? '', shape.x ?? 0, shape.y ?? 0, shape.fontSize ?? 24).toPathData(4);
                 if (pathData) {
                     item = new scope.CompoundPath(pathData);
-                    if (t.rotation) item.rotate(t.rotation);
-                    if (t.scaleX && t.scaleY) item.scale(t.scaleX, t.scaleY);
+                    if (shape.rotation) item.rotate(shape.rotation);
+                    if (shape.scaleX && shape.scaleY) item.scale(shape.scaleX, shape.scaleY);
                     if (!shape.fillColor) {
-                        item.fillColor = new paper.Color(t.fillColor || 'black');
+                        item.fillColor = new paper.Color(shape.fillColor || 'black');
                     }
                 }
             } else {
                 const textItem = new scope.PointText({
-                    point: new paper.Point(t.x ?? 0, t.y ?? 0),
-                    content: t.text ?? '',
-                    fontFamily: t.fontFamily,
-                    fontSize: t.fontSize,
-                    fontWeight: t.fontWeight,
-                    fontStyle: t.fontStyle,
-                    fillColor: t.fillColor || 'black'
+                    point: new paper.Point(shape.x ?? 0, shape.y ?? 0),
+                    content: shape.text ?? '',
+                    fontFamily: shape.fontFamily,
+                    fontSize: shape.fontSize,
+                    fontWeight: shape.fontWeight,
+                    fontStyle: shape.fontStyle,
+                    fillColor: shape.fillColor || 'black'
                 });
-                if (t.rotation) textItem.rotate(t.rotation);
-                if (t.scaleX && t.scaleY) textItem.scale(t.scaleX, t.scaleY);
+                if (shape.rotation) textItem.rotate(shape.rotation);
+                if (shape.scaleX && shape.scaleY) textItem.scale(shape.scaleX, shape.scaleY);
                 item = textItem;
             }
         } else if (shape.nodes) {

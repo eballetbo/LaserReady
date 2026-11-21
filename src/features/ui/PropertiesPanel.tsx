@@ -239,7 +239,7 @@ export default function PropertiesPanel({ theme, editor, applyLaserMode, deleteS
                         </div>
                     )}
 
-                    {selectedObject && selectedObject.type === 'text' && (
+                    {selectedObject instanceof TextObject && (
                         <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
@@ -287,7 +287,7 @@ export default function PropertiesPanel({ theme, editor, applyLaserMode, deleteS
                                     editor.render();
                                 }} theme={theme} />
                             </div>
-                            <TextOptionsBar selectedObject={selectedObject as TextObject} editor={editor} theme={theme} />
+                            <TextOptionsBar selectedObject={selectedObject} editor={editor} theme={theme} />
                             <div className="mt-2">
                                 <Button
                                     variant="primary"

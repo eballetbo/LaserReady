@@ -58,7 +58,7 @@ export class TextObject implements IShape {
     distort: boolean;
     pathId: string | null;
     weld: boolean;
-    type: string;
+    type: 'text';
     closed: boolean = false;
     fillColor?: string;
     strokeColor?: string;
