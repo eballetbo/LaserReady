@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import {
     Star, Heart, Cloud, Sun, Moon, Zap,
     Music, Camera, Video, Mic,
@@ -114,17 +113,19 @@ export default function AssetLibrary({ theme }: AssetLibraryProps) {
         return currentLibrary.categories[selectedCategory] || [];
     }, [currentLibrary, selectedCategory]);
 
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, IconComponent: LucideIcon) => {
-        // Render icon to SVG string
-        const svgString = renderToStaticMarkup(
-            <IconComponent
-                size={100} // Default import size
-                stroke="black"
-                strokeWidth={2}
-                fill="none"
-            />
-        );
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+        const svgEl = e.currentTarget.querySelector('svg');
+        if (!svgEl) return;
 
+        const clone = svgEl.cloneNode(true) as SVGSVGElement;
+        clone.setAttribute('width', '100');
+        clone.setAttribute('height', '100');
+        clone.setAttribute('stroke', 'black');
+        clone.setAttribute('stroke-width', '2');
+        clone.setAttribute('fill', 'none');
+        clone.removeAttribute('class');
+
+        const svgString = new XMLSerializer().serializeToString(clone);
         e.dataTransfer.setData('image/svg+xml', svgString);
         e.dataTransfer.effectAllowed = 'copy';
     };
@@ -188,7 +189,7 @@ export default function AssetLibrary({ theme }: AssetLibraryProps) {
                         <div
                             key={`${selectedLibrary}-${selectedCategory}-${index}`}
                             draggable
-                            onDragStart={(e) => handleDragStart(e, Icon)}
+                            onDragStart={handleDragStart}
                             className={`
                                 aspect-square flex flex-col items-center justify-center gap-2 
                                 rounded-lg border ${theme.border} ${theme.buttonHover} 
