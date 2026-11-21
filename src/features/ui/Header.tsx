@@ -45,21 +45,28 @@ export function Header({ editor, theme }: HeaderProps) {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const lowerName = file.name.toLowerCase();
+        if (!lowerName.endsWith('.laser') && !lowerName.endsWith('.svg')) {
+            notify('Unsupported file format. Please select an .svg or .laser file.', 'error');
+            e.target.value = '';
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (f) => {
             const result = f.target?.result;
             if (typeof result === 'string') {
-                if (file.name.endsWith('.laser')) {
+                if (lowerName.endsWith('.laser')) {
                     const success = importProjectFile(result);
                     if (success) {
                         editor?.render();
                         notify('Project loaded successfully', 'success');
-                    } else {
-                        notify('Failed to load project file — it may be corrupted or unsupported', 'error');
                     }
                 } else {
-                    editor?.importSVGString(result);
-                    notify(`Imported ${file.name}`, 'success');
+                    const success = editor?.importSVGString(result);
+                    if (success) {
+                        notify(`Imported ${file.name}`, 'success');
+                    }
                 }
             }
         };

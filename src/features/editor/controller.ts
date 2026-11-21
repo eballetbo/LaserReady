@@ -307,7 +307,7 @@ export class CanvasController {
         this.render();
     }
 
-    importSVGString(svgString: string, position: { x: number; y: number } | null = null) {
+    importSVGString(svgString: string, position: { x: number; y: number } | null = null): boolean {
         try {
             const shapes = SVGImportService.import(svgString, {
                 position,
@@ -317,10 +317,12 @@ export class CanvasController {
             const command = new ImportShapesCommand(shapes);
             this.history.execute(command);
             this.render();
+            return true;
         } catch (e: unknown) {
             const err = e as Error;
             console.error("SVG Import Error:", err);
             notify(err.message || "Error importing SVG", 'error');
+            return false;
         }
     }
 
