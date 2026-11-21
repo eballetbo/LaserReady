@@ -2,7 +2,7 @@ import { Command } from '../../../core/commands/command';
 import { useStore } from '../../../store/useStore';
 import { BooleanOperations } from '../../../core/math/boolean';
 import { PathShape } from '../models/path';
-import { notify } from '../../ui/toast-utils';
+import { notify } from '../../../core/notifications';
 
 type BooleanOperationType = 'unite' | 'subtract' | 'intersect' | 'exclude';
 

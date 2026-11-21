@@ -3,7 +3,7 @@ import { useStore } from '../../../store/useStore';
 import { PathShape } from '../models/path';
 import { GroupShape } from '../models/group';
 import { PathNode } from '../models/node';
-import { notify } from '../../ui/toast-utils';
+import { notify } from '../../../core/notifications';
 import { TextObject } from '../models/text';
 import { BooleanOperations } from '../../../core/math/boolean';
 import opentype from 'opentype.js';
