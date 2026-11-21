@@ -1,9 +1,74 @@
 import paper from 'paper';
+import opentype from 'opentype.js';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { LASER_MODES } from '../../config/laser-modes';
 import { PathNode } from '../../features/shapes/models/node';
 import { IShape } from '../../features/shapes/types';
 import { LaserLayer } from '../../types/layer';
+
+const FALLBACK_FONT_PATH = '/fonts/Roboto.ttf';
+const exportFontCache = new Map<string, opentype.Font>();
+
+const LOCAL_FONT_MAP: Record<string, string> = {
+    'Roboto': '/fonts/Roboto.ttf',
+    'Open Sans': '/fonts/OpenSans.ttf',
+    'Lato': '/fonts/Lato.ttf',
+    'Montserrat': '/fonts/Montserrat.ttf',
+    'Poppins': '/fonts/Poppins.ttf',
+    'Raleway': '/fonts/Raleway.ttf',
+    'Nunito': '/fonts/Nunito.ttf',
+    'Ubuntu': '/fonts/Ubuntu.ttf',
+    'Noto Sans': '/fonts/NotoSans.ttf',
+    'Oswald': '/fonts/Oswald.ttf',
+    'Bebas Neue': '/fonts/BebasNeue.ttf',
+    'Righteous': '/fonts/Righteous.ttf',
+    'Black Ops One': '/fonts/BlackOpsOne.ttf',
+    'Permanent Marker': '/fonts/PermanentMarker.ttf',
+    'Bungee Shade': '/fonts/BungeeShade.ttf',
+    'Playfair Display': '/fonts/PlayfairDisplay.ttf',
+    'Merriweather': '/fonts/Merriweather.ttf',
+    'Dancing Script': '/fonts/DancingScript.ttf',
+    'Pacifico': '/fonts/Pacifico.ttf',
+    'Great Vibes': '/fonts/GreatVibes.ttf',
+    'Sacramento': '/fonts/Sacramento.ttf',
+    'Lobster': '/fonts/Lobster.ttf',
+    'PT Serif': '/fonts/PTSerif.ttf',
+    'Bitter': '/fonts/Bitter.ttf',
+    'Libre Baskerville': '/fonts/LibreBaskerville.ttf',
+    'Roboto Mono': '/fonts/RobotoMono.ttf',
+    'Source Code Pro': '/fonts/SourceCodePro.ttf',
+    'Courier Prime': '/fonts/CourierPrime.ttf',
+    'Verdana': '/fonts/Roboto.ttf',
+};
+
+async function loadFontForExport(fontFamily: string): Promise<opentype.Font | null> {
+    if (exportFontCache.has(fontFamily)) {
+        return exportFontCache.get(fontFamily)!;
+    }
+
+    const url = LOCAL_FONT_MAP[fontFamily] || FALLBACK_FONT_PATH;
+    try {
+        const font = await opentype.load(url);
+        exportFontCache.set(fontFamily, font);
+        return font;
+    } catch {
+        if (fontFamily !== 'Roboto') {
+            return loadFontForExport('Roboto');
+        }
+        return null;
+    }
+}
+
+function collectFontFamilies(shapes: IShape[], families: Set<string>): void {
+    for (const shape of shapes) {
+        if (shape.type === 'group' && shape.children) {
+            collectFontFamilies(shape.children, families);
+        } else if (shape.type === 'text') {
+            const t = shape as unknown as TextShapeView;
+            families.add(t.fontFamily || 'Roboto');
+        }
+    }
+}
 
 interface TextShapeView {
     x?: number;
@@ -41,7 +106,13 @@ function shapeToPaperPath(shape: IShape): paper.Path | null {
     return path;
 }
 
-export const exportToSVG = (shapes: IShape[], width: number, height: number, layers?: LaserLayer[]): string => {
+export const exportToSVG = (
+    shapes: IShape[],
+    width: number,
+    height: number,
+    layers?: LaserLayer[],
+    fonts?: Map<string, opentype.Font>
+): string => {
     const layerMap = new Map<string, LaserLayer>();
     if (layers) layers.forEach(l => layerMap.set(l.id, l));
 
@@ -63,21 +134,31 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number, lay
 
         if (shape.type === 'text') {
             const t = shape as unknown as TextShapeView;
-            const textItem = new scope.PointText({
-                point: new paper.Point(t.x ?? 0, t.y ?? 0),
-                content: t.text ?? '',
-                fontFamily: t.fontFamily,
-                fontSize: t.fontSize,
-                fontWeight: t.fontWeight,
-                fontStyle: t.fontStyle,
-                fillColor: t.fillColor || 'black'
-            });
-
-            if (t.rotation) textItem.rotate(t.rotation);
-            if (t.scaleX && t.scaleY) textItem.scale(t.scaleX, t.scaleY);
-
-            item = (textItem as unknown as { toPath(): paper.PathItem }).toPath();
-            textItem.remove();
+            const font = fonts?.get(t.fontFamily || 'Roboto');
+            if (font) {
+                const pathData = font.getPath(t.text ?? '', t.x ?? 0, t.y ?? 0, t.fontSize ?? 24).toPathData(4);
+                if (pathData) {
+                    item = new scope.CompoundPath(pathData);
+                    if (t.rotation) item.rotate(t.rotation);
+                    if (t.scaleX && t.scaleY) item.scale(t.scaleX, t.scaleY);
+                    if (!shape.fillColor) {
+                        item.fillColor = new paper.Color(t.fillColor || 'black');
+                    }
+                }
+            } else {
+                const textItem = new scope.PointText({
+                    point: new paper.Point(t.x ?? 0, t.y ?? 0),
+                    content: t.text ?? '',
+                    fontFamily: t.fontFamily,
+                    fontSize: t.fontSize,
+                    fontWeight: t.fontWeight,
+                    fontStyle: t.fontStyle,
+                    fillColor: t.fillColor || 'black'
+                });
+                if (t.rotation) textItem.rotate(t.rotation);
+                if (t.scaleX && t.scaleY) textItem.scale(t.scaleX, t.scaleY);
+                item = textItem;
+            }
         } else if (shape.nodes) {
             item = shapeToPaperPath(shape);
         }
@@ -122,6 +203,26 @@ export const exportToSVG = (shapes: IShape[], width: number, height: number, lay
 
     // Serialize to string
     return new XMLSerializer().serializeToString(svg);
+};
+
+export const exportToSVGAsync = async (
+    shapes: IShape[],
+    width: number,
+    height: number,
+    layers?: LaserLayer[]
+): Promise<string> => {
+    const families = new Set<string>();
+    collectFontFamilies(shapes, families);
+
+    const fonts = new Map<string, opentype.Font>();
+    await Promise.all(
+        Array.from(families).map(async (family) => {
+            const font = await loadFontForExport(family);
+            if (font) fonts.set(family, font);
+        })
+    );
+
+    return exportToSVG(shapes, width, height, layers, fonts);
 };
 
 export const downloadSVG = (svgString: string, filename: string = 'design.svg'): void => {

@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import opentype from 'opentype.js';
 import { exportToSVG } from './svg-export';
 import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
@@ -14,21 +17,9 @@ if (typeof global.XMLSerializer === 'undefined') {
     } as any;
 }
 
-// Mock Paper.js if needed, but exportToSVG uses it internally.
-// We assume canvas is available in the test environment (jsdom/happy-dom).
-import paper from 'paper';
-
-// Mock toPath for PointText since jsdom/headless paper might not support it
-if (!(paper.PointText.prototype as any).toPath) {
-    (paper.PointText.prototype as any).toPath = function (this: any) {
-        // Return a dummy path representing the vectorized text
-        const path = new paper.Path();
-        path.name = 'vectorized-text';
-        // Add a segment so it's not empty and renders
-        path.add(new paper.Point(this.point));
-        path.add(new paper.Point(this.point.x + 10, this.point.y));
-        return path;
-    };
+function loadTestFont(filename = 'Roboto.ttf'): opentype.Font {
+    const buf = fs.readFileSync(path.resolve(process.cwd(), 'public/fonts', filename));
+    return opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
 }
 
 describe('SVG Export', () => {
@@ -127,8 +118,10 @@ describe('SVG Export', () => {
         expect(svgString).toContain('stroke');
     });
 
-    it('should vectorize text elements', () => {
+    it('should vectorize text elements when font is provided', () => {
         // Arrange
+        const font = loadTestFont();
+        const fonts = new Map<string, opentype.Font>([['Roboto', font]]);
         const textShape = {
             id: 'text-1',
             type: 'text',
@@ -136,7 +129,7 @@ describe('SVG Export', () => {
             y: 100,
             text: 'Hello',
             fontSize: 20,
-            fontFamily: 'Arial',
+            fontFamily: 'Roboto',
             fillColor: 'black',
             scaleX: 1,
             scaleY: 1,
@@ -146,14 +139,33 @@ describe('SVG Export', () => {
         };
 
         // Act
-        const svgString = exportToSVG([textShape] as any, 500, 500);
+        const svgString = exportToSVG([textShape] as any, 500, 500, undefined, fonts);
 
         // Assert
-        // Should NOT contain <text> tag
         expect(svgString).not.toContain('<text');
-
-        // Should contain <path> tags (letters are paths)
-        // Note: Paper.js might create <g> for compound paths
         expect(svgString).toContain('<path');
+    });
+
+    it('should not throw when exporting text without a preloaded font', () => {
+        const textShape = {
+            id: 'text-2',
+            type: 'text',
+            x: 100,
+            y: 100,
+            text: 'Hello',
+            fontSize: 20,
+            fontFamily: 'Roboto',
+            fillColor: 'black',
+            scaleX: 1,
+            scaleY: 1,
+            rotation: 0,
+            closed: false,
+            layerId: 'layer-1'
+        };
+
+        expect(() => {
+            const svgString = exportToSVG([textShape] as any, 500, 500);
+            expect(svgString).toContain('<text');
+        }).not.toThrow();
     });
 });

@@ -5,7 +5,7 @@ import { PIXELS_PER_MM } from '../../config/constants';
 import { useLanguage } from '../../contexts/useLanguage';
 import { ThemeColors } from '../../config/themes';
 import { PathShape } from '../shapes/models/path';
-import { exportToSVG, downloadSVG } from '../io/svg-export';
+import { exportToSVGAsync, downloadSVG } from '../io/svg-export';
 import { importProjectFile } from '../persistence/auto-save';
 import { useStore } from '../../store/useStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -30,10 +30,10 @@ export function Header({ editor, theme }: HeaderProps) {
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleExport = () => {
+    const handleExport = async () => {
         if (!editor) return;
         const layers = useStore.getState().layers;
-        const svgString = exportToSVG(editor.shapes as PathShape[], material.width, material.height, layers);
+        const svgString = await exportToSVGAsync(editor.shapes as PathShape[], material.width, material.height, layers);
         downloadSVG(svgString, 'laser-design.svg');
     };
 
