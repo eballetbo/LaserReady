@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { validateProject, deserializeShapes, serializeProject } from './project-format';
 import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
 import { TextObject } from '../shapes/models/text';
+import * as toastUtils from '../ui/toast-utils';
 
 describe('validateProject', () => {
     const validProject = {
@@ -54,6 +55,16 @@ describe('validateProject', () => {
         const result = validateProject({ ...validProject, shapes: [{ type: 'path' }] });
         expect(result.valid).toBe(false);
         expect(result.errors.some(e => e.includes('missing id'))).toBe(true);
+    });
+
+    it('should reject shapes with missing id beyond the first 5 entries', () => {
+        const shapes = [
+            ...Array.from({ length: 6 }, (_, i) => ({ id: `s-${i}`, type: 'path' })),
+            { type: 'path' },
+        ];
+        const result = validateProject({ ...validProject, shapes });
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.includes('index 6') && e.includes('missing id'))).toBe(true);
     });
 
     it('should reject invalid layers', () => {
@@ -113,13 +124,16 @@ describe('deserializeShapes', () => {
         expect((shapes[0] as any).text).toBe('Hello');
     });
 
-    it('should skip malformed shapes gracefully', () => {
+    it('should skip malformed shapes gracefully and notify the user', () => {
+        const notifySpy = vi.spyOn(toastUtils, 'notify').mockImplementation(() => {});
         const data = [
             { id: 'good', type: 'path', nodes: [{ x: 0, y: 0, cpIn: { x: 0, y: 0 }, cpOut: { x: 0, y: 0 } }], closed: false, layerId: 'l1' },
             null as any,
         ];
         const shapes = deserializeShapes(data);
-        expect(shapes.length).toBeLessThanOrEqual(2);
+        expect(shapes).toHaveLength(1);
+        expect(notifySpy).toHaveBeenCalledWith(expect.stringContaining('Skipped 1 corrupted shape'), 'warning');
+        notifySpy.mockRestore();
     });
 });
 

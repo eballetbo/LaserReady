@@ -3,6 +3,7 @@ import { LaserLayer } from '../../types/layer';
 import { PathShape } from '../shapes/models/path';
 import { TextObject } from '../shapes/models/text';
 import { GroupShape } from '../shapes/models/group';
+import { notify } from '../ui/toast-utils';
 
 export const PROJECT_VERSION = 1;
 const MAX_SHAPES = 10000;
@@ -49,11 +50,10 @@ export function validateProject(data: unknown, rawSize?: number): ValidationResu
 
     if (!Array.isArray(project.shapes)) {
         errors.push('Missing or invalid shapes array');
+    } else if (project.shapes.length > MAX_SHAPES) {
+        errors.push(`Too many shapes (${project.shapes.length}, max ${MAX_SHAPES})`);
     } else {
-        if (project.shapes.length > MAX_SHAPES) {
-            errors.push(`Too many shapes (${project.shapes.length}, max ${MAX_SHAPES})`);
-        }
-        for (let i = 0; i < Math.min(project.shapes.length, 5); i++) {
+        for (let i = 0; i < project.shapes.length; i++) {
             const shape = project.shapes[i];
             if (!shape || typeof shape !== 'object') {
                 errors.push(`Shape at index ${i} is not a valid object`);
@@ -62,9 +62,11 @@ export function validateProject(data: unknown, rawSize?: number): ValidationResu
             const s = shape as Record<string, unknown>;
             if (typeof s.id !== 'string') {
                 errors.push(`Shape at index ${i} missing id`);
+                break;
             }
             if (s.type !== null && typeof s.type !== 'string') {
                 errors.push(`Shape at index ${i} has invalid type`);
+                break;
             }
         }
     }
@@ -120,8 +122,12 @@ export function serializeProject(
 
 export function deserializeShapes(data: Record<string, unknown>[]): IShape[] {
     const shapes: IShape[] = [];
+    let skipped = 0;
     for (const json of data) {
-        if (!json || typeof json !== 'object') continue;
+        if (!json || typeof json !== 'object') {
+            skipped++;
+            continue;
+        }
         try {
             switch (json.type) {
                 case 'text':
@@ -135,8 +141,12 @@ export function deserializeShapes(data: Record<string, unknown>[]): IShape[] {
                     break;
             }
         } catch (err) {
+            skipped++;
             console.warn('Skipping undeserializable shape:', json.id, err);
         }
+    }
+    if (skipped > 0) {
+        notify(`Skipped ${skipped} corrupted shape${skipped === 1 ? '' : 's'} while loading project.`, 'warning');
     }
     return shapes;
 }
