@@ -286,7 +286,7 @@ export class CanvasController {
     moveSelected(dx: number, dy: number) {
         if (this.selectedShapes.length > 0) {
             const command = new MoveShapeCommand(this, this.selectedShapes, dx, dy);
-            command.execute();
+            this.history.execute(command);
             this.render();
         }
     }
