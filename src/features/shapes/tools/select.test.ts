@@ -124,7 +124,7 @@ describe('SelectTool - Resize Bug', () => {
         expect((tool as any).state.kind).toBe('idle');
     });
 
-    it('🔴 RED: should not confuse resize with move operation', () => {
+    it('should not confuse resize with move operation', () => {
         // Click on resize handle
         const handleX = 100; // maxX
         const handleY = 50;  // cy
@@ -142,7 +142,6 @@ describe('SelectTool - Resize Bug', () => {
             clientY: handleY
         }));
 
-        // 🔴 THIS WILL FAIL: moveSelected should NOT have been called
         expect(mockEditor.moveSelected).not.toHaveBeenCalled();
     });
 });
