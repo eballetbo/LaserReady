@@ -7,6 +7,8 @@ import {
 } from './node';
 import { useStore } from '../../../store/useStore';
 import { PathNode } from '../models/node';
+import { IShape } from '../types';
+import { AppState } from '../../../store/useStore';
 
 // Mock store
 vi.mock('../../../store/useStore', () => ({
@@ -26,19 +28,21 @@ describe('Node Commands', () => {
 
         beforeEach(() => {
             // Reset store
-            (useStore.setState as any).mockClear();
-            (useStore.getState as any).mockReturnValue({
+            vi.mocked(useStore.setState).mockClear();
+            vi.mocked(useStore.getState).mockReturnValue({
                 shapes: [{
                     id: shapeId,
                     type: 'path',
+                    layerId: 'layer-1',
+                    closed: false,
                     nodes: [
                         new PathNode(0, 0), // index 0
                         new PathNode(10, 10) // index 1 (we will move this)
                     ],
-                    clone: function () { return { ...this, nodes: this.nodes.map((n: any) => n.clone()) }; }
+                    clone: function () { return { ...this, nodes: this.nodes.map((n: PathNode) => n.clone()) }; }
                 }],
                 setShapes: vi.fn()
-            });
+            } as unknown as AppState);
 
             initialNode = new PathNode(10, 10);
             targetNode = new PathNode(20, 20);
@@ -51,8 +55,8 @@ describe('Node Commands', () => {
             const command = new MoveNodeCommand(shapeId, [{ index: 1, oldNode: initialNode, newNode: targetNode }]);
             command.execute();
 
-            const setShapesArgs = (useStore.getState().setShapes as any).mock.calls[0][0];
-            const shape = setShapesArgs.find((s: any) => s.id === shapeId);
+            const setShapesArgs = vi.mocked(useStore.getState().setShapes).mock.calls[0]![0] as IShape[];
+            const shape = setShapesArgs.find((s) => s.id === shapeId);
             expect(shape?.nodes).toBeDefined();
             const node = shape!.nodes![1];
 
@@ -68,14 +72,15 @@ describe('Node Commands', () => {
     });
 
     describe('Advanced Node Commands', () => {
-        let mockShape: any;
-        let setShapes: any;
+        let mockShape: IShape & { nodes: PathNode[] };
+        let setShapes: ReturnType<typeof vi.fn>;
 
         beforeEach(() => {
             setShapes = vi.fn();
             mockShape = {
                 id: 'shape1',
                 type: 'path',
+                layerId: 'layer-1',
                 nodes: [
                     new PathNode(0, 0, 0, 0, 10, 0, 'corner'),
                     new PathNode(100, 0, 90, 0, 110, 0, 'corner'), // straight line
@@ -85,15 +90,15 @@ describe('Node Commands', () => {
                 clone: function () {
                     return {
                         ...this,
-                        nodes: this.nodes.map((n: any) => n.clone())
+                        nodes: this.nodes.map((n: PathNode) => n.clone())
                     };
                 }
             };
 
-            (useStore.getState as any).mockReturnValue({
+            vi.mocked(useStore.getState).mockReturnValue({
                 shapes: [mockShape],
                 setShapes
-            });
+            } as unknown as AppState);
         });
 
         describe('ChangeNodeTypeCommand', () => {

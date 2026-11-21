@@ -29,7 +29,7 @@ describe('OffsetCommand', () => {
             updateShape: (updated: IShape) => useStore.setState(state => ({
                 shapes: state.shapes.map(s => s.id === updated.id ? updated : s)
             }))
-        } as any);
+        });
 
         s1 = createRect('s1', 0, 0, 100, 100);
         useStore.getState().setShapes([s1]);

@@ -16,15 +16,15 @@ class MockEditor extends CanvasController {
             height: 600,
             addEventListener: vi.fn(),
             removeEventListener: vi.fn()
-        } as any;
+        } as unknown as HTMLCanvasElement;
         super({ background: mockCanvas, content: mockCanvas, overlay: mockCanvas });
         this.canvas = mockCanvas;
-        this.ctx = mockCanvas.getContext('2d');
+        this.ctx = mockCanvas.getContext('2d')!;
         this.selectedNodeIndices = [];
-        this.history = { execute: vi.fn() } as any;
+        this.history = { execute: vi.fn() } as unknown as CanvasController['history'];
         this.render = vi.fn(); // This shadow might be late, but the method below handles super calls
         this.getMousePos = vi.fn((e) => ({ x: e.clientX, y: e.clientY }));
-        this.config = { handleRadius: 4, anchorSize: 6 } as any;
+        this.config = { handleRadius: 4, anchorSize: 6 } as unknown as CanvasController['config'];
         this.zoom = 1;
     }
 
@@ -39,7 +39,7 @@ class MockEditor extends CanvasController {
 
 describe('NodeEditTool - Segment Dragging', () => {
     let tool: NodeEditTool;
-    let editor: any;
+    let editor: MockEditor;
     let shape: PathShape;
 
     beforeEach(() => {
@@ -60,13 +60,17 @@ describe('NodeEditTool - Segment Dragging', () => {
 
     it('should detect segment hit on mouse down', () => {
         // Mock hit tester methods
-        (tool as any).hitTester.getHitAnchor = vi.fn().mockReturnValue(-1);
-        (tool as any).hitTester.getHitSegment = vi.fn().mockReturnValue({ index: 0, t: 0.5 });
+        const toolInternal = tool as unknown as {
+            hitTester: { getHitAnchor: ReturnType<typeof vi.fn>; getHitSegment: ReturnType<typeof vi.fn> };
+            state: { kind: string; type?: string; nodeIndex?: number; dragStartMouse?: { x: number; y: number } };
+        };
+        toolInternal.hitTester.getHitAnchor = vi.fn().mockReturnValue(-1);
+        toolInternal.hitTester.getHitSegment = vi.fn().mockReturnValue({ index: 0, t: 0.5 });
 
         const event = { clientX: 50, clientY: 5, shiftKey: false } as MouseEvent;
         tool.onMouseDown(event);
 
-        const state = (tool as any).state;
+        const state = toolInternal.state;
         expect(state.kind).toBe('dragging');
         expect(state.type).toBe('SEGMENT');
         expect(state.nodeIndex).toBe(0);
@@ -86,7 +90,7 @@ describe('NodeEditTool - Segment Dragging', () => {
         initialNodes.set(0, n1.clone());
         initialNodes.set(1, n2.clone());
 
-        (tool as any).state = {
+        (tool as unknown as { state: unknown }).state = {
             kind: 'dragging',
             type: 'SEGMENT',
             nodeIndex: 0,
@@ -111,7 +115,7 @@ describe('NodeEditTool - Segment Dragging', () => {
         initialNodes.set(0, shape.nodes[0].clone());
         initialNodes.set(1, shape.nodes[1].clone());
 
-        (tool as any).state = {
+        (tool as unknown as { state: unknown }).state = {
             kind: 'dragging',
             type: 'SEGMENT',
             nodeIndex: 0,
@@ -126,8 +130,8 @@ describe('NodeEditTool - Segment Dragging', () => {
         tool.onMouseUp();
 
         expect(editor.history.execute).toHaveBeenCalled();
-        const call = editor.history.execute.mock.calls[0][0];
+        const call = vi.mocked(editor.history.execute).mock.calls[0]![0] as { constructor: { name: string }; changes: unknown[] };
         expect(call.constructor.name).toBe('MoveNodeCommand');
-        expect((call as any).changes.length).toBe(2);
+        expect(call.changes.length).toBe(2);
     });
 });

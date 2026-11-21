@@ -12,7 +12,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -33,7 +33,7 @@ async function drawRectangle(page: Page) {
 }
 
 async function getShapeCount(page: Page): Promise<number> {
-    return page.evaluate(() => (window as any).store.getState().shapes.length);
+    return page.evaluate(() => window.store!.getState().shapes.length);
 }
 
 test.describe('Persistence - Auto-save', () => {
@@ -62,8 +62,8 @@ test.describe('Persistence - Auto-save', () => {
         });
 
         expect(savedProject).not.toBeNull();
-        expect((savedProject as any).shapes.length).toBe(1);
-        expect((savedProject as any).version).toBe(1);
+        expect((savedProject as { shapes: unknown[]; version: number }).shapes.length).toBe(1);
+        expect((savedProject as { shapes: unknown[]; version: number }).version).toBe(1);
     });
 
     test('session restore on page reload', async ({ page }) => {
@@ -158,7 +158,7 @@ test.describe('Persistence - .laser Project File', () => {
 
             // Verify material was restored
             const material = await page.evaluate(() => {
-                const state = (window as any).store.getState();
+                const state = window.store!.getState();
                 return state.material;
             });
             expect(material.width).toBeCloseTo(300 * PIXELS_PER_MM, 0);
@@ -201,9 +201,9 @@ test.describe('Persistence - .laser Project File', () => {
 
         // Get original shape data
         const originalBounds = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0]!;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            shape.nodes.forEach((n: any) => {
+            shape.nodes!.forEach((n) => {
                 minX = Math.min(minX, n.x);
                 minY = Math.min(minY, n.y);
                 maxX = Math.max(maxX, n.x);
@@ -222,7 +222,7 @@ test.describe('Persistence - .laser Project File', () => {
 
         // Clear canvas
         await page.evaluate(() => {
-            (window as any).store.getState().setShapes([]);
+            window.store!.getState().setShapes([]);
         });
         await page.waitForTimeout(100);
         expect(await getShapeCount(page)).toBe(0);
@@ -236,9 +236,9 @@ test.describe('Persistence - .laser Project File', () => {
 
             // Verify geometry is preserved
             const restoredBounds = await page.evaluate(() => {
-                const shape = (window as any).store.getState().shapes[0];
+                const shape = window.store!.getState().shapes[0]!;
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                shape.nodes.forEach((n: any) => {
+                shape.nodes!.forEach((n) => {
                     minX = Math.min(minX, n.x);
                     minY = Math.min(minY, n.y);
                     maxX = Math.max(maxX, n.x);
@@ -293,8 +293,8 @@ test.describe('Persistence - .laser Project File', () => {
 
             // Verify shapes retained their types
             const shapeTypes = await page.evaluate(() => {
-                const shapes = (window as any).store.getState().shapes;
-                return shapes.map((s: any) => ({
+                const shapes = window.store!.getState().shapes;
+                return shapes.map((s) => ({
                     type: s.type,
                     hasBounds: typeof s.getBounds === 'function',
                 }));

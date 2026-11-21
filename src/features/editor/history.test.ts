@@ -6,13 +6,15 @@ import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
 import { DeleteShapeCommand } from '../shapes/commands/delete';
 import { useStore } from '../../store/useStore';
+import { IEditorContext } from '../../core/tools/base';
+import { IShape } from '../shapes/types';
 
 // Mock getMousePos since we don't have a real DOM/Canvas
 const mockGetMousePos = (e: MouseEvent) => ({ x: e.clientX, y: e.clientY });
 
 describe('Undo/Redo Integration Tests', () => {
     let history: HistoryManager;
-    let mockEditor: any;
+    let mockEditor: IEditorContext;
 
     beforeEach(() => {
         // Reset Store
@@ -37,13 +39,16 @@ describe('Undo/Redo Integration Tests', () => {
         };
 
         mockEditor = {
-            canvas: { style: {}, getContext: () => mockCtx } as any,
-            ctx: mockCtx,
-            history: history,
+            canvas: { style: {}, getContext: () => mockCtx } as unknown as HTMLCanvasElement,
+            ctx: mockCtx as unknown as CanvasRenderingContext2D,
+            history: history as unknown as IEditorContext['history'],
             activeLayerId: 'layer-1',
             config: { handleRadius: 5 },
             getMousePos: vi.fn(mockGetMousePos),
             render: vi.fn(),
+            renderOverlay: vi.fn(),
+            moveSelected: vi.fn(),
+            deleteSelected: vi.fn(),
 
             // Proxy properties to store
             get shapes() { return useStore.getState().shapes; },
@@ -53,17 +58,27 @@ describe('Undo/Redo Integration Tests', () => {
                 const state = useStore.getState();
                 return state.shapes.filter(s => state.selectedShapes.includes(s.id));
             },
-            set selectedShapes(v: any[]) { useStore.getState().setSelectedShapes(v.map(s => s.id)); },
+            set selectedShapes(v: IShape[]) { useStore.getState().setSelectedShapes(v.map(s => s.id)); },
 
             // Temporary property used by Creation Tools
             selectedShape: null,
+            activePath: null,
+            previewPoint: null,
+            selectionBox: null,
+            previewOrigin: null,
+            zoom: 1,
+            pan: { x: 0, y: 0 },
+            selectedNodeIndices: [],
+            selectedSegmentIndices: [],
+            hoveredNodeIndex: -1,
+            hoveredSegmentIndex: -1,
 
             snapManager: {
-                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                snapPoint: vi.fn(() => ({ type: 'none' as const, point: { x: 0, y: 0 } })),
                 clear: vi.fn(),
                 activeSnap: null
             }
-        };
+        } as unknown as IEditorContext;
     });
 
     it('should correctly handle multiple shape creations and undo them one by one', () => {
@@ -75,7 +90,7 @@ describe('Undo/Redo Integration Tests', () => {
             // MouseDown
             const downEvent = new MouseEvent('mousedown', { clientX: i * 10, clientY: i * 10 });
             tool.onMouseDown(downEvent);
-            const shape = mockEditor.selectedShape;
+            const shape = mockEditor.selectedShape!;
             createdIds.push(shape.id);
 
             // Drag a bit (MouseMove)
@@ -95,11 +110,11 @@ describe('Undo/Redo Integration Tests', () => {
         // 2. Undo 3 times
         history.undo();
         expect(mockEditor.shapes.length).toBe(2);
-        expect(mockEditor.shapes.find((s: any) => s.id === createdIds[2])).toBeUndefined();
+        expect(mockEditor.shapes.find((s) => s.id === createdIds[2])).toBeUndefined();
 
         history.undo();
         expect(mockEditor.shapes.length).toBe(1);
-        expect(mockEditor.shapes.find((s: any) => s.id === createdIds[1])).toBeUndefined();
+        expect(mockEditor.shapes.find((s) => s.id === createdIds[1])).toBeUndefined();
 
         history.undo();
         expect(mockEditor.shapes.length).toBe(0);
@@ -145,18 +160,17 @@ describe('Undo/Redo Integration Tests', () => {
         expect(history['undoStack'].length).toBe(1);
 
         // Verify Move
-        const movedShape = mockEditor.shapes[0];
         // Original x=0. Total delta = 100 - 50 = 50. New X should be 0 + 50 = 50?
         // Wait, onMouseDown was at 50,50.
         // Node 0 was at 0,0.
         // Final mouse at 100,50. Delta X = 50.
         // Node 0 should be at 50,0.
-        expect(movedShape.nodes[0].x).toBe(50);
+        expect(mockEditor.shapes[0]!.nodes![0]!.x).toBe(50);
 
         // 4. Undo
         history.undo();
-        const undoneShape = mockEditor.shapes[0];
-        expect(undoneShape.nodes[0].x).toBe(0); // Back to start
+        const undoneShape = mockEditor.shapes[0]!;
+        expect(undoneShape.nodes![0]!.x).toBe(0); // Back to start
         expect(history['undoStack'].length).toBe(0);
     });
 
@@ -181,7 +195,7 @@ describe('Undo/Redo Integration Tests', () => {
         history.undo();
 
         expect(mockEditor.shapes.length).toBe(2);
-        expect(mockEditor.shapes.find((s: any) => s.id === shape1.id)).toBeDefined();
+        expect(mockEditor.shapes.find((s) => s.id === shape1.id)).toBeDefined();
     });
 
     it('should retain only the last 50 entries after 60 actions (history stack limit)', () => {

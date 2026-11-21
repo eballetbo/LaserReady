@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 test.describe('Shape Tools (Strict & Robust)', () => {
 
     // Strict helper that verifies absolute coordinate accuracy at specified Zoom
-    const drawAndVerifyShapeStrict = async (page: any, toolNameRegex: RegExp | string, shapeType: string, expectedSides?: number, zoom: number = 1) => {
+    const drawAndVerifyShapeStrict = async (page: Page, toolNameRegex: RegExp | string, shapeType: string, expectedSides?: number, zoom: number = 1) => {
         await page.goto('/');
 
         // Wait for initial fitToScreen (which happens on mount) to complete
@@ -46,16 +46,15 @@ test.describe('Shape Tools (Strict & Robust)', () => {
         await page.mouse.up();
 
         const result = await page.evaluate(({ shapeType, expectedSides }) => {
-            // @ts-ignore
-            const state = window.store.getState();
+            const state = window.store!.getState();
             const shapes = Object.values(state.shapes);
-            const shape = shapes[shapes.length - 1] as any;
+            const shape = shapes[shapes.length - 1];
 
             if (!shape || shape.type !== shapeType) return null;
             if (expectedSides && shape.params?.sides !== expectedSides) return null;
 
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            shape.nodes.forEach((n: any) => {
+            shape.nodes?.forEach((n) => {
                 minX = Math.min(minX, n.x);
                 minY = Math.min(minY, n.y);
                 maxX = Math.max(maxX, n.x);

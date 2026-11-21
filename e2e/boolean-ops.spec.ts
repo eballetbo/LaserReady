@@ -4,7 +4,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -32,7 +32,7 @@ async function selectAll(page: Page) {
 }
 
 async function getShapeCount(page: Page): Promise<number> {
-    return page.evaluate(() => (window as any).store.getState().shapes.length);
+    return page.evaluate(() => window.store!.getState().shapes.length);
 }
 
 test.describe('Boolean Operations', () => {
@@ -94,7 +94,7 @@ test.describe('Boolean Operations', () => {
 
         // Verify the result is smaller than both originals
         const bounds = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
         // The overlap region is roughly 50x50

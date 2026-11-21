@@ -16,7 +16,7 @@ describe('ChangeTextStyleCommand — shape mutation triggers store update', () =
         cmd.execute();
 
         const shapes = useStore.getState().shapes;
-        const updatedShape = shapes.find(s => s.id === textObj.id) as any;
+        const updatedShape = shapes.find(s => s.id === textObj.id) as TextObject;
         expect(updatedShape.fontFamily).toBe('Times New Roman');
     });
 
@@ -37,6 +37,6 @@ describe('ChangeTextStyleCommand — shape mutation triggers store update', () =
         // The shape in the store should have the new value
         const { shapes, selectedShapes } = useStore.getState();
         const selected = shapes.filter(s => selectedShapes.includes(s.id));
-        expect((selected[0] as any).fontFamily).toBe('Times New Roman');
+        expect((selected[0] as TextObject).fontFamily).toBe('Times New Roman');
     });
 });

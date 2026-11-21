@@ -4,7 +4,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -30,11 +30,11 @@ async function activateSelectTool(page: Page) {
 }
 
 async function getSelectedIds(page: Page): Promise<string[]> {
-    return page.evaluate(() => (window as any).store.getState().selectedShapes);
+    return page.evaluate(() => window.store!.getState().selectedShapes);
 }
 
 async function getShapeIds(page: Page): Promise<string[]> {
-    return page.evaluate(() => (window as any).store.getState().shapes.map((s: any) => s.id));
+    return page.evaluate(() => window.store!.getState().shapes.map((s) => s.id));
 }
 
 function _canvasPos(box: { x: number; y: number }, x: number, y: number) {
@@ -192,7 +192,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const initialBounds = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -204,7 +204,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const finalBounds = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -225,7 +225,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const before = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -240,7 +240,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(100);
 
         const after = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -268,7 +268,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const bounds = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -288,7 +288,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const before = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -304,7 +304,7 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(100);
 
         const after = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             return shape.getBounds();
         });
 
@@ -324,8 +324,8 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const before = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
-            return shape.nodes.map((n: any) => ({ x: n.x, y: n.y }));
+            const shape = window.store!.getState().shapes[0]!;
+            return shape.nodes!.map((n) => ({ x: n.x, y: n.y }));
         });
 
         // Rotation handle is 30px above the top-center of the selection
@@ -338,13 +338,13 @@ test.describe('Select Tool', () => {
         await page.waitForTimeout(50);
 
         const after = await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
-            return shape.nodes.map((n: any) => ({ x: n.x, y: n.y }));
+            const shape = window.store!.getState().shapes[0]!;
+            return shape.nodes!.map((n) => ({ x: n.x, y: n.y }));
         });
 
         // At least one node should have moved
-        const moved = before.some((b: any, i: number) =>
-            Math.abs(b.x - after[i].x) > 1 || Math.abs(b.y - after[i].y) > 1
+        const moved = before.some((b, i: number) =>
+            Math.abs(b.x - after[i]!.x) > 1 || Math.abs(b.y - after[i]!.y) > 1
         );
         expect(moved).toBe(true);
     });
@@ -355,13 +355,13 @@ test.describe('Select Tool', () => {
         // Start with pen tool
         await page.keyboard.press('p');
         await page.waitForTimeout(50);
-        const toolBefore = await page.evaluate(() => (window as any).store.getState().tool);
+        const toolBefore = await page.evaluate(() => window.store!.getState().tool);
         expect(toolBefore).toBe('pen');
 
         // Press V to activate select
         await page.keyboard.press('v');
         await page.waitForTimeout(50);
-        const toolAfter = await page.evaluate(() => (window as any).store.getState().tool);
+        const toolAfter = await page.evaluate(() => window.store!.getState().tool);
         expect(toolAfter).toBe('select');
     });
 });

@@ -50,7 +50,7 @@ describe('DistributeCommand', () => {
         useStore.setState({
             shapes: [],
             material: { width: 1000, height: 1000 }
-        } as any);
+        });
 
         // Horizontal setup:
         // s1: x=0, w=10. Center = 5.

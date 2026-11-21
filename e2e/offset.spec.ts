@@ -6,7 +6,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -33,18 +33,18 @@ async function activateOffsetTool(page: Page) {
 
 async function setOffsetDistance(page: Page, distanceMm: number) {
     await page.evaluate((d) => {
-        (window as any).store.getState().setOffsetDistance(d);
+        window.store!.getState().setOffsetDistance(d);
     }, distanceMm * PIXELS_PER_MM);
 }
 
 async function getShapeCount(page: Page): Promise<number> {
-    return page.evaluate(() => (window as any).store.getState().shapes.length);
+    return page.evaluate(() => window.store!.getState().shapes.length);
 }
 
 async function getShapeBounds(page: Page, shapeIndex: number) {
     return page.evaluate((idx) => {
-        const shape = (window as any).store.getState().shapes[idx];
-        if (!shape) return null;
+        const shape = window.store!.getState().shapes[idx];
+        if (!shape?.getBounds) return null;
         return shape.getBounds();
     }, shapeIndex);
 }

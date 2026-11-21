@@ -6,7 +6,7 @@ type Theme = ThemeColors;
 interface ButtonProps {
     variant?: 'icon' | 'iconText' | 'primary';
     active?: boolean;
-    icon?: React.ComponentType<any>;
+    icon?: React.ComponentType<{ size?: number | string; className?: string }>;
     label: string;
     onClick: (e?: React.MouseEvent) => void;
     theme: Theme;

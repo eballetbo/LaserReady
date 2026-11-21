@@ -581,7 +581,7 @@ describe('TextTool — blinking cursor', () => {
 
         const textObj = new TO(100, 100, 'Hello');
         const { useStore: store } = await import('../../../store/useStore');
-        store.getState().setShapes([textObj as any]);
+        store.getState().setShapes([textObj]);
 
         tool.startEditing(textObj);
         expect(tool.cursorPosition).toBe(5);
@@ -596,7 +596,7 @@ describe('TextTool — blinking cursor', () => {
 
         const textObj = new TO(100, 100, 'Test');
         const { useStore: store } = await import('../../../store/useStore');
-        store.getState().setShapes([textObj as any]);
+        store.getState().setShapes([textObj]);
 
         tool.startEditing(textObj);
         expect(tool.cursorPosition).toBe(4);
@@ -612,7 +612,7 @@ describe('TextTool — blinking cursor', () => {
 
         const textObj = new TO(100, 100, '');
         const { useStore: store } = await import('../../../store/useStore');
-        store.getState().setShapes([textObj as any]);
+        store.getState().setShapes([textObj]);
 
         tool.startEditing(textObj);
         expect(tool.textarea).not.toBeNull();

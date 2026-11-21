@@ -4,7 +4,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -14,19 +14,19 @@ async function activatePenTool(page: Page) {
 }
 
 async function getShapeCount(page: Page): Promise<number> {
-    return page.evaluate(() => (window as any).store.getState().shapes.length);
+    return page.evaluate(() => window.store!.getState().shapes.length);
 }
 
 async function getLastShape(page: Page) {
     return page.evaluate(() => {
-        const shapes = (window as any).store.getState().shapes;
+        const shapes = window.store!.getState().shapes;
         const shape = shapes[shapes.length - 1];
         if (!shape) return null;
         return {
             id: shape.id,
             closed: shape.closed,
             nodeCount: shape.nodes?.length ?? 0,
-            nodes: shape.nodes?.map((n: any) => ({
+            nodes: shape.nodes?.map((n) => ({
                 x: n.x, y: n.y,
                 cpIn: { x: n.cpIn.x, y: n.cpIn.y },
                 cpOut: { x: n.cpOut.x, y: n.cpOut.y },
@@ -103,7 +103,7 @@ test.describe('Pen Tool', () => {
         expect(shape!.closed).toBe(false);
 
         // Tool should now be select
-        const tool = await page.evaluate(() => (window as any).store.getState().tool);
+        const tool = await page.evaluate(() => window.store!.getState().tool);
         expect(tool).toBe('select');
     });
 

@@ -2,16 +2,18 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { SnapManager } from './snapping';
 import { CanvasController } from './controller';
 import { PathNode } from '../shapes/models/node';
+import { IShape } from '../shapes/types';
 import { MINOR_GRID_SPACING } from '../../config/constants';
 
 // Mock CanvasController
-const mockController = {
+const mockControllerState = {
     config: {
         gridSpacing: 10
     },
-    shapes: [],
+    shapes: [] as IShape[],
     zoom: 1
-} as unknown as CanvasController;
+};
+const mockController = mockControllerState as unknown as CanvasController;
 
 describe('SnapManager', () => {
     let snapManager: SnapManager;
@@ -19,8 +21,8 @@ describe('SnapManager', () => {
     beforeEach(() => {
         snapManager = new SnapManager(mockController);
         // Reset controller state
-        (mockController.shapes as any) = [];
-        mockController.zoom = 1;
+        mockControllerState.shapes = [];
+        mockControllerState.zoom = 1;
         snapManager.settings.threshold = 10;
         snapManager.settings.grid = true;
         snapManager.settings.objects = true;
@@ -67,15 +69,17 @@ describe('SnapManager', () => {
     describe('Object Snapping', () => {
         beforeEach(() => {
             snapManager.settings.grid = false; // Disable grid to test object isolation
-            (mockController.shapes as any) = [{
+            mockControllerState.shapes = [{
                 id: 's1',
+                type: 'path',
+                layerId: 'layer-1',
                 visible: true,
                 closed: false,
                 nodes: [
                     new PathNode(100, 100),
                     new PathNode(200, 100)
                 ],
-                getBounds: () => ({ minX: 100, maxX: 200, minY: 100, maxY: 100 })
+                getBounds: () => ({ minX: 100, maxX: 200, minY: 100, maxY: 100, width: 100, height: 0, cx: 150, cy: 100 })
             }];
         });
 
@@ -92,11 +96,14 @@ describe('SnapManager', () => {
         });
 
         it('should snap to center', () => {
-            (mockController.shapes as any) = [{
+            mockControllerState.shapes = [{
                 id: 'rect',
+                type: 'rect',
+                layerId: 'layer-1',
                 visible: true,
+                closed: true,
                 nodes: [], // Dummy
-                getBounds: () => ({ minX: 0, maxX: 100, minY: 0, maxY: 100 }) // Center 50,50
+                getBounds: () => ({ minX: 0, maxX: 100, minY: 0, maxY: 100, width: 100, height: 100, cx: 50, cy: 50 }) // Center 50,50
             }];
 
             const result = snapManager.snapPoint({ x: 52, y: 52 });

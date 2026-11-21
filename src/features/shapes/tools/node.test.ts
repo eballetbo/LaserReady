@@ -16,15 +16,15 @@ class MockEditor extends CanvasController {
             height: 600,
             addEventListener: vi.fn(),
             removeEventListener: vi.fn()
-        } as any;
+        } as unknown as HTMLCanvasElement;
         super({ background: mockCanvas, content: mockCanvas, overlay: mockCanvas });
         this.canvas = mockCanvas;
-        this.ctx = mockCanvas.getContext('2d');
+        this.ctx = mockCanvas.getContext('2d')!;
         this.selectedNodeIndices = [];
-        this.history = { execute: vi.fn((cmd) => cmd.execute()) } as any;
+        this.history = { execute: vi.fn((cmd) => cmd.execute()) } as unknown as CanvasController['history'];
         this.render = vi.fn();
-        this.getMousePos = vi.fn((e: any) => ({ x: e.clientX, y: e.clientY }));
-        this.config = { handleRadius: 4, anchorSize: 6 } as any;
+        this.getMousePos = vi.fn((e: MouseEvent) => ({ x: e.clientX, y: e.clientY }));
+        this.config = { handleRadius: 4, anchorSize: 6 } as unknown as CanvasController['config'];
         this.zoom = 1;
     }
 
@@ -39,7 +39,7 @@ class MockEditor extends CanvasController {
 
 describe('NodeEditTool', () => {
     let tool: NodeEditTool;
-    let editor: any;
+    let editor: MockEditor;
     let shape: PathShape;
 
     beforeEach(() => {
@@ -74,7 +74,7 @@ describe('NodeEditTool', () => {
         it('shift+click adds a second node to the selection', () => {
             tool.onMouseDown({ clientX: 0, clientY: 0, shiftKey: false } as MouseEvent);
             tool.onMouseUp();
-            (tool as any).lastClickTime = 0; // avoid false double-click detection between clicks
+            (tool as unknown as { lastClickTime: number }).lastClickTime = 0; // avoid false double-click detection between clicks
             tool.onMouseDown({ clientX: 100, clientY: 0, shiftKey: true } as MouseEvent);
 
             expect(editor.selectedNodeIndices.sort()).toEqual([0, 1]);
@@ -83,7 +83,7 @@ describe('NodeEditTool', () => {
         it('shift+click on an already-selected node removes it from the selection', () => {
             tool.onMouseDown({ clientX: 0, clientY: 0, shiftKey: false } as MouseEvent);
             tool.onMouseUp();
-            (tool as any).lastClickTime = 0;
+            (tool as unknown as { lastClickTime: number }).lastClickTime = 0;
             tool.onMouseDown({ clientX: 0, clientY: 0, shiftKey: true } as MouseEvent);
 
             expect(editor.selectedNodeIndices).toEqual([]);
@@ -118,7 +118,7 @@ describe('NodeEditTool', () => {
         it('shift+click toggles a second segment into the selection', () => {
             tool.onMouseDown({ clientX: 50, clientY: 0, shiftKey: false } as MouseEvent);
             tool.onMouseUp();
-            (tool as any).lastClickTime = 0; // avoid false double-click detection between clicks
+            (tool as unknown as { lastClickTime: number }).lastClickTime = 0; // avoid false double-click detection between clicks
             tool.onMouseDown({ clientX: 100, clientY: 50, shiftKey: true } as MouseEvent);
 
             expect(useStore.getState().selectedSegmentIndices.sort()).toEqual([0, 1]);

@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ConvertSegmentToLineCommand, ConvertSegmentToCurveCommand } from './segment';
 import { useStore } from '../../../store/useStore';
 import { PathNode } from '../models/node';
+import { IShape } from '../types';
 
 describe('Segment Commands', () => {
     let shapeId: string;
-    let initialShapes: any[];
+    let initialShapes: IShape[];
 
 
     beforeEach(() => {
@@ -17,13 +18,15 @@ describe('Segment Commands', () => {
         const node2 = new PathNode(100, 0, 100, 0, 100, 0, 'corner');
 
         // Mock shape object
-        const shape = {
+        const shape: IShape = {
             id: shapeId,
+            type: 'path',
+            layerId: 'layer-1',
             nodes: [node1, node2],
             clone: function () {
                 return {
                     ...this,
-                    nodes: this.nodes.map((n: any) => n.clone())
+                    nodes: this.nodes!.map((n: PathNode) => n.clone())
                 };
             },
             closed: false

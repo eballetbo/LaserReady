@@ -5,6 +5,7 @@ import opentype from 'opentype.js';
 import { exportToSVG } from './svg-export';
 import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
+import { IShape } from '../shapes/types';
 import { PIXELS_PER_MM } from '../../config/constants';
 
 // Mock XMLSerializer for Node environment if not present
@@ -12,9 +13,9 @@ import { PIXELS_PER_MM } from '../../config/constants';
 if (typeof global.XMLSerializer === 'undefined') {
     global.XMLSerializer = class {
         serializeToString(node: Node) {
-            return (node as any).outerHTML;
+            return (node as Element).outerHTML;
         }
-    } as any;
+    } as unknown as typeof XMLSerializer;
 }
 
 function loadTestFont(filename = 'Roboto.ttf'): opentype.Font {
@@ -93,7 +94,7 @@ describe('SVG Export', () => {
             new PathNode(110, 50), new PathNode(60, 50)
         ], true, 'layer-1');
 
-        const group = {
+        const group: IShape = {
             id: 'group-1',
             type: 'group',
             layerId: 'layer-1',
@@ -102,7 +103,7 @@ describe('SVG Export', () => {
         };
 
         expect(() => {
-            const svgString = exportToSVG([group] as any, 500, 500);
+            const svgString = exportToSVG([group], 500, 500);
             expect(svgString).toContain('<path');
         }).not.toThrow();
     });
@@ -136,10 +137,10 @@ describe('SVG Export', () => {
             rotation: 0,
             closed: false,
             layerId: 'layer-1'
-        };
+        } as unknown as IShape;
 
         // Act
-        const svgString = exportToSVG([textShape] as any, 500, 500, undefined, fonts);
+        const svgString = exportToSVG([textShape], 500, 500, undefined, fonts);
 
         // Assert
         expect(svgString).not.toContain('<text');
@@ -161,10 +162,10 @@ describe('SVG Export', () => {
             rotation: 0,
             closed: false,
             layerId: 'layer-1'
-        };
+        } as unknown as IShape;
 
         expect(() => {
-            const svgString = exportToSVG([textShape] as any, 500, 500);
+            const svgString = exportToSVG([textShape], 500, 500);
             expect(svgString).toContain('<text');
         }).not.toThrow();
     });

@@ -36,7 +36,7 @@ describe('Fillet Commands', () => {
         useStore.setState({
             shapes: [shape],
             updateShape
-        } as any);
+        });
     });
 
     it('FilletCornerCommand should replace corner with arc', () => {

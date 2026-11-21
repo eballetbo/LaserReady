@@ -121,14 +121,14 @@ describe('deserializeShapes', () => {
         const shapes = deserializeShapes(data);
         expect(shapes).toHaveLength(1);
         expect(shapes[0]).toBeInstanceOf(TextObject);
-        expect((shapes[0] as any).text).toBe('Hello');
+        expect((shapes[0] as TextObject).text).toBe('Hello');
     });
 
     it('should skip malformed shapes gracefully and notify the user', () => {
         const notifySpy = vi.spyOn(toastUtils, 'notify').mockImplementation(() => {});
         const data = [
             { id: 'good', type: 'path', nodes: [{ x: 0, y: 0, cpIn: { x: 0, y: 0 }, cpOut: { x: 0, y: 0 } }], closed: false, layerId: 'l1' },
-            null as any,
+            null as unknown as Record<string, unknown>,
         ];
         const shapes = deserializeShapes(data);
         expect(shapes).toHaveLength(1);

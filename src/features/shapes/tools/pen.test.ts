@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PenTool } from './pen';
 import { PathShape } from '../models/path';
 import { useStore } from '../../../store/useStore';
+import { IEditorContext } from '../../../core/tools/base';
 
 describe('PenTool', () => {
-    let mockEditor: any;
+    let mockEditor: IEditorContext;
     let tool: PenTool;
 
     beforeEach(() => {
@@ -18,7 +19,7 @@ describe('PenTool', () => {
         const canvas = document.createElement('canvas');
         mockEditor = {
             canvas,
-            ctx: canvas.getContext('2d'),
+            ctx: canvas.getContext('2d')!,
             get shapes() { return useStore.getState().shapes; },
             set shapes(value) { useStore.setState({ shapes: value }); },
             activePath: null,
@@ -30,11 +31,11 @@ describe('PenTool', () => {
                 execute: vi.fn((cmd) => cmd.execute()),
             },
             snapManager: {
-                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                snapPoint: vi.fn(() => ({ type: 'none' as const, point: { x: 0, y: 0 } })),
                 clear: vi.fn(),
                 activeSnap: null
             }
-        };
+        } as unknown as IEditorContext;
 
         tool = new PenTool(mockEditor);
     });
@@ -48,7 +49,7 @@ describe('PenTool', () => {
         expect(() => tool.onMouseDown(ctrlClick)).not.toThrow();
 
         expect(mockEditor.activePath).not.toBeNull();
-        expect(mockEditor.activePath.nodes.length).toBe(1);
+        expect(mockEditor.activePath!.nodes!.length).toBe(1);
     });
 
     it('should NOT add a node on right click (contextmenu trigger)', () => {
@@ -56,11 +57,11 @@ describe('PenTool', () => {
         tool.onMouseDown(new MouseEvent('mousedown', { clientX: 0, clientY: 0, button: 0 }));
 
         expect(mockEditor.activePath).not.toBeNull();
-        expect(mockEditor.activePath.nodes.length).toBe(1);
+        expect(mockEditor.activePath!.nodes!.length).toBe(1);
 
         // 2. Add second node with left click
         tool.onMouseDown(new MouseEvent('mousedown', { clientX: 100, clientY: 0, button: 0 }));
-        expect(mockEditor.activePath.nodes.length).toBe(2);
+        expect(mockEditor.activePath!.nodes!.length).toBe(2);
 
         // 3. Right click at (100, 100) - Should be ignored by onMouseDown
         // NOTE: Browsers fire mousedown (button 2) BEFORE contextmenu

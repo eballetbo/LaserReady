@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../../store/useStore';
 import { TextObject } from '../models/text';
-import { captureSnapshot } from '../utils/snapshot';
+import { IShape } from '../types';
+import { captureSnapshot, ShapeSnapshot } from '../utils/snapshot';
 
-function computeMoveDelta(shape: any, snapshot: any): { dx: number; dy: number } {
+function computeMoveDelta(shape: IShape, snapshot: ShapeSnapshot): { dx: number; dy: number } {
     if (snapshot.type === 'path' && snapshot.nodes) {
         const currentBounds = shape.getBounds ? shape.getBounds() : { minX: shape.x ?? 0, minY: shape.y ?? 0 };
         const originalBounds = {
-            minX: Math.min(...snapshot.nodes.map((n: any) => n.x)),
-            minY: Math.min(...snapshot.nodes.map((n: any) => n.y))
+            minX: Math.min(...snapshot.nodes.map((n) => n.x)),
+            minY: Math.min(...snapshot.nodes.map((n) => n.y))
         };
         return {
             dx: (currentBounds.minX ?? 0) - originalBounds.minX,

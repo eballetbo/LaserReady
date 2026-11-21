@@ -50,7 +50,7 @@ describe('AlignCommand', () => {
         useStore.setState({
             shapes: [],
             material: { width: 1000, height: 1000 }
-        } as any);
+        });
 
         s1 = new MockShape('s1', 10, 10, 50, 50); // Bounds: 10-60, center 35
         s2 = new MockShape('s2', 100, 100, 100, 100); // Bounds: 100-200, center 150

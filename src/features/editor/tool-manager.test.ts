@@ -4,10 +4,12 @@ import { PathShape } from '../shapes/models/path';
 import { PathNode } from '../shapes/models/node';
 import { useStore } from '../../store/useStore';
 import { InputManager } from './input';
+import { IEditorContext } from '../../core/tools/base';
+import { IShape } from '../shapes/types';
 
 describe('ToolManager', () => {
     let toolManager: ToolManager;
-    let mockEditor: any;
+    let mockEditor: IEditorContext & { toolManager: ToolManager | null };
 
     beforeEach(() => {
         useStore.setState({
@@ -38,12 +40,12 @@ describe('ToolManager', () => {
             groupSelected: vi.fn(),
             ungroupSelected: vi.fn(),
             get shapes() { return useStore.getState().shapes; },
-            set shapes(v: any) { useStore.getState().setShapes(v); },
+            set shapes(v: IShape[]) { useStore.getState().setShapes(v); },
             get selectedShapes() {
                 const state = useStore.getState();
                 return state.shapes.filter(s => state.selectedShapes.includes(s.id));
             },
-            set selectedShapes(v: any[]) { useStore.getState().setSelectedShapes(v.map(s => s.id)); },
+            set selectedShapes(v: IShape[]) { useStore.getState().setSelectedShapes(v.map(s => s.id)); },
             get selectedNodeIndices() { return useStore.getState().selectedNodeIndices; },
             set selectedNodeIndices(v: number[]) { useStore.getState().setSelectedNodeIndices(v); },
             selectedShape: null,
@@ -53,14 +55,20 @@ describe('ToolManager', () => {
             previewOrigin: null,
             zoom: 1,
             pan: { x: 0, y: 0 },
+            selectedSegmentIndices: [],
+            hoveredNodeIndex: -1,
+            hoveredSegmentIndex: -1,
+            renderOverlay: vi.fn(),
+            moveSelected: vi.fn(),
+            deleteSelected: vi.fn(),
             snapManager: {
-                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                snapPoint: vi.fn(() => ({ type: 'none' as const, point: { x: 0, y: 0 } })),
                 clear: vi.fn(),
                 settings: { enabled: false },
                 activeSnap: null
             },
-            toolManager: null as any,
-        };
+            toolManager: null,
+        } as unknown as IEditorContext & { toolManager: ToolManager | null };
 
         toolManager = new ToolManager(mockEditor, inputManager);
         mockEditor.toolManager = toolManager;

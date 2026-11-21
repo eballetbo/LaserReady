@@ -20,7 +20,7 @@ test.describe('Shape Manipulation', () => {
 
         // Force Zoom to 1 and Pan to 0,0 to ensure 1:1 mapping for mouse moves
         await page.evaluate(() => {
-            const store = (window as any).useStore.getState();
+            const store = window.useStore!.getState();
             store.setZoom(1);
             store.setPan({ x: 0, y: 0 });
         });
@@ -36,7 +36,7 @@ test.describe('Shape Manipulation', () => {
 
         // Verify initial position
         const initialX = await page.evaluate(() => {
-            const shape = (window as any).useStore.getState().shapes[0];
+            const shape = window.useStore!.getState().shapes[0];
             return shape.getBounds().minX;
         });
 
@@ -52,7 +52,7 @@ test.describe('Shape Manipulation', () => {
 
         // Verify new position
         const finalX = await page.evaluate(() => {
-            const shape = (window as any).useStore.getState().shapes[0];
+            const shape = window.useStore!.getState().shapes[0];
             return shape.getBounds().minX;
         });
 
@@ -71,7 +71,7 @@ test.describe('Shape Manipulation', () => {
 
         // Force Zoom to 1 and Pan to 0,0
         await page.evaluate(() => {
-            const store = (window as any).useStore.getState();
+            const store = window.useStore!.getState();
             store.setZoom(1);
             store.setPan({ x: 0, y: 0 });
         });
@@ -100,7 +100,7 @@ test.describe('Shape Manipulation', () => {
 
         // Verify dimensions
         const width = await page.evaluate(() => {
-            const shape = (window as any).useStore.getState().shapes[0];
+            const shape = window.useStore!.getState().shapes[0];
             return shape.getBounds().width;
         });
 

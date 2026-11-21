@@ -177,7 +177,7 @@ describe('SVGImporter.fromPaperItem (style mapping)', () => {
         const shapes = SVGImporter.fromPaperItem(path);
 
         expect(shapes.length).toBe(1);
-        expect((shapes[0] as any).dashArray).toEqual([5, 3]);
+        expect(shapes[0]!.dashArray).toEqual([5, 3]);
     });
 
     it('should handle open paths (polyline-style)', () => {

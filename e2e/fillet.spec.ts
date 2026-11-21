@@ -6,7 +6,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -33,15 +33,15 @@ async function activateFilletTool(page: Page) {
 
 async function setFilletRadius(page: Page, radiusMm: number) {
     await page.evaluate((r) => {
-        (window as any).store.getState().setFilletRadius(r);
+        window.store!.getState().setFilletRadius(r);
     }, radiusMm * PIXELS_PER_MM);
 }
 
 async function _getShapeNodes(page: Page, shapeIndex: number = 0) {
     return page.evaluate((idx) => {
-        const shape = (window as any).store.getState().shapes[idx];
+        const shape = window.store!.getState().shapes[idx];
         if (!shape || !shape.nodes) return [];
-        return shape.nodes.map((n: any) => ({
+        return shape.nodes.map((n) => ({
             x: n.x, y: n.y,
             type: n.type,
         }));
@@ -50,7 +50,7 @@ async function _getShapeNodes(page: Page, shapeIndex: number = 0) {
 
 async function getNodeCount(page: Page, shapeIndex: number = 0): Promise<number> {
     return page.evaluate((idx) => {
-        const shape = (window as any).store.getState().shapes[idx];
+        const shape = window.store!.getState().shapes[idx];
         return shape?.nodes?.length ?? 0;
     }, shapeIndex);
 }

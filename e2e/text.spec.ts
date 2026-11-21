@@ -4,7 +4,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -14,13 +14,13 @@ async function activateTextTool(page: Page) {
 }
 
 async function getShapeCount(page: Page): Promise<number> {
-    return page.evaluate(() => (window as any).store.getState().shapes.length);
+    return page.evaluate(() => window.store!.getState().shapes.length);
 }
 
 async function getLastTextShape(page: Page) {
     return page.evaluate(() => {
-        const shapes = (window as any).store.getState().shapes;
-        const textShapes = shapes.filter((s: any) => s.type === 'text');
+        const shapes = window.store!.getState().shapes;
+        const textShapes = shapes.filter((s) => s.type === 'text');
         if (textShapes.length === 0) return null;
         const shape = textShapes[textShapes.length - 1];
         return {

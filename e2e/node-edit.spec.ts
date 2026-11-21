@@ -4,14 +4,14 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
 async function _createRectangleInStore(page: Page) {
     await page.evaluate(() => {
-        const store = (window as any).store.getState();
-        const PathShape = (window as any).PathShape;
+        const store = window.store!.getState();
+        const PathShape = window.PathShape;
         if (PathShape) {
             const shape = new PathShape([
                 { x: 100, y: 100, cpIn: { x: 100, y: 100 }, cpOut: { x: 100, y: 100 }, type: 'corner' },
@@ -56,9 +56,9 @@ async function selectShapeAndActivateNodeEdit(page: Page) {
 
 async function getShapeNodes(page: Page) {
     return page.evaluate(() => {
-        const shape = (window as any).store.getState().shapes[0];
-        if (!shape || !shape.nodes) return [];
-        return shape.nodes.map((n: any) => ({
+        const shape = window.store!.getState().shapes[0];
+        if (!shape?.nodes) return [];
+        return shape.nodes.map((n) => ({
             x: n.x, y: n.y,
             type: n.type,
             cpIn: { x: n.cpIn.x, y: n.cpIn.y },
@@ -156,7 +156,7 @@ test.describe('Node Edit Tool', () => {
 
         // Make node smooth via store directly for reliable initial state
         await page.evaluate(() => {
-            const shape = (window as any).store.getState().shapes[0];
+            const shape = window.store!.getState().shapes[0];
             shape.nodes[0].type = 'smooth';
         });
 

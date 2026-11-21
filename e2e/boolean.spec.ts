@@ -30,7 +30,7 @@ test.describe('Boolean Operations', () => {
         await page.mouse.up();
 
         // Verify 2 shapes
-        const count = await page.evaluate(() => (window as any).useStore.getState().shapes.length);
+        const count = await page.evaluate(() => window.useStore!.getState().shapes.length);
         expect(count).toBe(2);
 
         // 3. Select both
@@ -47,7 +47,7 @@ test.describe('Boolean Operations', () => {
         await page.getByRole('button', { name: /Unite/i }).click();
 
         // Verify 1 shape remains
-        const newCount = await page.evaluate(() => (window as any).useStore.getState().shapes.length);
+        const newCount = await page.evaluate(() => window.useStore!.getState().shapes.length);
         expect(newCount).toBe(1);
     });
 });

@@ -4,6 +4,14 @@ import { PathShape } from '../models/path';
 import { PathNode } from '../models/node';
 import { useStore } from '../../../store/useStore';
 import { Geometry } from '../../../core/math/geometry';
+import { IEditorContext } from '../../../core/tools/base';
+import { Command } from '../../../core/commands/command';
+import { IShape } from '../types';
+
+type SelectToolInternal = {
+    state: { kind: string; handle?: string };
+    hitTestShape: (shape: IShape, x: number, y: number) => boolean;
+};
 
 // Mock Geometry.isPointInBezierPath to avoid canvas API limitations in jsdom
 vi.spyOn(Geometry, 'isPointInBezierPath').mockImplementation((_ctx, shape, x, y) => {
@@ -13,7 +21,7 @@ vi.spyOn(Geometry, 'isPointInBezierPath').mockImplementation((_ctx, shape, x, y)
 });
 
 describe('SelectTool - Resize Bug', () => {
-    let mockEditor: any;
+    let mockEditor: IEditorContext;
     let tool: SelectTool;
     let testShape: PathShape;
 
@@ -51,7 +59,7 @@ describe('SelectTool - Resize Bug', () => {
                 const { shapes, selectedShapes } = useStore.getState();
                 return shapes.filter(s => selectedShapes.includes(s.id));
             },
-            set selectedShapes(value: any[]) {
+            set selectedShapes(value: IShape[]) {
                 useStore.getState().setSelectedShapes(value.map(s => s.id));
             },
             tool: 'select',
@@ -67,7 +75,7 @@ describe('SelectTool - Resize Bug', () => {
             render: vi.fn(),
             moveSelected: vi.fn(),
             history: {
-                execute: vi.fn((cmd: any) => cmd.execute()),
+                execute: vi.fn((cmd: Command) => cmd.execute()),
                 undo: vi.fn(),
                 redo: vi.fn()
             },
@@ -75,11 +83,11 @@ describe('SelectTool - Resize Bug', () => {
                 drawScene: vi.fn()
             },
             snapManager: {
-                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                snapPoint: vi.fn(() => ({ type: 'none' as const, point: { x: 0, y: 0 } })),
                 clear: vi.fn(),
                 activeSnap: null
             }
-        };
+        } as unknown as IEditorContext;
 
         tool = new SelectTool(mockEditor);
     });
@@ -96,8 +104,8 @@ describe('SelectTool - Resize Bug', () => {
         tool.onMouseDown(mouseDownEvent);
 
         // Verify resize mode activated
-        expect((tool as any).state.kind).toBe('resizing');
-        expect((tool as any).state.handle).toBe('w');
+        expect((tool as unknown as SelectToolInternal).state.kind).toBe('resizing');
+        expect((tool as unknown as SelectToolInternal).state.handle).toBe('w');
 
         // Step 2: User drags to resize
         const mouseMoveEvent = new MouseEvent('mousemove', {
@@ -121,7 +129,7 @@ describe('SelectTool - Resize Bug', () => {
         expect(mockEditor.selectedShapes.length).toBe(1);
 
         // State should be properly cleared
-        expect((tool as any).state.kind).toBe('idle');
+        expect((tool as unknown as SelectToolInternal).state.kind).toBe('idle');
     });
 
     it('should not confuse resize with move operation', () => {
@@ -134,7 +142,7 @@ describe('SelectTool - Resize Bug', () => {
             clientY: handleY
         }));
 
-        expect((tool as any).state.kind).toBe('resizing');
+        expect((tool as unknown as SelectToolInternal).state.kind).toBe('resizing');
 
         // Move mouse - should trigger resize, not move
         tool.onMouseMove(new MouseEvent('mousemove', {
@@ -147,7 +155,7 @@ describe('SelectTool - Resize Bug', () => {
 });
 
 describe('SelectTool - Click Selection with Modifiers', () => {
-    let mockEditor: any;
+    let mockEditor: IEditorContext;
     let tool: SelectTool;
     let shapeA: PathShape;
     let shapeB: PathShape;
@@ -410,7 +418,7 @@ describe('SelectTool - Click Selection with Modifiers', () => {
 });
 
 describe('SelectTool - Multi-Select Move', () => {
-    let mockEditor: any;
+    let mockEditor: IEditorContext;
     let tool: SelectTool;
     let shape1: PathShape;
     let shape2: PathShape;
@@ -452,7 +460,7 @@ describe('SelectTool - Multi-Select Move', () => {
                 const { shapes, selectedShapes } = useStore.getState();
                 return shapes.filter(s => selectedShapes.includes(s.id));
             },
-            set selectedShapes(value: any[]) {
+            set selectedShapes(value: IShape[]) {
                 useStore.getState().setSelectedShapes(value.map(s => s.id));
             },
             tool: 'select',
@@ -463,16 +471,16 @@ describe('SelectTool - Multi-Select Move', () => {
             render: vi.fn(),
             history: { execute: vi.fn() },
             snapManager: {
-                snapPoint: vi.fn(() => ({ type: 'none', point: { x: 0, y: 0 } })),
+                snapPoint: vi.fn(() => ({ type: 'none' as const, point: { x: 0, y: 0 } })),
                 clear: vi.fn(),
                 activeSnap: null
             }
-        };
+        } as unknown as IEditorContext;
 
         tool = new SelectTool(mockEditor);
 
         // Mock hitTestShape
-        (tool as any).hitTestShape = (shape: any, x: number, _y: number) => {
+        (tool as unknown as SelectToolInternal).hitTestShape = (shape: IShape, x: number, _y: number) => {
             if (shape.id === 's1' && x < 100) return true;
             return false;
         };
@@ -488,8 +496,8 @@ describe('SelectTool - Multi-Select Move', () => {
 
         // EXPECTATION: Both shapes should still be selected
         expect(mockEditor.selectedShapes.length).toBe(2);
-        expect(mockEditor.selectedShapes.map((s: any) => s.id)).toContain('s1');
-        expect(mockEditor.selectedShapes.map((s: any) => s.id)).toContain('s2');
+        expect(mockEditor.selectedShapes.map((s) => s.id)).toContain('s1');
+        expect(mockEditor.selectedShapes.map((s) => s.id)).toContain('s2');
 
         // 3. Simulate Drag
         tool.onMouseMove({ clientX: 60, clientY: 60 } as MouseEvent);
@@ -498,6 +506,6 @@ describe('SelectTool - Multi-Select Move', () => {
         tool.onMouseUp({ clientX: 60, clientY: 60 } as MouseEvent);
 
         // State should be cleared after mouseUp
-        expect((tool as any).state.kind).toBe('idle');
+        expect((tool as unknown as SelectToolInternal).state.kind).toBe('idle');
     });
 });

@@ -31,7 +31,7 @@ test.describe('Basic Editor Functionality', () => {
         // Verify shape was added to store
         const shapeCount = await page.evaluate(() => {
             // Access the exposed store
-            return (window as any).useStore.getState().shapes.length;
+            return window.useStore!.getState().shapes.length;
         });
 
         expect(shapeCount).toBe(1);
@@ -53,7 +53,7 @@ test.describe('Basic Editor Functionality', () => {
         await page.mouse.up();
 
         // Verify Drawn
-        const initialCount = await page.evaluate(() => (window as any).useStore.getState().shapes.length);
+        const initialCount = await page.evaluate(() => window.useStore!.getState().shapes.length);
         expect(initialCount).toBe(1);
 
         // 2. Undo
@@ -62,14 +62,14 @@ test.describe('Basic Editor Functionality', () => {
         await page.getByTitle(/Undo/i).click();
 
         // Verify Empty
-        const countAfterUndo = await page.evaluate(() => (window as any).useStore.getState().shapes.length);
+        const countAfterUndo = await page.evaluate(() => window.useStore!.getState().shapes.length);
         expect(countAfterUndo).toBe(0);
 
         // 3. Redo
         await page.getByTitle(/Redo/i).click();
 
         // Verify Returned
-        const countAfterRedo = await page.evaluate(() => (window as any).useStore.getState().shapes.length);
+        const countAfterRedo = await page.evaluate(() => window.useStore!.getState().shapes.length);
         expect(countAfterRedo).toBe(1);
     });
 

@@ -11,7 +11,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -36,17 +36,17 @@ test.describe('IO - SVG Import', () => {
     test('import SVG with basic shapes (rect + circle)', async ({ page }) => {
         await setupEditor(page);
 
-        const initialCount = await page.evaluate(() => (window as any).store.getState().shapes.length);
+        const initialCount = await page.evaluate(() => window.store!.getState().shapes.length);
         expect(initialCount).toBe(0);
 
         const filePath = path.resolve(__dirname, 'assets/simple.svg');
         await page.setInputFiles('input[type="file"]', filePath);
 
         await expect.poll(async () => {
-            return await page.evaluate(() => (window as any).store.getState().shapes.length);
+            return await page.evaluate(() => window.store!.getState().shapes.length);
         }).toBeGreaterThan(0);
 
-        const finalCount = await page.evaluate(() => (window as any).store.getState().shapes.length);
+        const finalCount = await page.evaluate(() => window.store!.getState().shapes.length);
         expect(finalCount).toBe(2);
     });
 
@@ -57,14 +57,14 @@ test.describe('IO - SVG Import', () => {
         await page.setInputFiles('input[type="file"]', filePath);
 
         await expect.poll(async () => {
-            return await page.evaluate(() => (window as any).store.getState().shapes.length);
+            return await page.evaluate(() => window.store!.getState().shapes.length);
         }).toBe(2);
 
         const bounds = await page.evaluate(() => {
-            const shapes = (window as any).store.getState().shapes;
-            return shapes.map((s: any) => {
+            const shapes = window.store!.getState().shapes;
+            return shapes.map((s) => {
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                s.nodes.forEach((n: any) => {
+                s.nodes!.forEach((n) => {
                     minX = Math.min(minX, n.x);
                     minY = Math.min(minY, n.y);
                     maxX = Math.max(maxX, n.x);
@@ -100,14 +100,14 @@ test.describe('IO - SVG Import', () => {
             await page.setInputFiles('input[type="file"]', filePath);
 
             await expect.poll(async () => {
-                return await page.evaluate(() => (window as any).store.getState().shapes.length);
+                return await page.evaluate(() => window.store!.getState().shapes.length);
             }).toBeGreaterThan(0);
 
             const bounds = await page.evaluate(() => {
-                const shapes = (window as any).store.getState().shapes;
-                const s = shapes[0];
+                const shapes = window.store!.getState().shapes;
+                const s = shapes[0]!;
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                s.nodes.forEach((n: any) => {
+                s.nodes!.forEach((n) => {
                     minX = Math.min(minX, n.x);
                     minY = Math.min(minY, n.y);
                     maxX = Math.max(maxX, n.x);
@@ -141,15 +141,15 @@ test.describe('IO - SVG Import', () => {
             await page.setInputFiles('input[type="file"]', filePath);
 
             await expect.poll(async () => {
-                return await page.evaluate(() => (window as any).store.getState().shapes.length);
+                return await page.evaluate(() => window.store!.getState().shapes.length);
             }).toBeGreaterThan(0);
 
             // Script should NOT have executed
-            const hacked = await page.evaluate(() => (window as any).__HACKED);
+            const hacked = await page.evaluate(() => window.__HACKED);
             expect(hacked).toBeFalsy();
 
             // Shape should still have been imported
-            const count = await page.evaluate(() => (window as any).store.getState().shapes.length);
+            const count = await page.evaluate(() => window.store!.getState().shapes.length);
             expect(count).toBeGreaterThanOrEqual(1);
         } finally {
             fs.unlinkSync(filePath);
@@ -165,7 +165,7 @@ test.describe('IO - SVG Export', () => {
         // Set material to 300x200mm
         await page.evaluate(() => {
             const PIXELS_PER_MM = 3.779527559;
-            (window as any).store.setState({
+            window.store!.setState({
                 material: { width: 300 * PIXELS_PER_MM, height: 200 * PIXELS_PER_MM }
             });
         });
@@ -174,14 +174,14 @@ test.describe('IO - SVG Export', () => {
 
         // Call export function directly and inspect the SVG string
         const svgString = await page.evaluate(() => {
-            const { exportToSVG } = (window as any).__io_exports ?? {};
+            const { exportToSVG } = window.__io_exports ?? {};
             if (!exportToSVG) {
                 // If not exposed, use the module directly
-                (window as any).store.getState();
+                window.store!.getState();
                 // We'll test via the download mechanism instead
                 return null;
             }
-            const state = (window as any).store.getState();
+            const state = window.store!.getState();
             return exportToSVG(state.shapes, state.material.width, state.material.height, state.layers);
         });
 
@@ -245,20 +245,20 @@ test.describe('IO - SVG Round-trip', () => {
         await page.setInputFiles('input[type="file"]', filePath);
 
         await expect.poll(async () => {
-            return await page.evaluate(() => (window as any).store.getState().shapes.length);
+            return await page.evaluate(() => window.store!.getState().shapes.length);
         }).toBe(2);
 
         // Clear and re-import the same file
         await page.evaluate(() => {
-            (window as any).store.getState().setShapes([]);
+            window.store!.getState().setShapes([]);
         });
         await page.waitForTimeout(100);
-        expect(await page.evaluate(() => (window as any).store.getState().shapes.length)).toBe(0);
+        expect(await page.evaluate(() => window.store!.getState().shapes.length)).toBe(0);
 
         await page.setInputFiles('input[type="file"]', filePath);
 
         await expect.poll(async () => {
-            return await page.evaluate(() => (window as any).store.getState().shapes.length);
+            return await page.evaluate(() => window.store!.getState().shapes.length);
         }).toBe(2);
     });
 
@@ -270,14 +270,14 @@ test.describe('IO - SVG Round-trip', () => {
         // First import
         await page.setInputFiles('input[type="file"]', filePath);
         await expect.poll(async () => {
-            return await page.evaluate(() => (window as any).store.getState().shapes.length);
+            return await page.evaluate(() => window.store!.getState().shapes.length);
         }).toBe(2);
 
         const firstBounds = await page.evaluate(() => {
-            const shapes = (window as any).store.getState().shapes;
-            const s = shapes[0];
+            const shapes = window.store!.getState().shapes;
+            const s = shapes[0]!;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            s.nodes.forEach((n: any) => {
+            s.nodes!.forEach((n) => {
                 minX = Math.min(minX, n.x);
                 minY = Math.min(minY, n.y);
                 maxX = Math.max(maxX, n.x);
@@ -288,20 +288,20 @@ test.describe('IO - SVG Round-trip', () => {
 
         // Clear and re-import
         await page.evaluate(() => {
-            (window as any).store.getState().setShapes([]);
+            window.store!.getState().setShapes([]);
         });
         await page.waitForTimeout(100);
 
         await page.setInputFiles('input[type="file"]', filePath);
         await expect.poll(async () => {
-            return await page.evaluate(() => (window as any).store.getState().shapes.length);
+            return await page.evaluate(() => window.store!.getState().shapes.length);
         }).toBe(2);
 
         const secondBounds = await page.evaluate(() => {
-            const shapes = (window as any).store.getState().shapes;
-            const s = shapes[0];
+            const shapes = window.store!.getState().shapes;
+            const s = shapes[0]!;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            s.nodes.forEach((n: any) => {
+            s.nodes!.forEach((n) => {
                 minX = Math.min(minX, n.x);
                 minY = Math.min(minY, n.y);
                 maxX = Math.max(maxX, n.x);

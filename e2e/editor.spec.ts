@@ -4,7 +4,7 @@ async function setupEditor(page: Page) {
     await page.goto('/');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-        (window as any).store.setState({ zoom: 1, pan: { x: 0, y: 0 } });
+        window.store!.setState({ zoom: 1, pan: { x: 0, y: 0 } });
     });
 }
 
@@ -26,13 +26,13 @@ async function drawRectangle(page: Page) {
 
 function getStore(page: Page) {
     return page.evaluate(() => {
-        const state = (window as any).store.getState();
+        const state = window.store!.getState();
         return {
             zoom: state.zoom,
             pan: state.pan,
             tool: state.tool,
             shapesCount: state.shapes.length,
-            isSnappingEnabled: state.isSnappingEnabled,
+            isSnappingEnabled: (state as unknown as { isSnappingEnabled: boolean }).isSnappingEnabled,
         };
     });
 }
@@ -89,7 +89,7 @@ test.describe('Editor - Zoom', () => {
         await page.waitForTimeout(50);
 
         const state = await page.evaluate(() => {
-            const s = (window as any).store.getState();
+            const s = window.store!.getState();
             return { zoom: s.zoom, pan: s.pan };
         });
 
@@ -216,18 +216,17 @@ test.describe('Editor - Undo/Redo', () => {
         // Create 55 shapes rapidly
         for (let i = 0; i < 55; i++) {
             await page.evaluate((idx) => {
-                const store = (window as any).store.getState();
-                const { PathShape } = (window as any).__test_internals ?? {};
+                const store = window.store!.getState();
                 // Use store API directly to create shapes quickly
                 const shapes = [...store.shapes];
                 shapes.push({
                     id: `shape-${idx}`,
                     type: 'rect',
                     nodes: [
-                        { x: idx * 10, y: 0, cpInX: idx * 10, cpInY: 0, cpOutX: idx * 10, cpOutY: 0, type: 'corner' },
-                        { x: idx * 10 + 50, y: 0, cpInX: idx * 10 + 50, cpInY: 0, cpOutX: idx * 10 + 50, cpOutY: 0, type: 'corner' },
-                        { x: idx * 10 + 50, y: 50, cpInX: idx * 10 + 50, cpInY: 50, cpOutX: idx * 10 + 50, cpOutY: 50, type: 'corner' },
-                        { x: idx * 10, y: 50, cpInX: idx * 10, cpInY: 50, cpOutX: idx * 10, cpOutY: 50, type: 'corner' },
+                        { x: idx * 10, y: 0, cpIn: { x: idx * 10, y: 0 }, cpOut: { x: idx * 10, y: 0 }, type: 'corner' },
+                        { x: idx * 10 + 50, y: 0, cpIn: { x: idx * 10 + 50, y: 0 }, cpOut: { x: idx * 10 + 50, y: 0 }, type: 'corner' },
+                        { x: idx * 10 + 50, y: 50, cpIn: { x: idx * 10 + 50, y: 50 }, cpOut: { x: idx * 10 + 50, y: 50 }, type: 'corner' },
+                        { x: idx * 10, y: 50, cpIn: { x: idx * 10, y: 50 }, cpOut: { x: idx * 10, y: 50 }, type: 'corner' },
                     ],
                     closed: true,
                     layerId: store.layers[0]?.id ?? 'default',
@@ -239,10 +238,10 @@ test.describe('Editor - Undo/Redo', () => {
         // Now try to undo all 55 — only 50 should be undoable
         let undoCount = 0;
         for (let i = 0; i < 60; i++) {
-            const before = await page.evaluate(() => (window as any).store.getState().shapes.length);
+            const before = await page.evaluate(() => window.store!.getState().shapes.length);
             await page.keyboard.press('Control+z');
             await page.waitForTimeout(20);
-            const after = await page.evaluate(() => (window as any).store.getState().shapes.length);
+            const after = await page.evaluate(() => window.store!.getState().shapes.length);
             if (after < before) {
                 undoCount++;
             } else {
@@ -387,7 +386,7 @@ test.describe('Editor - Canvas Rendering', () => {
         // Set a specific material size and zoom to fit
         await page.evaluate(() => {
             const PIXELS_PER_MM = 3.779527559;
-            (window as any).store.setState({
+            window.store!.setState({
                 material: { width: 300 * PIXELS_PER_MM, height: 200 * PIXELS_PER_MM },
                 zoom: 0.3,
                 pan: { x: 50, y: 50 },
