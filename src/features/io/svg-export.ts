@@ -234,4 +234,5 @@ export const downloadSVG = (svgString: string, filename: string = 'design.svg'):
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
