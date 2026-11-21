@@ -77,17 +77,20 @@ export const SVGImporter = {
         return shapes;
     },
 
-    /**
-     * Imports an SVG string and returns an array of PathShapes.
-     */
-    importSVG(svgString: string): PathShape[] {
-        const sanitized = DOMPurify.sanitize(svgString, {
+    sanitize(svgString: string): string {
+        return DOMPurify.sanitize(svgString, {
             USE_PROFILES: { svg: true, svgFilters: true },
             ADD_TAGS: ['use'],
             FORBID_TAGS: ['script', 'foreignObject'],
             FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover']
         });
+    },
 
+    /**
+     * Imports an SVG string and returns an array of PathShapes.
+     */
+    importSVG(svgString: string): PathShape[] {
+        const sanitized = this.sanitize(svgString);
         const item = scope.project.importSVG(sanitized, {
             expandShapes: true, // Convert rects, circles, etc. to paths
             insert: false,      // Don't insert into the active layer
@@ -132,11 +135,13 @@ export const SVGImportService = {
     import(svgString: string, options: SVGImportOptions = {}): IShape[] {
         const { position = null, layerId } = options;
 
+        const sanitized = SVGImporter.sanitize(svgString);
+
         // Parse attributes to determine physical scale
-        const attributes = SVGAttributeParser.parseRootAttributes(svgString);
+        const attributes = SVGAttributeParser.parseRootAttributes(sanitized);
 
         // Parse SVG using basic importer
-        const shapes = SVGImporter.importSVG(svgString);
+        const shapes = SVGImporter.importSVG(sanitized);
 
         if (!shapes || shapes.length === 0) {
             throw new Error('No valid shapes found in SVG');
