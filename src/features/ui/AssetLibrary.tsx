@@ -140,10 +140,12 @@ export default function AssetLibrary({ theme }: AssetLibraryProps) {
 
                 {/* Library Selector */}
                 <div className="flex flex-col gap-1">
-                    <label className={`text-[10px] uppercase font-bold ${theme.textMuted}`}>
+                    <label htmlFor="asset-library-select" className={`text-[10px] uppercase font-bold ${theme.textMuted}`}>
                         {t('library') || 'Library'}
                     </label>
                     <select
+                        id="asset-library-select"
+                        aria-label={t('library') || 'Library'}
                         value={selectedLibrary}
                         onChange={(e) => {
                             setSelectedLibrary(e.target.value);
@@ -161,10 +163,12 @@ export default function AssetLibrary({ theme }: AssetLibraryProps) {
 
                 {/* Category Selector */}
                 <div className="flex flex-col gap-1">
-                    <label className={`text-[10px] uppercase font-bold ${theme.textMuted}`}>
+                    <label htmlFor="asset-category-select" className={`text-[10px] uppercase font-bold ${theme.textMuted}`}>
                         {t('category') || 'Category'}
                     </label>
                     <select
+                        id="asset-category-select"
+                        aria-label={t('category') || 'Category'}
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className={`w-full p-2 text-sm rounded border ${theme.border} bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500`}

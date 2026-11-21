@@ -32,22 +32,22 @@ export default function Toolbar({ tool, setTool, theme }: ToolbarProps) {
     // Submenu content for shapes
     const shapeSubmenu = (
         <>
-            <button onClick={(e) => { e.stopPropagation(); setTool('rect'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'rect' ? 'text-red-500' : theme.iconColor}`} title={t('rect')}>
+            <button onClick={(e) => { e.stopPropagation(); setTool('rect'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'rect' ? 'text-red-500' : theme.iconColor}`} title={t('rect')} aria-label={t('rect')}>
                 <Square size={20} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setTool('circle'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'circle' ? 'text-red-500' : theme.iconColor}`} title={t('circle')}>
+            <button onClick={(e) => { e.stopPropagation(); setTool('circle'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'circle' ? 'text-red-500' : theme.iconColor}`} title={t('circle')} aria-label={t('circle')}>
                 <Circle size={20} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setTool('triangle'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'triangle' ? 'text-red-500' : theme.iconColor}`} title={t('triangle')}>
+            <button onClick={(e) => { e.stopPropagation(); setTool('triangle'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'triangle' ? 'text-red-500' : theme.iconColor}`} title={t('triangle')} aria-label={t('triangle')}>
                 <Triangle size={20} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setTool('pentagon'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'pentagon' ? 'text-red-500' : theme.iconColor}`} title={t('pentagon')}>
+            <button onClick={(e) => { e.stopPropagation(); setTool('pentagon'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'pentagon' ? 'text-red-500' : theme.iconColor}`} title={t('pentagon')} aria-label={t('pentagon')}>
                 <Pentagon size={20} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setTool('polygon'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'polygon' ? 'text-red-500' : theme.iconColor}`} title={t('polygon')}>
+            <button onClick={(e) => { e.stopPropagation(); setTool('polygon'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'polygon' ? 'text-red-500' : theme.iconColor}`} title={t('polygon')} aria-label={t('polygon')}>
                 <Hexagon size={20} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setTool('star'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'star' ? 'text-red-500' : theme.iconColor}`} title={t('star')}>
+            <button onClick={(e) => { e.stopPropagation(); setTool('star'); }} className={`p-2 rounded ${theme.buttonHover} ${tool === 'star' ? 'text-red-500' : theme.iconColor}`} title={t('star')} aria-label={t('star')}>
                 <Star size={20} />
             </button>
         </>

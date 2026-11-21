@@ -16,5 +16,6 @@ export function notify(message: string, type: ToastType = 'info', duration = 400
 
 export function confirmDialog(message: string): Promise<boolean> {
     if (showConfirmFn) return showConfirmFn(message);
-    return Promise.resolve(window.confirm(message));
+    console.warn('[Confirm dialog not mounted]', message);
+    return Promise.resolve(false);
 }
