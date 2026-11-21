@@ -2,62 +2,11 @@ import paper from 'paper';
 import opentype from 'opentype.js';
 import { PIXELS_PER_MM } from '../../config/constants';
 import { LASER_MODES } from '../../config/laser-modes';
+import { loadFont } from '../../core/fonts';
+import { scope } from '../../core/math/paper-scope';
 import { PathNode } from '../../features/shapes/models/node';
 import { IShape } from '../../features/shapes/types';
 import { LaserLayer } from '../../types/layer';
-
-const FALLBACK_FONT_PATH = '/fonts/Roboto.ttf';
-const exportFontCache = new Map<string, opentype.Font>();
-
-const LOCAL_FONT_MAP: Record<string, string> = {
-    'Roboto': '/fonts/Roboto.ttf',
-    'Open Sans': '/fonts/OpenSans.ttf',
-    'Lato': '/fonts/Lato.ttf',
-    'Montserrat': '/fonts/Montserrat.ttf',
-    'Poppins': '/fonts/Poppins.ttf',
-    'Raleway': '/fonts/Raleway.ttf',
-    'Nunito': '/fonts/Nunito.ttf',
-    'Ubuntu': '/fonts/Ubuntu.ttf',
-    'Noto Sans': '/fonts/NotoSans.ttf',
-    'Oswald': '/fonts/Oswald.ttf',
-    'Bebas Neue': '/fonts/BebasNeue.ttf',
-    'Righteous': '/fonts/Righteous.ttf',
-    'Black Ops One': '/fonts/BlackOpsOne.ttf',
-    'Permanent Marker': '/fonts/PermanentMarker.ttf',
-    'Bungee Shade': '/fonts/BungeeShade.ttf',
-    'Playfair Display': '/fonts/PlayfairDisplay.ttf',
-    'Merriweather': '/fonts/Merriweather.ttf',
-    'Dancing Script': '/fonts/DancingScript.ttf',
-    'Pacifico': '/fonts/Pacifico.ttf',
-    'Great Vibes': '/fonts/GreatVibes.ttf',
-    'Sacramento': '/fonts/Sacramento.ttf',
-    'Lobster': '/fonts/Lobster.ttf',
-    'PT Serif': '/fonts/PTSerif.ttf',
-    'Bitter': '/fonts/Bitter.ttf',
-    'Libre Baskerville': '/fonts/LibreBaskerville.ttf',
-    'Roboto Mono': '/fonts/RobotoMono.ttf',
-    'Source Code Pro': '/fonts/SourceCodePro.ttf',
-    'Courier Prime': '/fonts/CourierPrime.ttf',
-    'Verdana': '/fonts/Roboto.ttf',
-};
-
-async function loadFontForExport(fontFamily: string): Promise<opentype.Font | null> {
-    if (exportFontCache.has(fontFamily)) {
-        return exportFontCache.get(fontFamily)!;
-    }
-
-    const url = LOCAL_FONT_MAP[fontFamily] || FALLBACK_FONT_PATH;
-    try {
-        const font = await opentype.load(url);
-        exportFontCache.set(fontFamily, font);
-        return font;
-    } catch {
-        if (fontFamily !== 'Roboto') {
-            return loadFontForExport('Roboto');
-        }
-        return null;
-    }
-}
 
 function collectFontFamilies(shapes: IShape[], families: Set<string>): void {
     for (const shape of shapes) {
@@ -83,10 +32,6 @@ interface TextShapeView {
     scaleX?: number;
     scaleY?: number;
 }
-
-// Initialize a headless PaperScope for SVG exporting
-const scope = new paper.PaperScope();
-scope.setup(new paper.Size(1000, 1000));
 
 function shapeToPaperPath(shape: IShape): paper.Path | null {
     if (!shape.nodes || shape.nodes.length === 0) return null;
@@ -217,7 +162,7 @@ export const exportToSVGAsync = async (
     const fonts = new Map<string, opentype.Font>();
     await Promise.all(
         Array.from(families).map(async (family) => {
-            const font = await loadFontForExport(family);
+            const font = await loadFont(family);
             if (font) fonts.set(family, font);
         })
     );

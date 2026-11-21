@@ -1,11 +1,8 @@
 import paper from 'paper';
 import DOMPurify from 'dompurify';
+import { scope } from '../../core/math/paper-scope';
 import { PathShape } from '../../features/shapes/models/path';
 import { PathNode } from '../../features/shapes/models/node';
-
-// Initialize a headless PaperScope for SVG importing
-const scope = new paper.PaperScope();
-scope.setup(new paper.Size(1000, 1000));
 
 export const SVGImporter = {
     /**
@@ -90,6 +87,7 @@ export const SVGImporter = {
      * Imports an SVG string and returns an array of PathShapes.
      */
     importSVG(svgString: string): PathShape[] {
+        scope.activate();
         const sanitized = this.sanitize(svgString);
         const item = scope.project.importSVG(sanitized, {
             expandShapes: true, // Convert rects, circles, etc. to paths
